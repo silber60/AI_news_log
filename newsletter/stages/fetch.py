@@ -11,6 +11,7 @@ from datetime import date, datetime, timedelta
 from typing import Any, Literal
 
 import httpx
+from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from newsletter.errors import EmptyFetchError, FetchError
 from newsletter.schema import HfEntry
@@ -21,6 +22,9 @@ log = logging.getLogger(__name__)
 HF_BASE = "https://huggingface.co"
 PAGE_LIMIT = 100
 MAX_PAGES = 20
+# Exponential backoff base in seconds, read per call so tests can set it to 0.
+RETRY_WAIT_MULTIPLIER: float = 1.0
+RETRY_WAIT_MAX = 30
 
 _PAPER_KEYS = (
     "id",
@@ -62,19 +66,44 @@ class _WeekRejected(FetchError):
     """HTTP 400 from HF. On `week=` this switches to the `date=` loop."""
 
 
-def _get_page(client: httpx.Client, params: dict[str, Any]) -> list[dict]:
-    try:
-        resp = client.get("/api/daily_papers", params=params)
-    except httpx.TransportError as e:
-        raise FetchError(type(e).__name__) from e
-    if resp.status_code == 400:
+class _RetryableStatus(Exception):
+    def __init__(self, status: int):
+        super().__init__(status)
+        self.status = status
+
+
+def _get_once(client: httpx.Client, params: dict[str, Any]) -> list[dict]:
+    resp = client.get("/api/daily_papers", params=params)
+    code = resp.status_code
+    if code == 429 or code >= 500:
+        raise _RetryableStatus(code)
+    if code == 400:
         raise _WeekRejected("HTTP 400")
-    if resp.status_code >= 400:
-        raise FetchError(f"HTTP {resp.status_code}")
+    if code >= 400:
+        raise FetchError(f"HTTP {code}")
     data = resp.json()
     if not isinstance(data, list):
         raise FetchError("unexpected payload shape")
     return data
+
+
+def _get_page(client: httpx.Client, params: dict[str, Any]) -> list[dict]:
+    """One GET with bounded retries on transport errors, 429 and 5xx only.
+
+    Error messages carry the status code or exception class, never response bodies.
+    """
+    retrying = Retrying(
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=RETRY_WAIT_MULTIPLIER, max=RETRY_WAIT_MAX),
+        retry=retry_if_exception_type((httpx.TransportError, _RetryableStatus)),
+        reraise=True,
+    )
+    try:
+        return retrying(_get_once, client, params)
+    except _RetryableStatus as e:
+        raise FetchError(f"HTTP {e.status}") from None
+    except httpx.TransportError as e:
+        raise FetchError(type(e).__name__) from e
 
 
 def _page_all(client: httpx.Client, params: dict[str, Any]) -> tuple[list[dict], int]:

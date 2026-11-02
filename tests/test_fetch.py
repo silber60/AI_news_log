@@ -5,6 +5,7 @@ import json
 from datetime import date, timedelta
 
 import httpx
+import pytest
 import respx
 from conftest import FakeAnthropic
 
@@ -102,3 +103,112 @@ def test_week_400_falls_back_to_date_loop():
     assert week_route.call_count == 1
     assert result.method == "date"
     assert [e.paper.id for e in result.entries] == ["2610.00001"]
+
+
+# ------------------------------------------------------------ retries / empty
+
+_ONE = [
+    {
+        "paper": {
+            "id": "2610.00002",
+            "title": "T",
+            "summary": "S",
+            "upvotes": 1,
+            "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+        },
+        "numComments": 0,
+    }
+]
+
+
+@pytest.fixture
+def no_wait(monkeypatch):
+    from newsletter.stages import fetch
+
+    monkeypatch.setattr(fetch, "RETRY_WAIT_MULTIPLIER", 0)
+
+
+def _fetch_w44(side_effect):
+    from newsletter.stages.fetch import HF_BASE, fetch_week
+
+    with respx.mock(assert_all_mocked=True) as router:
+        route = router.get(HF_URL, params={"week": "2026-W44"}).mock(side_effect=side_effect)
+        with httpx.Client(base_url=HF_BASE) as client:
+            try:
+                return fetch_week("2026-W44", client=client), route.call_count
+            except Exception as e:
+                e.call_count = route.call_count
+                raise
+
+
+def test_503_twice_then_ok(no_wait):
+    result, calls = _fetch_w44(
+        [httpx.Response(503), httpx.Response(503), httpx.Response(200, json=_ONE)]
+    )
+    assert calls == 3
+    assert result.method == "week"
+    assert [e.paper.id for e in result.entries] == ["2610.00002"]
+
+
+def test_429_is_retried(no_wait):
+    result, calls = _fetch_w44([httpx.Response(429), httpx.Response(200, json=_ONE)])
+    assert calls == 2
+    assert len(result.entries) == 1
+
+
+def test_persistent_503_raises_fetch_error_after_4_attempts(no_wait):
+    from newsletter.errors import FetchError
+
+    with pytest.raises(FetchError) as ei:
+        _fetch_w44([httpx.Response(503, text="secret body")] * 5)
+    assert ei.value.call_count == 4
+    assert ei.value.stage == "fetch"
+    assert "503" in str(ei.value)
+    assert "secret body" not in str(ei.value)
+
+
+def test_transport_error_raises_fetch_error_after_4_attempts(no_wait):
+    from newsletter.errors import FetchError
+
+    with pytest.raises(FetchError) as ei:
+        _fetch_w44(httpx.ConnectError("boom"))
+    assert ei.value.call_count == 4
+    assert str(ei.value) == "ConnectError"
+
+
+def test_404_is_not_retried(no_wait):
+    from newsletter.errors import EmptyFetchError, FetchError
+
+    with pytest.raises(FetchError) as ei:
+        _fetch_w44([httpx.Response(404, text="nope")] * 4)
+    assert not isinstance(ei.value, EmptyFetchError)
+    assert ei.value.call_count == 1
+    assert str(ei.value) == "HTTP 404"
+
+
+def test_empty_week_raises_empty_fetch_error(no_wait):
+    from newsletter.errors import EmptyFetchError
+
+    with pytest.raises(EmptyFetchError) as ei:
+        _fetch_w44([httpx.Response(200, json=[])])
+    assert ei.value.call_count == 1
+
+
+def test_empty_date_loop_raises_empty_fetch_error(no_wait):
+    from newsletter.errors import EmptyFetchError
+    from newsletter.stages.fetch import HF_BASE, fetch_week
+
+    pages = {(W53_MON + timedelta(days=i)).isoformat(): [] for i in range(7)}
+    with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
+        _mock_dates(router, pages)
+        with httpx.Client(base_url=HF_BASE) as client, pytest.raises(EmptyFetchError):
+            fetch_week(W53, client=client)
+
+
+def test_retry_multiplier_is_read_at_call_time(monkeypatch):
+    """Patching the module constant after import must take effect (tests stay fast)."""
+    from newsletter.stages import fetch
+
+    monkeypatch.setattr(fetch, "RETRY_WAIT_MULTIPLIER", 0)
+    _, calls = _fetch_w44([httpx.Response(500), httpx.Response(200, json=_ONE)])
+    assert calls == 2
