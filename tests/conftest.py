@@ -63,7 +63,11 @@ def default_analysis(kw: dict) -> ItemAnalysisLLM:
         title_ko=f"{title}: 테스트 제목",
         ai_type="멀티모달",
         summary_ko="테스트용 한줄 요약입니다.",
-        use_ideas_ko=["테스트 아이디어"],
+        does_ko="테스트 모델이 하는 일이다.",
+        new_ko="이전 방법과 다른 점이다.",
+        result_ko="논문이 보고한 결과다.",
+        kind_ko="테스트 모델",
+        architecture_ko="확인 필요",
     )
 
 

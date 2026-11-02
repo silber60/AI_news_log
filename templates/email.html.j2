@@ -1,4 +1,4 @@
-{# template-version: 2 #}
+{# template-version: 3 #}
 {#- Phase 1 plain table email (DSGN-03). Tables + inline CSS only, 640px.
     The <style> block is moved inline by css_inline and then dropped.
     The font stack is also written on every text cell for clients that strip styles. -#}
@@ -38,10 +38,17 @@ a { color: #2563eb; text-decoration: underline; }
 {%- if it.affiliation %}
 <tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 2px 16px 0 16px;">{{ it.affiliation }}</td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} padding: 8px 16px 0 16px;">{{ it.summary_ko }}</td></tr>
-{%- if it.use_ideas_ko %}
-<tr><td style="{{ ff }} padding: 8px 16px 0 16px;">{% for idea in it.use_ideas_ko %}· {{ idea }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
-{%- endif %}
+<tr><td style="{{ ff }} padding: 8px 16px 0 16px; font-weight: bold;">{{ it.summary_ko }}</td></tr>
+<tr><td style="{{ ff }} padding: 8px 16px 0 16px;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+{%- set mi = it.model_info %}
+<tr><td style="padding: 8px 16px 0 16px;">
+<table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fafafa; border: 1px solid #e4e4e7;">
+<tr><td colspan="2" style="{{ ff }} padding: 8px 12px 4px 12px; font-size: 14px; font-weight: bold;">🧩 모델 정보</td></tr>
+{%- for label, value in [("유형", mi.kind_ko), ("구조", mi.architecture_ko), ("크기", mi.size), ("학습 데이터", mi.training_data), ("공개 범위", mi.release)] %}
+<tr><td width="96" style="{{ ff }} padding: 2px 12px{% if loop.last %} 8px{% else %} 2px{% endif %} 12px; font-size: 13px; color: #71717a; vertical-align: top;">{{ label }}</td><td style="{{ ff }} padding: 2px 12px{% if loop.last %} 8px{% else %} 2px{% endif %} 0; font-size: 13px;">{{ value }}</td></tr>
+{%- endfor %}
+</table>
+</td></tr>
 <tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 8px 16px 16px 16px;"><a href="{{ it.hf_url }}" style="color: #2563eb;">Hugging Face</a> · <a href="{{ it.arxiv_url }}" style="color: #2563eb;">arXiv</a>{% if it.github_url %} · <a href="{{ it.github_url }}" style="color: #2563eb;">GitHub</a>{% endif %}{% if it.project_url %} · <a href="{{ it.project_url }}" style="color: #2563eb;">Project</a>{% endif %}</td></tr>
 </table>
 </td></tr>

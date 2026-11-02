@@ -160,7 +160,11 @@ VALID = {
     "title_ko": "Qwen3-VL: long-context 멀티모달 추론 개선",
     "ai_type": "멀티모달",
     "summary_ko": "긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했다.",
-    "use_ideas_ko": ["긴 회의 영상 요약"],
+    "does_ko": "긴 영상과 문서를 함께 읽고 답한다.",
+    "new_ko": "long-context 처리 방식을 바꿔 더 긴 입력을 다룬다.",
+    "result_ko": "공개 benchmark에서 기존 공개 모델보다 높은 점수를 보고했다.",
+    "kind_ko": "Vision-Language 모델",
+    "architecture_ko": "확인 필요",
 }
 
 
@@ -242,11 +246,8 @@ def test_long_summary_fixture_exceeds_limit():
     ("over", "codes"),
     [
         ({}, []),
-        ({"use_ideas_ko": []}, []),
         ({"title_ko": "   "}, ["title_empty"]),
         ({"summary_ko": LONG_SUMMARY}, ["summary_len"]),
-        ({"use_ideas_ko": ["a", "b", "c"]}, ["ideas_count"]),
-        ({"use_ideas_ko": ["a", " "]}, ["idea_empty"]),
     ],
 )
 def test_check_codes(over, codes):
@@ -275,19 +276,19 @@ def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
 
 
 def test_summary_overrun_with_other_error_fails(hf_pages):
-    bad = {"summary_ko": LONG_SUMMARY, "use_ideas_ko": ["a", "b", "c"]}
+    bad = {"summary_ko": LONG_SUMMARY, "title_ko": " "}
     fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
     with pytest.raises(AnalysisInvalid) as exc:
         analyze.analyze_one(fake, _entry(hf_pages), rank=2)
-    assert "summary_len" in str(exc.value) and "ideas_count" in str(exc.value)
+    assert "summary_len" in str(exc.value) and "title_empty" in str(exc.value)
 
 
-def test_three_ideas_then_valid_returns_second(hf_pages):
-    fake = FakeAnthropic([_parsed(use_ideas_ko=["a", "b", "c"]), _parsed()])
+def test_empty_title_then_valid_returns_second(hf_pages):
+    fake = FakeAnthropic([_parsed(title_ko=" "), _parsed()])
     result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
     assert len(fake.calls) == 2
-    assert result.use_ideas_ko == VALID["use_ideas_ko"]
-    assert "use_ideas_ko" in fake.user_texts()[1]
+    assert result.title_ko == VALID["title_ko"]
+    assert "title_ko" in fake.user_texts()[1]
 
 
 def test_unknown_ai_type_goes_through_retry(hf_pages):
@@ -308,14 +309,18 @@ def test_free_text_newlines_are_normalized(hf_pages):
             _parsed(
                 title_ko="Qwen3-VL:\r\nlong-context 개선",
                 summary_ko="첫 줄\n둘째 줄\t끝.",
-                use_ideas_ko=["회의\r영상 요약"],
+                does_ko="긴 영상을\r\n읽는다.",
+                new_ko="입력\t처리를 바꾼다.",
+                result_ko="점수가\n올랐다.",
             )
         ]
     )
     result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
     assert result.title_ko == "Qwen3-VL: long-context 개선"
     assert result.summary_ko == "첫 줄 둘째 줄 끝."
-    assert result.use_ideas_ko == ["회의 영상 요약"]
+    assert result.does_ko == "긴 영상을 읽는다."
+    assert result.new_ko == "입력 처리를 바꾼다."
+    assert result.result_ko == "점수가 올랐다."
 
 
 @pytest.mark.parametrize(

@@ -16,7 +16,7 @@ import anthropic
 from pydantic import ValidationError
 
 from newsletter.errors import AnalysisInvalid
-from newsletter.schema import HfEntry, Item, ItemAnalysisLLM
+from newsletter.schema import HfEntry, Item, ItemAnalysisLLM, ModelInfo
 from newsletter.store import PROMPTS_DIR
 
 log = logging.getLogger(__name__)
@@ -77,18 +77,24 @@ def _one_line(text: str) -> str:
     return re.sub(r" {2,}", " ", _WS_RE.sub(" ", text)).strip()
 
 
+_TEXT_FIELDS = (
+    "title_ko",
+    "summary_ko",
+    "does_ko",
+    "new_ko",
+    "result_ko",
+    "kind_ko",
+    "architecture_ko",
+)
+
+
 def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
-    return a.model_copy(
-        update={
-            "title_ko": _one_line(a.title_ko),
-            "summary_ko": _one_line(a.summary_ko),
-            "use_ideas_ko": [_one_line(i) for i in a.use_ideas_ko],
-        }
-    )
+    return a.model_copy(update={f: _one_line(getattr(a, f)) for f in _TEXT_FIELDS})
 
 
 def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
-    """Code-enforced ANLY-03 / D-07 limits. Messages carry counts, never model text."""
+    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 limits. Messages carry field names
+    and counts, never model text."""
     errs: list[tuple[str, str]] = []
     if not a.title_ko.strip():
         errs.append(("title_empty", "title_ko가 비어 있음"))
@@ -96,10 +102,6 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(
             ("summary_len", f"summary_ko가 {len(a.summary_ko)}자로 {SUMMARY_LIMIT}자를 넘음")
         )
-    if len(a.use_ideas_ko) > 2:
-        errs.append(("ideas_count", f"use_ideas_ko가 {len(a.use_ideas_ko)}개로 2개를 넘음"))
-    if any(not i.strip() for i in a.use_ideas_ko):
-        errs.append(("idea_empty", "use_ideas_ko에 빈 항목이 있음"))
     return errs
 
 
@@ -271,7 +273,11 @@ def to_item(rank: int, entry: HfEntry, analysis: ItemAnalysisLLM) -> Item:
             title_ko=analysis.title_ko,
             ai_type=analysis.ai_type,
             summary_ko=analysis.summary_ko,
-            use_ideas_ko=analysis.use_ideas_ko,
+            summary_lines_ko=[analysis.does_ko, analysis.new_ko, analysis.result_ko],
+            # D-07: size / training_data / release stay UNKNOWN; only code fills them.
+            model_info=ModelInfo(
+                kind_ko=analysis.kind_ko, architecture_ko=analysis.architecture_ko
+            ),
         )
     except ValidationError as e:
         raise AnalysisInvalid(f"item {rank}: {e.error_count()} validation errors") from e

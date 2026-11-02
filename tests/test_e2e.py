@@ -6,8 +6,10 @@ import httpx
 import respx
 from conftest import FakeAnthropic
 
-from newsletter.schema import HfEntry, Issue
+from newsletter.schema import UNKNOWN, HfEntry, Issue
 from newsletter.stages.analyze import strip_urls
+from newsletter.stages.headline import fallback_headline
+from newsletter.stages.render import build_subject
 from newsletter.stages.select import sort_key
 
 ISSUE_ID = "2026-W44"
@@ -62,6 +64,17 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         assert it.poc.verdict == "확인 필요"
         assert it.claude_gpt.verdict == "확인 필요"
         assert it.hardware.local_run == "확인 필요"
+        assert len(it.summary_lines_ko) == 3
+        assert all(line.strip() for line in it.summary_lines_ko)
+        assert (it.model_info.size, it.model_info.training_data, it.model_info.release) == (
+            UNKNOWN,
+            UNKNOWN,
+            UNKNOWN,
+        )
+    assert stored.schema_version == 2
+    name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
+    assert stored.headline_ko == f"🧠 {name} 등 이번 주 AI 모델 10"
+    assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
     assert len(fake.calls) == 10
     for text in fake.user_texts():
@@ -95,7 +108,16 @@ def test_claude_output_model_has_no_code_owned_fields():
     from newsletter.schema import ItemAnalysisLLM
 
     fields = set(ItemAnalysisLLM.model_fields)
-    assert fields == {"title_ko", "ai_type", "summary_ko", "use_ideas_ko"}
+    assert fields == {
+        "title_ko",
+        "ai_type",
+        "summary_ko",
+        "does_ko",
+        "new_ko",
+        "result_ko",
+        "kind_ko",
+        "architecture_ko",
+    }
     for name in fields:
         assert "url" not in name and "rank" not in name and "verdict" not in name
 
@@ -103,7 +125,7 @@ def test_claude_output_model_has_no_code_owned_fields():
 def test_deliver_test_mode_sends_one_message(hf_pages, archive_tmp, fake_smtp, monkeypatch):
     from newsletter.__main__ import main
 
-    _build(hf_pages, FakeAnthropic())
+    stored = _build(hf_pages, FakeAnthropic())
 
     monkeypatch.setenv("SMTP_USER", "sender@example.com")
     monkeypatch.setenv("SMTP_PASSWORD", "abcd efgh ijkl mnop")
@@ -119,6 +141,6 @@ def test_deliver_test_mode_sends_one_message(hf_pages, archive_tmp, fake_smtp, m
     msg = smtp.sent[0]
     assert msg.get_content_type() == "multipart/alternative"
     assert msg["To"] == "owner@example.com"
-    assert str(msg["Subject"]).startswith("[TEST] [AI 주간 모델 브리프]")
+    assert str(msg["Subject"]) == "[TEST] " + build_subject(stored, "send")
     html = msg.get_body(preferencelist=("html",)).get_content()
     assert "구독자님" in html

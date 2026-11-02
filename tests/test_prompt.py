@@ -50,12 +50,20 @@ def test_system_carries_rules_and_ai_types(hf_pages):
     assert "Qwen3-VL: long-context 멀티모달 추론 개선" in text
     for term in ("fine-tuning", "RAG", "diffusion", "MoE"):
         assert term in text
-    # D-07 grounding, injection fence, humanizer core subset
-    assert "[]" in text
+    # D-07 grounding (unknown -> 확인 필요), injection fence, humanizer core subset
+    assert "정확히 `확인 필요`" in text
     assert "<paper>" in text
     for word in ("혁신적", "획기적", "게임 체인저", "단순히", "—"):
         assert word in text
-    assert text.splitlines()[0] == "<!-- prompt-version: 2 -->"
+    assert text.splitlines()[0] == "<!-- prompt-version: 3 -->"
+
+
+def test_system_names_v2_fields_and_drops_ideas(hf_pages):
+    text = _call(hf_pages)["system"][0]["text"]
+    for field in ("does_ko", "new_ko", "result_ko", "kind_ko", "architecture_ko", "확인 필요"):
+        assert field in text, field
+    assert "use_ideas" not in text
+    assert "활용 아이디어" not in text
 
 
 def test_user_block_is_fenced_and_url_free(hf_pages):

@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from newsletter import store
+from newsletter.schema import Issue
+from newsletter.stages.render import build_subject
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EXAMPLE_CSV = (Path(__file__).parent.parent / "subscribers.example.csv").read_text(encoding="utf-8")
@@ -43,8 +45,9 @@ def test_send_mode_greets_subscriber_by_name(current_issue, send_env, fake_smtp)
     msg = smtp.sent[0]
     assert msg.get_content_type() == "multipart/alternative"
     assert msg["To"] == "subscriber@example.com"
+    issue = Issue.model_validate_json((current_issue / "issue.json").read_text(encoding="utf-8"))
+    assert str(msg["Subject"]) == build_subject(issue, "send")
     assert "[TEST]" not in str(msg["Subject"])
-    assert "AI 주간 모델 브리프" in str(msg["Subject"])
     assert "홍길동님" in msg.get_body(preferencelist=("html",)).get_content()
     assert "홍길동님" in msg.get_body(preferencelist=("plain",)).get_content()
     for header, value in msg.items():
