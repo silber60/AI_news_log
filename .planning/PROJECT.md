@@ -37,7 +37,7 @@
 
 ### Out of Scope
 
-- 구독/구독취소 웹 페이지 — v1은 CSV 직접 관리로 충분
+- 구독/구독취소 웹 폼 — v1은 CSV 직접 관리로 충분 (웹 버전·아카이브 페이지는 v1 포함)
 - 발송 전 수동 검토/승인 단계 — 사용자가 완전 자동 발송을 선택
 - 오픈율/클릭 트래킹 — 1명 대상 초기 단계라 불필요
 - 대량 발송 인프라(ESP, 도메인 인증) — Gmail SMTP 일일 한도 내 소규모
@@ -75,6 +75,10 @@
 | Figma에 웹형 디자인 새로 제작 후 HTML 구현 | 기존 모바일 디자인 톤 유지 | — Pending |
 | Public repo (silber60) | 사용자 선택. GitHub Pages 무료로 웹 버전/아카이브 가능 | — Pending |
 | cron `0 8 * * 1` + `timezone: Asia/Seoul` | 사용자 선택. KST 기준이라 계산 단순 | — Pending |
+| Figma 웹형 디자인 640px 이메일 폭 | Gmail/네이버 호환 | — Pending |
+| 발신: 개인 Gmail + 앱 비밀번호 | 사용자 선택 (전용 계정 대신) | — Pending |
+| 웹 버전 + 아카이브 v1 포함 (GitHub Pages) | public repo라 무료 | — Pending |
+| Vertical MVP 단계 구성 | 빨리 끝까지 도는 버전 우선 | — Pending |
 | Claude 생성 텍스트에 humanizer 필수 | 사용자 요구: AI 티 안 나는 뉴스레터 | — Pending |
 | Claude Skill / GPTs 활용 후보를 상단에서 별도 강조 | 사용자 요구: 바로 써볼 만한 것 홍보 | — Pending |
 | 추가 필드: 한줄요약+활용, 라이선스·공개, 실행 난이도·GPU, 주간 트렌드 | 사용자 선택 | — Pending |
