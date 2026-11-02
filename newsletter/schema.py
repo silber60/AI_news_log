@@ -158,9 +158,7 @@ class Issue(Strict):
             raise ValueError("at most 3 highlights")
         if any(h.rank not in ranks for h in self.highlights):
             raise ValueError("highlight rank must reference an item")
-        if self.explainer is not None and any(
-            r not in ranks for r in self.explainer.related_ranks
-        ):
+        if self.explainer is not None and any(r not in ranks for r in self.explainer.related_ranks):
             raise ValueError("explainer related_ranks must reference items")
         return self
 
