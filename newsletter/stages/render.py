@@ -18,9 +18,11 @@ from newsletter.store import TEMPLATES_DIR
 BRAND = "AI 주간 모델 브리프"
 # Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
 MAX_EMAIL_BYTES = 90 * 1024
+# Written on every text cell (~23 per card), so each byte counts ~230 times
+# (research Pitfall 6): the Korean-named duplicate of Malgun Gothic is dropped.
 FONT_STACK = (
     "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', "
-    "'맑은 고딕', 'Noto Sans KR', sans-serif"
+    "'Noto Sans KR', sans-serif"
 )
 # D-09: versioned, never-overwritten public asset directory (docs/assets/email/v1/).
 ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v1"

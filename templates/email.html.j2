@@ -17,8 +17,9 @@
 </tr></table>
 {%- endmacro -%}
 
+{#- Inline pill: one <span> inside a text cell, so a badge row costs one font-stack cell. #}
 {%- macro pill(text, bg, fg) -%}
-<td style="{{ ff }} padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background-color: {{ bg }}; color: {{ fg }}; white-space: nowrap;">{{ text }}</td>
+<span style="padding: 4px 10px; border-radius: 999px; background-color: {{ bg }}; color: {{ fg }}; white-space: nowrap;">{{ text }}</span>
 {%- endmacro -%}
 
 {%- macro box_cell(label, text) -%}
@@ -52,13 +53,7 @@
 </table>
 </td></tr>
 {%- if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
-<tr><td style="padding: 10px 0 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-{{ pill("상업적 사용 " ~ it.commercial.verdict, "#F0F0F0", "#666666") }}<td width="6"></td>
-{{ pill("PoC " ~ it.poc.verdict, "#E8F5E9", "#2E7D32") }}<td width="6"></td>
-{{ pill("Claude/GPT " ~ it.claude_gpt.verdict, "#EDF6FF", "#303A83") }}
-</tr></table>
-</td></tr>
+<tr><td style="{{ ff }} padding: 14px 0 4px 0; font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill("상업적 사용 " ~ it.commercial.verdict, "#F0F0F0", "#666666") }} {{ pill("PoC " ~ it.poc.verdict, "#E8F5E9", "#2E7D32") }} {{ pill("Claude/GPT " ~ it.claude_gpt.verdict, "#EDF6FF", "#303A83") }}</td></tr>
 {%- endif %}
 <tr><td style="{{ ff }} padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
 </table>
@@ -113,7 +108,7 @@ a { color: #FF6B00; text-decoration: none; }
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding: 14px 0 0 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-{{ pill(h.tag, "#ffffff", "#FF6B00") }}<td width="8"></td>
+<td style="{{ ff }} font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill(h.tag, "#ffffff", "#FF6B00") }}</td><td width="8"></td>
 <td style="{{ ff }} font-size: 15px; font-weight: bold; color: #222222;">{{ issue.items[h.rank - 1].title_ko }}</td>
 </tr></table>
 </td></tr>

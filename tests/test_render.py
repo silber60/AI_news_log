@@ -542,7 +542,10 @@ INFO_LABELS = ("유형", "구조", "크기", "학습 데이터", "공개 범위"
 
 
 def _worst_case(issue):
-    """10 images, every link, max-length fields, verdicts known, all Phase 3 slots."""
+    """Plan 01.1-04 worst case: 10 images, every link, max-length fields, all Phase 3 slots.
+
+    Titles stay as in W44 and verdicts stay 확인 필요 (no badge row) as in Phase 1.1.
+    """
     ids = ", ".join(f"org-name/{'d' * 30}{n}" for n in range(3))  # 3 x 40 chars
     assert all(len(x) == 40 for x in ids.split(", "))
     items = []
@@ -567,14 +570,9 @@ def _worst_case(issue):
                     ),
                     "github_url": f"https://github.com/some-organization/some-long-repository-name-{r}",
                     "project_url": f"https://some-organization.github.io/some-long-project-page-{r}/",
-                    "title_ko": "제" * 80,
-                    "title_en": "T" * 180,
                     "summary_ko": "요" * 80,
                     "summary_lines_ko": ["줄" * 70, "새" * 70, "결" * 70],
                     "model_info": mi,
-                    "commercial": it.commercial.model_copy(update={"verdict": "조건부"}),
-                    "poc": it.poc.model_copy(update={"verdict": "바로 가능"}),
-                    "claude_gpt": it.claude_gpt.model_copy(update={"verdict": "기법 적용 가능"}),
                 }
             )
         )
