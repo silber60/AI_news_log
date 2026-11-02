@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of 6 in current phase
-Status: Ready to execute (6 plans, 3 waves; plan-check passed)
-Last activity: 2026-11-02 - Phase 1 planned
+Status: Phase 1 code done (5/6 plans; 01-06 live runs pending: preview passed, test/send/failure runs not yet). Phase 1.1 inserted, ready to plan
+Last activity: 2026-11-02 - Phase 1.1 (Newsletter Design v2 & Model Detail Fields) inserted after Phase 1
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -46,6 +46,10 @@ Recent decisions affecting current work:
 - Roadmap: The send ledger (DLVR-05) and checkpoint reuse (AUTO-05) land in Phase 5 with the cron; until then `mode=send` is manual-only to the single subscriber
 - Stack (research): Python 3.14 + uv, httpx/tenacity, anthropic `messages.parse` + Pydantic, Jinja2 + css-inline, stdlib smtplib/email/csv
 
+### Roadmap Evolution
+
+- Phase 1.1 inserted after Phase 1: Newsletter Design v2 & Model Detail Fields (owner-approved Figma v2 draft, node 7:22)
+
 ### Pending Todos
 
 None yet.
@@ -70,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 1 planned
-Resume file: .planning/phases/01-end-to-end-skeleton/01-CONTEXT.md
+Stopped at: Phase 1.1 inserted and context captured
+Resume file: .planning/phases/01.1-newsletter-design-v2/01.1-CONTEXT.md

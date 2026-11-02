@@ -24,9 +24,11 @@
 
 - [ ] **ANLY-01**: Reader sees AI 종류 for each item from a closed enum (LLM, 비전, 멀티모달, 음성, 에이전트, 이미지/비디오 생성, 기타)
 - [ ] **ANLY-02**: Reader sees Claude/GPT 사용 가능 여부 (`직접 사용 / 기법 적용 가능 / 해당 없음 / 확인 필요`) with a one-sentence reason
-- [ ] **ANLY-03**: Reader sees a Korean title gloss, 한줄 요약 (≤ ~80 chars, enforced in code), and up to 2 활용 아이디어 per item
+- [ ] **ANLY-03**: Reader sees a Korean title gloss, 한줄 요약 (≤ ~80 chars, enforced in code), and up to 2 활용 아이디어 per item (활용 아이디어 removed from the email in Phase 1.1, replaced by ANLY-07/ANLY-08)
 - [ ] **ANLY-04**: Reader sees the verdict reasons for 상업적 사용/PoC written by Claude from code-supplied evidence (Claude never decides the verdict itself)
 - [ ] **ANLY-05**: Reader sees a 이번 주 트렌드 총평 (2–3 sentences) that only references this week's 10 items
+- [ ] **ANLY-07**: Reader sees a 3-line 여러 줄 요약 per item (what it does, what is new, reported result), grounded in the abstract/project page
+- [ ] **ANLY-08**: Reader sees a 모델 정보 table per item: 유형 and 구조 written by Claude from the abstract; 크기, 학습 데이터 and 공개 범위 taken from HF/GitHub evidence by code, otherwise `확인 필요`
 - [ ] **ANLY-06**: Claude output is produced via `messages.parse` into the frozen Pydantic `Issue` schema; invalid output is retried once, and a still-invalid issue fails the run without sending
 
 ### Humanizer (HUMN)
@@ -52,6 +54,8 @@
 - [ ] **DSGN-02**: Design sections in order: header + week range, personalized greeting, 이번 주 바로 써볼 만한 것, 트렌드 총평, Top 10 cards (rank, upvotes, badges, summary, links), footer
 - [ ] **DSGN-03**: Email HTML is a hand-written Jinja2 table layout with all CSS inlined (no `<head>` style dependence), system Korean font fallback stack on every element, badges as colored text cells (no text images)
 - [ ] **DSGN-04**: Rendered HTML is under 90 KB (asserted at render time) and a plain-text alternative is generated from the same data
+- [ ] **DSGN-06**: Email HTML follows the Figma v2 draft (node 7:22): otter banner and closing banner, section order with Top 3 → AI 기술 쉽게 보기 → 4위~10위, orange/navy palette, no AI/auto-generated wording
+- [ ] **DSGN-07**: Otter images and at most one per-item model image are served from public HTTPS URLs with alt text; the email stays readable with images blocked
 - [ ] **DSGN-05**: Email renders correctly in Naver Mail and Gmail (web + mobile app, light + dark) — verified by real test sends
 
 ### Delivery (DLVR)
@@ -59,6 +63,7 @@
 - [ ] **DLVR-01**: Pipeline reads subscribers (email, name) from the `SUBSCRIBERS_CSV` GitHub Secret (UTF-8-BOM / CP949 safe); only `subscribers.example.csv` is committed; initial list is subscriber@example.com / 홍길동
 - [ ] **DLVR-02**: Each subscriber receives a personalized greeting ("홍길동님", fallback "구독자님") with the name HTML-escaped and CR/LF stripped
 - [ ] **DLVR-03**: Mail is sent via Gmail SMTP (`SMTP_SSL` 465, personal Gmail with app password from secrets) as one multipart `EmailMessage` per recipient with correct Korean subject encoding
+- [ ] **DLVR-07**: Subject is a headline-style line about the week's top topic (NEWNEEK/어세스타 style), with `[TEST]` prefix in test mode
 - [ ] **DLVR-04**: Footer shows sender info and an unsubscribe line, and messages carry a `List-Unsubscribe: <mailto:>` header
 - [ ] **DLVR-05**: A send ledger keyed by (week, SHA-256 email hash) is committed to the repo so a re-run never sends the same issue twice to the same person
 - [ ] **DLVR-06**: Logs and artifacts never contain addresses, names, or credentials (counts/hashes only, no SMTP debug output) — repo is public
@@ -98,7 +103,7 @@
 |---------|--------|
 | Manual review/approval before send | User chose full automation; fail-closed validation replaces it |
 | Open/click tracking | Not needed for a tiny list; hurts deliverability and privacy |
-| Per-paper thumbnails / text-as-image headings | Size budget, image blocking, Naver/Gmail rendering |
+| Text-as-image headings | Size budget, image blocking, Naver/Gmail rendering (one optional per-item model image is allowed since Phase 1.1, DSGN-07) |
 | LLM-written HTML | Breaks email-safe markup; Claude only returns JSON |
 | Sources other than HF Papers | HF Papers is the fixed reference source |
 | ESP / domain authentication / bulk sending | Gmail SMTP sufficient for current list size |
@@ -123,6 +128,8 @@
 | ANLY-04 | Phase 2 | Pending |
 | ANLY-05 | Phase 2 | Pending |
 | ANLY-06 | Phase 1 | Pending |
+| ANLY-07 | Phase 1.1 | Pending |
+| ANLY-08 | Phase 1.1 | Pending |
 | HUMN-01 | Phase 3 | Pending |
 | HUMN-02 | Phase 3 | Pending |
 | HUMN-03 | Phase 3 | Pending |
@@ -136,12 +143,15 @@
 | DSGN-03 | Phase 1 | Pending |
 | DSGN-04 | Phase 1 | Pending |
 | DSGN-05 | Phase 4 | Pending |
+| DSGN-06 | Phase 1.1 | Pending |
+| DSGN-07 | Phase 1.1 | Pending |
 | DLVR-01 | Phase 1 | Pending |
 | DLVR-02 | Phase 1 | Pending |
 | DLVR-03 | Phase 1 | Pending |
 | DLVR-04 | Phase 4 | Pending |
 | DLVR-05 | Phase 5 | Pending |
 | DLVR-06 | Phase 1 | Pending |
+| DLVR-07 | Phase 1.1 | Pending |
 | WEB-01 | Phase 4 | Pending |
 | WEB-02 | Phase 4 | Pending |
 | AUTO-01 | Phase 5 | Pending |
@@ -151,10 +161,10 @@
 | AUTO-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 41 total
-- Mapped to phases: 41
+- v1 requirements: 46 total
+- Mapped to phases: 46
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-02*
-*Last updated: 2026-11-02 after Phase 1 discussion (added EXPL-01, EXPL-02)*
+*Last updated: 2026-11-02 after inserting Phase 1.1 (added ANLY-07, ANLY-08, DSGN-06, DSGN-07, DLVR-07)*

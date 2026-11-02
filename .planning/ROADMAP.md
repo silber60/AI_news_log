@@ -7,6 +7,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 ## Phases
 
 - [ ] **Phase 1: End-to-End Skeleton** - Manual Actions run fetches last week's Top 10, analyzes minimally, renders a basic email, and previews or test-sends it
+- [ ] **Phase 1.1: Newsletter Design v2 & Model Detail Fields** (INSERTED) - The email follows the approved Figma v2 draft (otter mascot, Top 3 → explainer → 4-10 layout, headline-style subject) and each card shows one-line + multi-line summaries and a model info table
 - [ ] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
 - [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
@@ -34,6 +35,20 @@ Plans:
 - [ ] 01-04-PLAN.md — Render: full Phase 1 card email, inline CSS + KR fonts, 90 KB gate, plain text, D-01/D-03 subject
 - [ ] 01-05-PLAN.md — Delivery: send mode + CSV secret, greeting, redaction handler, failure notice, build secret isolation
 - [ ] 01-06-PLAN.md — Actions workflow + CI, push/secrets (owner), live preview/test/send/failure runs and log audit
+
+### Phase 1.1: Newsletter Design v2 & Model Detail Fields (INSERTED)
+**Goal**: The newsletter looks like the approved Figma v2 draft and each Top 10 card tells the reader what the model is, not how to use it.
+**Mode:** mvp
+**Depends on**: Phase 1
+**Requirements**: DSGN-06, DSGN-07, ANLY-07, ANLY-08, DLVR-07
+**Design source**: Figma `qyJcGii2MLHTbi4W9mPZkx`, frame `Newsletter / Web 640 (draft)` (node 7:22), card component `Card / Top10 item` (node 7:2)
+**Success Criteria** (what must be TRUE):
+  1. The rendered email follows the Figma v2 section order: otter banner, header, issue headline, greeting, 이번 주 바로 써볼 만한 것 slot, 흐름 slot, Top 3, AI 기술 쉽게 보기 slot, 4위~10위, closing line + waving-otter banner, footer; empty Phase 3 slots are skipped cleanly
+  2. Each card shows rank/type/upvotes, Korean + English titles, a bold one-line summary, a 3-line summary, a 모델 정보 table (유형, 구조, 크기, 학습 데이터, 공개 범위) with `확인 필요` for unknown facts, badges and links; 활용 아이디어 is gone
+  3. Otter images and an optional single per-item image load from public HTTPS URLs with alt text; the email stays under 90 KB and reads fine with images blocked
+  4. The subject is a headline-style line about the week's top topic (no fixed brand prefix), `[TEST]` still prefixes test mode, and nothing in the email says it is AI- or auto-generated
+  5. `Issue` schema v2 is committed with a snapshot test, v1 fixtures are migrated, and the full test suite passes
+**Plans**: TBD
 
 ### Phase 2: Evidence & Practical Verdicts
 **Goal**: Readers can tell at a glance whether each model is usable in practice, with verdicts decided by code from real HF/GitHub evidence and explained by Claude.
@@ -91,6 +106,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. End-to-End Skeleton | 0/6 | Planned | - |
+| 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 0/TBD | Not started | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
