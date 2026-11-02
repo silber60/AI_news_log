@@ -68,6 +68,10 @@ def paper_block(entry: HfEntry) -> str:
 
 
 SUMMARY_LIMIT = 80  # ANLY-03, measured in Python len() characters
+LINE_LIMIT = 70  # ANLY-07: does_ko / new_ko / result_ko
+KIND_LIMIT = 30  # ANLY-08: kind_ko
+ARCH_LIMIT = 60  # ANLY-08: architecture_ko
+_LINE_FIELDS = ("does_ko", "new_ko", "result_ko")
 _WS_RE = re.compile(r"[\r\n\t]+")
 _BOUNDARY_CHARS = " ,."
 
@@ -102,7 +106,42 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(
             ("summary_len", f"summary_ko가 {len(a.summary_ko)}자로 {SUMMARY_LIMIT}자를 넘음")
         )
+    for field in _LINE_FIELDS:
+        text = getattr(a, field)
+        if not text.strip():
+            errs.append(("line_empty", f"{field}가 비어 있음"))
+        elif len(text) > LINE_LIMIT:
+            errs.append(("line_len", f"{field}가 {len(text)}자로 {LINE_LIMIT}자를 넘음"))
+    if not a.kind_ko.strip():
+        errs.append(("kind_empty", "kind_ko가 비어 있음"))
+    elif len(a.kind_ko) > KIND_LIMIT:
+        errs.append(("kind_len", f"kind_ko가 {len(a.kind_ko)}자로 {KIND_LIMIT}자를 넘음"))
+    if len(a.architecture_ko) > ARCH_LIMIT:
+        errs.append(
+            ("arch_len", f"architecture_ko가 {len(a.architecture_ko)}자로 {ARCH_LIMIT}자를 넘음")
+        )
     return errs
+
+
+# Length-only problems left after the retry are repaired by trimming (D-19).
+_TRIM_LIMITS = {
+    "summary_ko": SUMMARY_LIMIT,
+    "does_ko": LINE_LIMIT,
+    "new_ko": LINE_LIMIT,
+    "result_ko": LINE_LIMIT,
+    "kind_ko": KIND_LIMIT,
+    "architecture_ko": ARCH_LIMIT,
+}
+_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len"}
+
+
+def _trim_overruns(a: ItemAnalysisLLM) -> tuple[ItemAnalysisLLM, list[str]]:
+    update = {
+        f: trim_summary(getattr(a, f), limit)
+        for f, limit in _TRIM_LIMITS.items()
+        if len(getattr(a, f)) > limit
+    }
+    return a.model_copy(update=update), list(update)
 
 
 def trim_summary(s: str, limit: int = SUMMARY_LIMIT) -> str:
@@ -239,10 +278,11 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
         problems = check(last)
         if not problems:
             return last
-    if last is not None and [code for code, _ in problems] == ["summary_len"]:
-        # D-19: a pure length overrun after the retry is repaired, not fatal.
-        log.info("trimmed=summary rank=%d", rank)
-        return last.model_copy(update={"summary_ko": trim_summary(last.summary_ko)})
+    if last is not None and problems and {code for code, _ in problems} <= _LENGTH_CODES:
+        # D-19: pure length overruns after the retry are repaired, not fatal.
+        trimmed, fields = _trim_overruns(last)
+        log.info("trimmed=%s rank=%d", ",".join(fields), rank)
+        return trimmed
     reason = "+".join(code for code, _ in problems) or "unknown"
     raise AnalysisInvalid(f"rank={rank} reason={reason}")
 
