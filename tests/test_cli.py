@@ -223,3 +223,14 @@ def test_notify_failure_failing_prints_class_only(archive_tmp, capsys, monkeypat
     assert "Traceback" not in out
     # the original failure status is preserved for the workflow
     assert _status(archive_tmp) == status
+
+
+def test_delivery_error_detail_is_printed_without_addresses(capsys):
+    from newsletter import __main__ as cli
+    from newsletter.errors import DeliveryError
+
+    cli._report("notify-failure", DeliveryError("SMTPAuthenticationError code=535 a@b.co"))
+    err = capsys.readouterr().err
+    assert "stage=notify-failure error=DeliveryError" in err
+    assert "detail=SMTPAuthenticationError code=535" in err
+    assert "@" not in err

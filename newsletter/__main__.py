@@ -10,12 +10,13 @@ NEWSLETTER_DEBUG=1 (never set in CI) (DLVR-06).
 import argparse
 import logging
 import os
+import re
 import sys
 import traceback
 from datetime import datetime
 
 from newsletter import store
-from newsletter.errors import PipelineError
+from newsletter.errors import DeliveryError, PipelineError
 from newsletter.week import KST, previous_iso_week
 
 NOTIFY = "notify-failure"
@@ -49,6 +50,9 @@ def _run(args: argparse.Namespace) -> None:
         send_failure_notice(args.mode)
 
 
+_EMAIL_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")
+
+
 def _report(command: str, exc: BaseException) -> None:
     if command == NOTIFY:
         stage = NOTIFY
@@ -60,6 +64,9 @@ def _report(command: str, exc: BaseException) -> None:
     if os.environ.get("NEWSLETTER_DEBUG") == "1":
         traceback.print_exception(exc, file=sys.stderr)
     print(f"stage={stage} error={error_class}", file=sys.stderr)
+    if isinstance(exc, DeliveryError):
+        # DeliveryError text is built from env var names or SMTP class + code only.
+        print(f"detail={_EMAIL_RE.sub('<redacted>', str(exc))[:200]}", file=sys.stderr)
     if command == NOTIFY:
         return  # keep the original failure's status.json for the workflow
     try:
