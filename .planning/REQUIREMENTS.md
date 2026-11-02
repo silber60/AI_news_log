@@ -103,13 +103,51 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| COLL-01 | Phase 1 | Pending |
+| COLL-02 | Phase 1 | Pending |
+| COLL-03 | Phase 1 | Pending |
+| COLL-04 | Phase 1 | Pending |
+| EVID-01 | Phase 2 | Pending |
+| EVID-02 | Phase 2 | Pending |
+| EVID-03 | Phase 2 | Pending |
+| EVID-04 | Phase 2 | Pending |
+| EVID-05 | Phase 2 | Pending |
+| ANLY-01 | Phase 1 | Pending |
+| ANLY-02 | Phase 2 | Pending |
+| ANLY-03 | Phase 1 | Pending |
+| ANLY-04 | Phase 2 | Pending |
+| ANLY-05 | Phase 2 | Pending |
+| ANLY-06 | Phase 1 | Pending |
+| HUMN-01 | Phase 3 | Pending |
+| HUMN-02 | Phase 3 | Pending |
+| HUMN-03 | Phase 3 | Pending |
+| HILT-01 | Phase 3 | Pending |
+| HILT-02 | Phase 3 | Pending |
+| HILT-03 | Phase 3 | Pending |
+| DSGN-01 | Phase 4 | Pending |
+| DSGN-02 | Phase 4 | Pending |
+| DSGN-03 | Phase 1 | Pending |
+| DSGN-04 | Phase 1 | Pending |
+| DSGN-05 | Phase 4 | Pending |
+| DLVR-01 | Phase 1 | Pending |
+| DLVR-02 | Phase 1 | Pending |
+| DLVR-03 | Phase 1 | Pending |
+| DLVR-04 | Phase 4 | Pending |
+| DLVR-05 | Phase 5 | Pending |
+| DLVR-06 | Phase 1 | Pending |
+| WEB-01 | Phase 4 | Pending |
+| WEB-02 | Phase 4 | Pending |
+| AUTO-01 | Phase 5 | Pending |
+| AUTO-02 | Phase 1 | Pending |
+| AUTO-03 | Phase 5 | Pending |
+| AUTO-04 | Phase 5 | Pending |
+| AUTO-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39 ⚠️
+- Mapped to phases: 39
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-02*
-*Last updated: 2026-11-02 after initial definition*
+*Last updated: 2026-11-02 after roadmap creation (traceability filled)*
