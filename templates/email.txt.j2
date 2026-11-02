@@ -1,14 +1,10 @@
-{# template-version: 3 #}
-{{ brand }} {{ issue.issue_id }} ({{ label }})
-
-{{ greeting }}, 지난주 Hugging Face Papers 상위 {{ issue.items|length }}편입니다.
-{% for it in issue.items %}
+{# template-version: 4 #}
+{%- macro card(it) %}
 ----------------------------------------
 #{{ it.rank }} · ▲ {{ it.upvotes }} · {{ it.ai_type }}
 {{ it.title_ko }}
 {{ it.title_en }}
-{% if it.affiliation %}{{ it.affiliation }}
-{% endif %}
+
 {{ it.summary_ko }}
 {% for line in it.summary_lines_ko %}· {{ line }}
 {% endfor %}
@@ -23,6 +19,50 @@ Hugging Face: {{ it.hf_url }}
 arXiv: {{ it.arxiv_url }}
 {% if it.github_url %}GitHub: {{ it.github_url }}
 {% endif %}{% if it.project_url %}Project: {{ it.project_url }}
-{% endif %}{% endfor %}
-----------------------------------------
-출처: Hugging Face Daily Papers. 이 메일은 자동으로 생성되었습니다.
+{% endif %}
+{%- endmacro -%}
+{{ brand }}
+{% if hashtags %}{{ hashtags|join(" ") }}
+{% endif %}{{ date_line }}{% if web_url %} ㅣ 웹에서 보기: {{ web_url }}{% endif %}
+
+{{ issue.headline_ko }}
+
+{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에서 추천을 많이 받은 AI 모델 {{ issue.items|length }}개를 골랐어요.
+{% if issue.highlights %}
+========================================
+이번 주 바로 써볼 만한 것 ✨
+{% for h in issue.highlights %}
+[{{ h.tag }}] {{ h.why_ko }} {{ h.how_ko }}
+{% endfor %}{% endif %}
+{%- if issue.trend_ko %}
+========================================
+이번 주 흐름 한눈에 📈
+
+{{ issue.trend_ko }}
+{% endif %}
+========================================
+이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️
+Hugging Face 추천 수 기준
+{% for it in top3 %}{{ card(it) }}{% endfor %}
+{%- if issue.explainer %}
+========================================
+AI 기술 쉽게 보기 🔍
+
+{{ issue.explainer.topic }}
+
+{{ issue.explainer.body_ko }}
+{% endif %}
+{%- if rest %}
+========================================
+놓치기 아까운 4위부터 10위까지 👀
+Hugging Face 추천 수 기준
+{% for it in rest %}{{ card(it) }}{% endfor %}
+{%- endif %}
+========================================
+이번 주 브리프는 여기까지! 다음 주 월요일에 또 만나요 👋
+
+{{ brand }}
+매주 월요일 오전 8시에 보내드려요. 출처: Hugging Face Papers
+더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.
+{% if web_url %}웹에서 보기 · 지난 호 보기: {{ web_url }}
+{% endif -%}
