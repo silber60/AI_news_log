@@ -1,16 +1,21 @@
-{# template-version: 1 #}
+{# template-version: 2 #}
 {{ brand }} {{ issue.issue_id }} ({{ label }})
 
-{{ greeting }}, 지난주 Hugging Face Papers에서 추천을 많이 받은 논문 {{ issue.items|length }}편을 정리했습니다.
+{{ greeting }}, 지난주 Hugging Face Papers 상위 {{ issue.items|length }}편입니다.
 {% for it in issue.items %}
-{{ it.rank }}위 · 추천 {{ it.upvotes }} · {{ it.ai_type }}
+----------------------------------------
+#{{ it.rank }} · ▲ {{ it.upvotes }} · {{ it.ai_type }}
 {{ it.title_ko }}
-{{ it.title_en }}{% if it.affiliation %} · {{ it.affiliation }}{% endif %}
+{{ it.title_en }}
+{% if it.affiliation %}{{ it.affiliation }}
+{% endif %}
 {{ it.summary_ko }}
-{% for idea in it.use_ideas_ko %}- {{ idea }}
-{% endfor %}HF Papers: {{ it.hf_url }}
+{% for idea in it.use_ideas_ko %}· {{ idea }}
+{% endfor %}
+Hugging Face: {{ it.hf_url }}
 arXiv: {{ it.arxiv_url }}
 {% if it.github_url %}GitHub: {{ it.github_url }}
 {% endif %}{% if it.project_url %}Project: {{ it.project_url }}
 {% endif %}{% endfor %}
-출처: Hugging Face Papers 주간 추천 수 기준. 요약은 Claude가 작성했습니다.
+----------------------------------------
+출처: Hugging Face Daily Papers. 이 메일은 자동으로 생성되었습니다.

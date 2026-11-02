@@ -9,11 +9,16 @@ import css_inline
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup
 
+from newsletter.errors import RenderTooLarge
 from newsletter.schema import AiType, Issue
 from newsletter.store import TEMPLATES_DIR
 from newsletter.week import week_label
 
 BRAND = "AI 주간 모델 브리프"
+# Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
+MAX_EMAIL_BYTES = 90 * 1024
+# D-01: cap the #1 title in the subject so it stays readable on mobile.
+SUBJECT_TITLE_MAX = 32
 FONT_STACK = (
     "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', "
     "'맑은 고딕', 'Noto Sans KR', sans-serif"
@@ -56,7 +61,12 @@ def _context(issue: Issue, greeting: str) -> dict:
 
 def render_html(issue: Issue, greeting: str) -> str:
     html = _html_env.get_template("email.html.j2").render(**_context(issue, greeting))
-    return css_inline.inline(html)
+    html = css_inline.inline(html)
+    n = len(html.encode("utf-8"))
+    if n >= MAX_EMAIL_BYTES:
+        # Message holds only the size; never content or recipient data.
+        raise RenderTooLarge(f"bytes={n}")
+    return html
 
 
 def render_text(issue: Issue, greeting: str) -> str:
@@ -64,10 +74,15 @@ def render_text(issue: Issue, greeting: str) -> str:
 
 
 def build_subject(issue: Issue, mode: Literal["preview", "test", "send"]) -> str:
+    """D-01 subject; `[TEST] ` prefix only in test mode (D-03); count follows N (D-11)."""
     n = len(issue.items)
-    subject = f"[{BRAND}] 이번 주 1위: {issue.items[0].title_ko}"
+    title = issue.items[0].title_ko.replace("\r", " ").replace("\n", " ")
+    if len(title) > SUBJECT_TITLE_MAX:
+        title = title[:SUBJECT_TITLE_MAX].rstrip() + "…"
+    subject = f"[{BRAND}] 이번 주 1위: {title}"
     if n > 1:
         subject += f" 외 {n - 1}건"
     if mode == "test":
         subject = "[TEST] " + subject
-    return subject
+    # Header injection guard: no CR/LF may reach the Subject header.
+    return subject.replace("\r", " ").replace("\n", " ")

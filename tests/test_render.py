@@ -115,7 +115,8 @@ def test_ai_type_badges_use_color_map(issue_w44):
     types = list(AI_TYPE_COLORS)
     assert len(types) == 7
     items = [
-        it.model_copy(update={"ai_type": types[i % len(types)]}) for i, it in enumerate(issue_w44.items)
+        it.model_copy(update={"ai_type": types[i % len(types)]})
+        for i, it in enumerate(issue_w44.items)
     ]
     issue = issue_w44.model_copy(update={"items": items})
     cells = _cells(render_html(issue, "구독자님")).cells
@@ -174,7 +175,9 @@ def test_title_script_is_escaped(issue_w44):
 
 def test_explainer_set_is_not_rendered_in_phase1(issue_w44):
     issue = issue_w44.model_copy(
-        update={"explainer": Explainer(topic="MoE 해설", body_ko="전문가 혼합 설명", related_ranks=[1])}
+        update={
+            "explainer": Explainer(topic="MoE 해설", body_ko="전문가 혼합 설명", related_ranks=[1])
+        }
     )
     out = render_html(issue, "구독자님")
     assert "MoE 해설" not in out
