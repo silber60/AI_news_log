@@ -43,6 +43,11 @@ User did not answer these explicitly; recommended defaults applied and stated to
 - **D-16:** Reserve an optional `explainer` block in `Issue` for the weekly 기술 해설 코너 (Phase 3): topic, plain-language explanation, related item rank(s). Empty in Phase 1; renderer skips it when empty. — **Reversibility:** costly — `Issue` is the frozen contract all later phases fill; adding fields later means a schema change outside a planned phase.
 - **D-17:** Item schema needs fields for D-04/D-06/D-08: `title_ko`, `title_en`, `affiliation | None`, `github_url | None`, `project_url | None`, plus existing HF/arXiv URLs.
 
+### Decisions after research (2026-11-02)
+- **D-18:** Phase 1 ships a short core subset of humanizer rules in `prompts/humanizer_ko.md`, included in the analysis system prompt. Lint and the polish pass stay in Phase 3.
+- **D-19:** If 한줄 요약 still exceeds ~80 chars after the one retry and length is the only error, trim in code at a sentence/phrase boundary and send. Any other validation error still fails the run (D-15).
+- **D-20:** Phase 1 keeps `archive/<YYYY-Www>/` on the runner and in the uploaded artifact only. No commit-back (`contents: write`) until Phase 5.
+
 ### Claude's Discretion
 - Subject title truncation length; exact table layout and font sizes for the plain Phase 1 email (final design comes in Phase 4).
 - Failure-notice wording and format.
