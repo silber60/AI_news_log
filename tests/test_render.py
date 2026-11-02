@@ -9,8 +9,10 @@ import respx
 from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import Explainer, Highlight
+from newsletter.schema import Explainer, Highlight, ItemImage
+from newsletter.stages import render as render_mod
 from newsletter.stages.render import (
+    ASSET_BASE_URL,
     MAX_EMAIL_BYTES,
     build_subject,
     render_html,
@@ -512,3 +514,220 @@ def test_subject_has_no_line_breaks(issue_w44):
         s = build_subject(issue, mode)
         assert "\r" not in s and "\n" not in s
         assert "바꿈" in s and "헤드라인" in s
+
+
+# ------------------- Task 3 guards: images, images-off, wording, worst case
+
+
+AUTHORSHIP_PHRASES = (
+    "자동으로 생성",
+    "자동 생성",
+    "자동으로 작성",
+    "AI가 작성",
+    "AI가 생성",
+    "AI가 만든",
+    "Claude가",
+    "Claude로",
+    "generated",
+)
+SECTION_TITLES = (
+    "이번 주 바로 써볼 만한 것 ✨",
+    "이번 주 흐름 한눈에 📈",
+    "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️",
+    "AI 기술 쉽게 보기 🔍",
+    "놓치기 아까운 4위부터 10위까지 👀",
+    "이번 주 브리프는 여기까지! 다음 주 월요일에 또 만나요 👋",
+)
+INFO_LABELS = ("유형", "구조", "크기", "학습 데이터", "공개 범위")
+
+
+def _worst_case(issue):
+    """10 images, every link, max-length fields, verdicts known, all Phase 3 slots."""
+    ids = ", ".join(f"org-name/{'d' * 30}{n}" for n in range(3))  # 3 x 40 chars
+    assert all(len(x) == 40 for x in ids.split(", "))
+    items = []
+    for it in issue.items:
+        r = it.rank
+        mi = it.model_info.model_copy(
+            update={
+                "kind_ko": "유" * 30,
+                "architecture_ko": "구" * 60,
+                "size": "123.4B 파라미터 (외 9개 모델)",
+                "training_data": ids + " 외 99개",
+                "release": "가중치(승인 필요) · GitHub · 데모",
+            }
+        )
+        items.append(
+            it.model_copy(
+                update={
+                    "image": ItemImage(
+                        url=f"https://cdn-uploads.huggingface.co/production/uploads/{'a' * 24}/{'b' * 20}{r:02d}.png",
+                        width=576,
+                        height=260,
+                    ),
+                    "github_url": f"https://github.com/some-organization/some-long-repository-name-{r}",
+                    "project_url": f"https://some-organization.github.io/some-long-project-page-{r}/",
+                    "title_ko": "제" * 80,
+                    "title_en": "T" * 180,
+                    "summary_ko": "요" * 80,
+                    "summary_lines_ko": ["줄" * 70, "새" * 70, "결" * 70],
+                    "model_info": mi,
+                    "commercial": it.commercial.model_copy(update={"verdict": "조건부"}),
+                    "poc": it.poc.model_copy(update={"verdict": "바로 가능"}),
+                    "claude_gpt": it.claude_gpt.model_copy(update={"verdict": "기법 적용 가능"}),
+                }
+            )
+        )
+    return issue.model_copy(
+        update={
+            "items": items,
+            "headline_ko": "🤖 " + "헤" * 40,
+            "highlights": [
+                Highlight(rank=r, tag="둘 다", why_ko="왜" * 120, how_ko="어" * 160)
+                for r in (1, 2, 3)
+            ],
+            "trend_ko": "흐" * 300,
+            "explainer": Explainer(
+                topic="주" * 40,
+                body_ko="본" * 800,
+                related_ranks=[1, 2],
+                point_ko="포" * 120,
+                example_ko="예" * 200,
+            ),
+        }
+    )
+
+
+def _check_imgs(out: str) -> list[dict]:
+    imgs = _imgs(out)
+    assert imgs
+    for img in imgs:
+        assert (img.get("alt") or "").strip(), img
+        assert re.fullmatch(r"\d+", img.get("width") or ""), img
+        assert re.fullmatch(r"\d+", img.get("height") or ""), img
+        assert (img.get("src") or "").startswith("https://"), img
+    assert "data:" not in "".join(img.get("src") or "" for img in imgs)
+    return imgs
+
+
+def _otters(imgs: list[dict]) -> set[str]:
+    names = set()
+    for img in imgs:
+        src = img["src"]
+        if "otter-" in src:
+            assert src.startswith(ASSET_BASE_URL + "/"), src
+            names.add(src.rsplit("/", 1)[1])
+    return names
+
+
+def test_w44_images_are_hosted_with_alt_and_size(issue_w44):
+    imgs = _check_imgs(render_html(issue_w44, "구독자님"))
+    assert _otters(imgs) == {"otter-banner.jpg", "otter-magnifier.png", "otter-wave.jpg"}
+    assert ASSET_BASE_URL.startswith("https://")
+
+
+def test_worst_case_images_and_phase3_otters(issue_w44):
+    imgs = _check_imgs(render_html(_worst_case(issue_w44), "구독자님"))
+    assert _otters(imgs) == {
+        "otter-banner.jpg",
+        "otter-magnifier.png",
+        "otter-wave.jpg",
+        "otter-tool.png",
+        "otter-chalkboard.png",
+    }
+    # hero + cards 2-10 (card 1 skips the hero image, D-18)
+    hf = [i for i in imgs if i["src"].startswith("https://cdn-uploads.huggingface.co/")]
+    assert len(hf) == 10
+
+
+def _strip_imgs(out: str) -> str:
+    return html_lib.unescape(re.sub(r"<img\b[^>]*>", "", out))
+
+
+@pytest.mark.parametrize("full", [False, True])
+def test_email_reads_with_images_blocked(issue_w44, full):
+    issue = _full_issue(issue_w44) if full else issue_w44
+    text = _strip_imgs(render_html(issue, "구독자님"))
+    titles = SECTION_TITLES if full else SECTION_TITLES[2:3] + SECTION_TITLES[4:]
+    for t in titles:
+        assert t in text, t
+    assert issue.headline_ko in text
+    for it in issue.items:
+        for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko):
+            assert s in text, (it.rank, s)
+        for label in INFO_LABELS:
+            assert f">{label}<" in text
+
+
+def _all_parts(issue) -> list[str]:
+    return [
+        render_html(issue, "구독자님"),
+        render_text(issue, "구독자님"),
+        *(build_subject(issue, m) for m in ("test", "send", "preview")),
+    ]
+
+
+def test_no_authorship_wording_anywhere(issue_w44):
+    for issue in (issue_w44, _full_issue(issue_w44)):
+        for part in _all_parts(issue):
+            for phrase in AUTHORSHIP_PHRASES:
+                assert phrase not in part, phrase
+
+
+def test_claude_absent_while_claude_gpt_verdicts_unknown(issue_w44):
+    # Pitfall 5: Phase 1.1 only. Phase 2 badges legitimately say Claude/GPT.
+    assert all(it.claude_gpt.verdict == "확인 필요" for it in issue_w44.items)
+    for part in _all_parts(issue_w44):
+        assert "Claude" not in part
+
+
+def test_footer_source_and_unsubscribe_without_web_links(issue_w44):
+    assert render_mod.WEB_URL is None
+    out = render_html(issue_w44, "구독자님")
+    footer = out[_section_pos(out, "footer") :]
+    assert "출처: Hugging Face Papers" in footer
+    assert "수신거부" in footer
+    txt = render_text(issue_w44, "구독자님")
+    for part in (out, txt):
+        assert "웹에서 보기" not in part
+        assert "지난 호 보기" not in part
+    assert "출처: Hugging Face Papers" in txt and "수신거부" in txt
+
+
+def test_web_links_appear_once_web_url_is_set(issue_w44, monkeypatch):
+    monkeypatch.setattr(render_mod, "WEB_URL", "https://example.github.io/archive/")
+    out = render_html(issue_w44, "구독자님")
+    footer = out[_section_pos(out, "footer") :]
+    assert "웹에서 보기" in footer and "지난 호 보기" in footer
+    header = out[_section_pos(out, "header") : _section_pos(out, "hero")]
+    assert "웹에서 보기" in header
+    assert 'href="https://example.github.io/archive/"' in out
+    txt = render_text(issue_w44, "구독자님")
+    assert "웹에서 보기" in txt and "지난 호 보기" in txt
+
+
+def test_worst_case_under_byte_limit(issue_w44):
+    n = len(render_html(_worst_case(issue_w44), "구독자님").encode("utf-8"))
+    print(f"worst-case email.html bytes={n}")
+    assert n < MAX_EMAIL_BYTES
+
+
+def test_text_part_complete_and_asset_free(issue_w44):
+    issue = issue_w44
+    txt = render_text(issue, "구독자님")
+    assert not re.search(r"<[a-zA-Z/][^>]*>", txt)
+    assert "구독자님, 안녕하세요." in txt
+    assert issue.headline_ko in txt
+    for it in issue.items:
+        mi = it.model_info
+        for s in (it.title_ko, it.title_en, it.summary_ko):
+            assert s in txt
+        for line in it.summary_lines_ko:
+            assert f"· {line}" in txt
+        values = (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release)
+        for label, value in zip(INFO_LABELS, values, strict=True):
+            assert f"{label}: {value}" in txt
+        assert it.hf_url in txt and it.arxiv_url in txt
+    assert ASSET_BASE_URL not in txt
+    assert "otter-" not in txt
+    assert "cdn-uploads.huggingface.co" not in txt
