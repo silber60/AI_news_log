@@ -7,6 +7,7 @@ public Actions log.
 import logging
 import smtplib
 import ssl
+import time
 from collections.abc import Iterable
 from email.message import EmailMessage
 from email.utils import formataddr, formatdate, make_msgid
@@ -30,12 +31,16 @@ def build_message(*, subject: str, sender_addr: str, to: str, text: str, html: s
     return msg
 
 
-def send_messages(messages: Iterable[EmailMessage], *, user: str, password: str) -> int:
+def send_messages(
+    messages: Iterable[EmailMessage], *, user: str, password: str, pause: float = 0.0
+) -> int:
     sent = 0
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as smtp:
         smtp.login(user, password.replace(" ", ""))
-        for msg in messages:
+        for i, msg in enumerate(messages):
+            if i and pause > 0:
+                time.sleep(pause)
             smtp.send_message(msg)
             sent += 1
     log.info("sent=%d", sent)

@@ -17,7 +17,7 @@ def _parser() -> argparse.ArgumentParser:
     b = sub.add_parser("build", help="fetch, analyze, render and archive one week")
     b.add_argument("--week", default="", help="ISO week YYYY-Www (blank: previous week in KST)")
     d = sub.add_parser("deliver", help="send the current issue")
-    d.add_argument("--mode", choices=["test"], required=True)
+    d.add_argument("--mode", choices=["test", "send"], required=True)
     return p
 
 
