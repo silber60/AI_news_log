@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-11-02 - Roadmap created (5 phases, 39/39 v1 requirements mapped)
+Status: Ready to plan (context gathered)
+Last activity: 2026-11-02 - Phase 1 context gathered
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -48,7 +48,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Add weekly 기술 해설 코너 requirement to REQUIREMENTS.md and Phase 3 in ROADMAP.md (decided in Phase 1 discussion; `Issue.explainer` slot reserved)
 
 ### Blockers/Concerns
 
@@ -70,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Roadmap and state initialized
-Resume file: None
+Stopped at: Phase 1 context gathered
+Resume file: .planning/phases/01-end-to-end-skeleton/01-CONTEXT.md
