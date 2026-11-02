@@ -100,7 +100,8 @@ def test_bad_request_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 10
+    # 10 analysis calls + 1 headline call; the downgrade covers the headline too.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 11
     for c in fake.calls[1:]:
         assert "fallbacks" not in c["kw"] and "betas" not in c["kw"]
     assert "previous_output_problems" not in fake.user_texts()[1]
@@ -111,7 +112,8 @@ def test_sdk_type_error_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 10
+    # 10 analysis calls + 1 headline call; the downgrade covers the headline too.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 11
 
 
 def test_downgrade_is_per_client(hf_pages):

@@ -199,15 +199,21 @@ def _log_api_error(where: str, e: Exception) -> None:
     )
 
 
-def _request(client, content: str):
+def _request(client, content: str, *, system: str | None = None, output_format=ItemAnalysisLLM):
+    """One parse call. Defaults are the per-paper analysis; the headline call passes
+    its own system text and output model and shares the fallback downgrade."""
     kwargs = {
         "model": model_name(),
         "max_tokens": 16000,
         "system": [
-            {"type": "text", "text": system_prompt(), "cache_control": {"type": "ephemeral"}}
+            {
+                "type": "text",
+                "text": system if system is not None else system_prompt(),
+                "cache_control": {"type": "ephemeral"},
+            }
         ],
         "messages": [{"role": "user", "content": content}],
-        "output_format": ItemAnalysisLLM,
+        "output_format": output_format,
     }
     if _fallbacks_supported(client):
         try:

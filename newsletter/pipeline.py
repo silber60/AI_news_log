@@ -63,7 +63,7 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         model=analyze.model_name(),
         fetch_method=fetched.method,
         items=items,
-        headline_ko=headline.fallback_headline(items),
+        headline_ko=headline.write_headline(items, client),
     )
     store.write_json(out / "issue.json", issue)
     store.write_text(out / "email.html", render.render_html(issue, PREVIEW_GREETING))
