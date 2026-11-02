@@ -1,0 +1,42 @@
+[
+  {
+    "paper": {
+      "id": "2610.37381",
+      "title": "PDRVLA: A Vision-Language-Action Model with Physical Dynamics Representations",
+      "summary": "Vision--Language--Action (VLA) models generate robot actions from visual observations and language instructions, but the ...",
+      "upvotes": 153,
+      "publishedAt": "2026-10-27T00:00:00.000Z",
+      "submittedOnDailyAt": "2026-10-28T00:00:00.000Z",
+      "ai_summary": "PDRVLA improves robot action generation by integrating a lightweight physical dynamics module ...",
+      "ai_keywords": ["Vision--Language--Action models", "physical dynamics module"],
+      "discussionId": "6ae15d0fa5eb0647c2907230"
+    },
+    "title": "PDRVLA: A Vision-Language-Action Model with Physical Dynamics Representations",
+    "numComments": 2,
+    "publishedAt": "2026-10-26T20:00:00.000Z"
+  },
+  {
+    "paper": {"id": "2610.37230", "upvotes": 95, "submittedOnDailyAt": "2026-10-29T00:00:00.000Z", "title": "...", "summary": "..."},
+    "numComments": 4,
+    "organization": {"name": "...", "fullname": "AIOR"}
+  },
+  {
+    "paper": {"id": "2610.34662", "upvotes": 95, "submittedOnDailyAt": "2026-10-27T00:00:00.000Z", "title": "...", "summary": "..."},
+    "numComments": 2,
+    "organization": {"name": "...", "fullname": "Google"}
+  },
+  {
+    "paper": {
+      "id": "2610.35684",
+      "upvotes": 139,
+      "submittedOnDailyAt": "2026-10-29T00:00:00.000Z",
+      "title": "...",
+      "summary": "...",
+      "githubRepo": "https://github.com/justin4ai/OmniShowcase",
+      "githubStars": 11,
+      "projectPage": "https://justin4ai.github.io/OmniShowcase/"
+    },
+    "numComments": 2,
+    "organization": {"name": "kaist-ai", "fullname": "KAIST AI"}
+  }
+]
