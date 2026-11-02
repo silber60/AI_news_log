@@ -1,0 +1,74 @@
+name: newsletter
+
+# Manual dispatch only in Phase 1 (AUTO-02). The Monday cron arrives in Phase 5.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "preview = artifact only, test = owner test inbox, send = subscriber list"
+        type: choice
+        options: [preview, test, send]
+        default: preview
+        required: true
+      week:
+        description: "YYYY-Www (blank = previous week in KST)"
+        type: string
+        required: false
+        default: ""
+
+# Read-only token. Archive commit-back (write scope) is Phase 5 (D-20).
+permissions:
+  contents: read
+
+concurrency:
+  group: newsletter
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # No secrets at job level: each secret is scoped to the step that needs it.
+    env:
+      MODE: ${{ inputs.mode }}
+      WEEK_INPUT: ${{ inputs.week }}  # reaches the shell via env only; validated in Python
+      CLAUDE_MODEL: claude-sonnet-5-5
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --frozen
+      - name: Build issue (content only; no delivery secrets)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python -m newsletter build --week "$WEEK_INPUT"
+      - name: Upload de-personalized preview
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: issue-${{ github.run_id }}
+          # raw.json, selected.json, issue.json, email.html (구독자님), email.txt (D-14)
+          path: archive/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Deliver
+        if: ${{ inputs.mode == 'test' || inputs.mode == 'send' }}
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TEST_RECIPIENT: ${{ inputs.mode == 'test' && secrets.TEST_RECIPIENT || '' }}
+          SUBSCRIBERS_CSV: ${{ inputs.mode == 'send' && secrets.SUBSCRIBERS_CSV || '' }}
+        run: uv run python -m newsletter deliver --mode "$MODE"
+      - name: Failure notice (test/send only, D-13)
+        if: ${{ failure() && inputs.mode != 'preview' }}
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TEST_RECIPIENT: ${{ secrets.TEST_RECIPIENT }}
+        run: uv run python -m newsletter notify-failure --mode "$MODE"
