@@ -141,6 +141,23 @@ def _mark_fallbacks_unsupported(client) -> None:
     log.warning("fallbacks=unsupported")
 
 
+_EMAIL_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")
+
+
+def _log_api_error(where: str, e: Exception) -> None:
+    """Log the API's own error type/message for a 4xx (no prompt text, no PII)."""
+    body = getattr(e, "body", None)
+    err = body.get("error", {}) if isinstance(body, dict) else {}
+    message = _EMAIL_RE.sub("<redacted>", str(err.get("message", "")))[:300]
+    log.error(
+        "api_error where=%s status=%s type=%s message=%s",
+        where,
+        getattr(e, "status_code", None),
+        err.get("type"),
+        message,
+    )
+
+
 def _request(client, content: str):
     kwargs = {
         "model": model_name(),
@@ -154,11 +171,17 @@ def _request(client, content: str):
     if _fallbacks_supported(client):
         try:
             return client.beta.messages.parse(**kwargs, betas=[FALLBACK_BETA], fallbacks="default")
-        except anthropic.BadRequestError, TypeError:
+        except (anthropic.BadRequestError, TypeError) as e:
             # The server (400) or the SDK (unknown keyword) rejects the combination.
             # Downgrade this client for good and re-issue the same attempt.
+            if isinstance(e, anthropic.BadRequestError):
+                _log_api_error("beta", e)
             _mark_fallbacks_unsupported(client)
-    return client.messages.parse(**kwargs)
+    try:
+        return client.messages.parse(**kwargs)
+    except anthropic.BadRequestError as e:
+        _log_api_error("plain", e)
+        raise
 
 
 def _log_call(rank: int, attempt: int, resp) -> None:

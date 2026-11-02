@@ -336,3 +336,26 @@ def test_trim_summary_limits(text):
 
 def test_trim_summary_keeps_short_text():
     assert analyze.trim_summary("짧은 요약.", limit=80) == "짧은 요약."
+
+
+def test_api_error_log_carries_type_and_message_without_emails(caplog):
+    class FakeBadRequest(Exception):
+        status_code = 400
+
+        def __init__(self):
+            super().__init__()
+            self.body = {
+                "type": "error",
+                "error": {
+                    "type": "invalid_request_error",
+                    "message": "Your credit balance is too low (owner: someone@example.com)",
+                },
+            }
+
+    with caplog.at_level("ERROR", logger="newsletter.stages.analyze"):
+        analyze._log_api_error("plain", FakeBadRequest())
+    line = caplog.text
+    assert "status=400" in line
+    assert "type=invalid_request_error" in line
+    assert "credit balance is too low" in line
+    assert "@" not in line
