@@ -8,7 +8,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 
 - [ ] **Phase 1: End-to-End Skeleton** - Manual Actions run fetches last week's Top 10, analyzes minimally, renders a basic email, and previews or test-sends it
 - [ ] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
-- [ ] **Phase 3: Humanizer & Highlight** - All generated Korean text reads human, and a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates
+- [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
 - [ ] **Phase 5: Scheduled Automation & Hardening** - Mail arrives every Monday 08:00 KST unattended, re-runs never double-send, and the owner gets a run report
 
@@ -40,16 +40,17 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
   5. The issue opens with a 2-3 sentence 이번 주 트렌드 총평 that mentions only this week's 10 items
 **Plans**: TBD
 
-### Phase 3: Humanizer & Highlight
-**Goal**: Every Claude-written sentence reads like a person wrote it, and readers see up to 3 items worth turning into a Claude Skill or GPTs right away.
+### Phase 3: Humanizer, Highlight & Explainer
+**Goal**: Every Claude-written sentence reads like a person wrote it, readers see up to 3 items worth turning into a Claude Skill or GPTs right away, and each issue explains one AI technique in plain language.
 **Mode:** mvp
 **Depends on**: Phase 2
-**Requirements**: HUMN-01, HUMN-02, HUMN-03, HILT-01, HILT-02, HILT-03
+**Requirements**: HUMN-01, HUMN-02, HUMN-03, HILT-01, HILT-02, HILT-03, EXPL-01, EXPL-02
 **Success Criteria** (what must be TRUE):
   1. Generated text in a preview issue contains no banned AI tells (e.g. "단순히 ~가 아니라", "~를 넘어", 혁신적/획기적/게임 체인저, connector dashes, bold labels, closing one-liners); the pattern list is unit-tested
   2. When lint finds AI tells, one polish pass rewrites only free-text fields; enums and URLs stay unchanged, and leftover style issues log a warning without blocking the send
   3. Above the Top 10, an "이번 주 바로 써볼 만한 것" section shows 1-3 items, each with 왜 좋은지 and 어떻게 만들지 in 1-2 lines and a Claude Skill / GPTs / 둘 다 tag
   4. Highlights only point at this week's Top 10; in a week with no fit the section shows "이번 주는 해당 항목 없음"
+  5. Each issue has a 기술 해설 코너 filling the `Issue.explainer` slot reserved in Phase 1: one technique from this week's Top 10, explained in plain Korean, preferring a topic absent from the committed past-topics record (fallback: the #1 paper's core technique)
 **Plans**: TBD
 
 ### Phase 4: Figma Design, Email Template & Web Archive
@@ -83,6 +84,6 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 |-------|----------------|--------|-----------|
 | 1. End-to-End Skeleton | 0/TBD | Not started | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
-| 3. Humanizer & Highlight | 0/TBD | Not started | - |
+| 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
 | 5. Scheduled Automation & Hardening | 0/TBD | Not started | - |

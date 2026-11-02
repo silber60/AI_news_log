@@ -99,7 +99,7 @@ User did not answer these explicitly; recommended defaults applied and stated to
 <deferred>
 ## Deferred Ideas
 
-- **Weekly 기술 해설 코너** — each issue explains one AI technique in plain language, like 어세스타 성장레터. Topic choice: prefer a technique from this week's Top 10 not covered in earlier issues; fall back to the #1 paper's core technique. Needs a record of past explainer topics. User chose to fold this into **Phase 3** (with humanizer/highlight); roadmap and REQUIREMENTS need a new requirement ID for it. Schema slot reserved now (D-16).
+- **Weekly 기술 해설 코너** — each issue explains one AI technique in plain language, like 어세스타 성장레터. Topic choice: prefer a technique from this week's Top 10 not covered in earlier issues; fall back to the #1 paper's core technique. Needs a record of past explainer topics. User chose to fold this into **Phase 3** (with humanizer/highlight); added to ROADMAP Phase 3 as EXPL-01, EXPL-02. Schema slot reserved now (D-16).
 
 </deferred>
 

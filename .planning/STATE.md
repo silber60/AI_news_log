@@ -48,14 +48,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Add weekly 기술 해설 코너 requirement to REQUIREMENTS.md and Phase 3 in ROADMAP.md (decided in Phase 1 discussion; `Issue.explainer` slot reserved)
+None yet.
 
 ### Blockers/Concerns
 
 - Before Phase 1 test send: GitHub repo under `silber60` (public), Gmail app password, `ANTHROPIC_API_KEY`, `SUBSCRIBERS_CSV` and `TEST_RECIPIENT` secrets must exist
 - Phase 1: smoke-test the `messages.parse` parameter combination early (research flagged it MEDIUM confidence)
 - Phase 2: HF `week=` probe returned Mon-Fri only; `date=` loop fallback may be needed for weekends (affects COLL-02 in Phase 1 too)
-- Phase 3: Korean humanizer rule set and highlight criteria are unresearched; review the first 2-3 preview issues
+- Phase 3: Korean humanizer rule set, highlight criteria and explainer style (어세스타 성장레터 reference) are unresearched; review the first 2-3 preview issues
 - Phase 4: Naver Mail rendering evidence is weak (one 2016 source); fonts in the existing mobile Figma design are unknown
 - Phase 5: confirm `timezone:` YAML placement and whether a `GITHUB_TOKEN` push counts as repo activity
 

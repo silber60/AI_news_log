@@ -41,6 +41,11 @@
 - [ ] **HILT-02**: Reader sees a top "이번 주 바로 써볼 만한 것" section above the Top 10 with 1–3 items good for building a Claude Skill or GPTs, each with 왜 좋은지 + 어떻게 만들지 (1–2 lines)
 - [ ] **HILT-03**: Highlights only reference papers in this week's Top 10; when none qualify the section shows "이번 주는 해당 항목 없음" instead of forcing a pick
 
+### Explainer (EXPL)
+
+- [ ] **EXPL-01**: Reader sees a weekly 기술 해설 코너 that explains one AI technique in plain Korean (model names and AI terms kept in English), in the spirit of 어세스타 성장레터, tied to the related Top 10 item(s)
+- [ ] **EXPL-02**: The explainer topic is chosen from this week's Top 10, preferring a technique not covered in earlier issues (checked against a committed record of past explainer topics) and falling back to the #1 paper's core technique
+
 ### Design & Template (DSGN)
 
 - [ ] **DSGN-01**: Figma file `qyJcGii2MLHTbi4W9mPZkx` contains a new 640px web/email newsletter frame derived from the existing mobile design's fonts, colors, and component styles
@@ -124,6 +129,8 @@
 | HILT-01 | Phase 3 | Pending |
 | HILT-02 | Phase 3 | Pending |
 | HILT-03 | Phase 3 | Pending |
+| EXPL-01 | Phase 3 | Pending |
+| EXPL-02 | Phase 3 | Pending |
 | DSGN-01 | Phase 4 | Pending |
 | DSGN-02 | Phase 4 | Pending |
 | DSGN-03 | Phase 1 | Pending |
@@ -144,10 +151,10 @@
 | AUTO-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 39 total
-- Mapped to phases: 39
+- v1 requirements: 41 total
+- Mapped to phases: 41
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-02*
-*Last updated: 2026-11-02 after roadmap creation (traceability filled)*
+*Last updated: 2026-11-02 after Phase 1 discussion (added EXPL-01, EXPL-02)*
