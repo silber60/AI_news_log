@@ -3,9 +3,10 @@
 import json
 from pathlib import Path
 
+import httpx
 import pytest
 import respx
-from conftest import FakeAnthropic, mock_enrich, mock_hf_week
+from conftest import FakeAnthropic, image_bytes, mock_enrich, mock_hf_week
 
 from newsletter.schema import UNKNOWN, HfEntry, Item, ModelInfo
 from newsletter.stages import enrich
@@ -240,3 +241,111 @@ def test_build_survives_total_hf_enrich_outage(hf_pages, archive_tmp):
         assert it.image is None
         assert (it.poc.has_weights, it.poc.has_code, it.poc.has_demo) == (None, None, None)
     assert (archive_tmp / "archive" / ISSUE_ID / "issue.json").is_file()
+
+
+# ------------------------------------------------------------------- images
+
+CDN = "https://cdn-uploads.huggingface.co/production/uploads/abc/"
+RANK1_IMG = (
+    "https://cdn-uploads.huggingface.co/production/uploads/"
+    "6415947858a690df103af49f/TdENf5Pa8C0iPVuP164gl.png"
+)
+
+
+def _entry_with_media(hf_pages, item: Item, media: list[str] | None) -> HfEntry:
+    entry = _entries(hf_pages, [item])[0]
+    paper = entry.paper.model_copy(update={"mediaUrls": media})
+    return entry.model_copy(update={"paper": paper})
+
+
+def _img_run(hf_pages, item: Item, media, response=None) -> tuple[Item, dict]:
+    entry = _entry_with_media(hf_pages, item, media)
+    out, routes = _run([item], [entry], papers={}, models={}, image=response)
+    return out[0], routes
+
+
+def _resp(body: bytes, ctype: str = "image/png", status: int = 206) -> httpx.Response:
+    return httpx.Response(status, headers={"content-type": ctype}, content=body)
+
+
+@pytest.mark.parametrize(
+    ("media", "picked"),
+    [
+        ([CDN + "a.mp4", CDN + "b.PNG", CDN + "c.png"], CDN + "b.PNG"),
+        (["https://example.com/x.png", CDN + "d.jpeg"], CDN + "d.jpeg"),
+        (["http://cdn-uploads.huggingface.co/x.png", CDN + "e.gif"], CDN + "e.gif"),
+        (["https://cdn-uploads.huggingface.co.evil.com/x.png", CDN + "f.jpg"], CDN + "f.jpg"),
+        ([CDN + "a.mp4", CDN + "b.webp"], None),
+        ([], None),
+        (None, None),
+    ],
+)
+def test_image_candidate_selection(media, picked):
+    assert enrich.pick_image_url(media) == picked
+
+
+def test_png_is_sized_to_576_from_ranged_get(items, hf_pages):
+    out, routes = _img_run(hf_pages, items[0], [CDN + "a.mp4", CDN + "wide.png"])
+    assert out.image is not None
+    assert (out.image.url, out.image.width, out.image.height) == (CDN + "wide.png", 576, 234)
+    req = routes["cdn"].calls.last.request
+    assert req.headers["range"] == "bytes=0-65535"
+    assert routes["cdn"].call_count == 1
+
+
+def test_mp4_only_gives_no_image_and_no_request(items, hf_pages):
+    out, routes = _img_run(hf_pages, items[0], [CDN + "clip.mp4"])
+    assert out.image is None
+    assert routes["cdn"].call_count == 0
+
+
+@pytest.mark.parametrize(
+    ("fmt", "ctype", "name"), [("GIF", "image/gif", "x.gif"), ("JPEG", "image/jpeg", "x.jpg")]
+)
+def test_gif_and_jpeg_accepted(items, hf_pages, fmt, ctype, name):
+    resp = _resp(image_bytes((1000, 500), fmt), ctype, status=200)
+    out, _ = _img_run(hf_pages, items[0], [CDN + name], resp)
+    assert out.image is not None
+    assert (out.image.width, out.image.height) == (576, 288)
+
+
+@pytest.mark.parametrize(
+    ("response", "reason"),
+    [
+        (_resp(image_bytes((400, 400))), "width"),
+        (_resp(image_bytes((4800, 600))), "ratio"),
+        (_resp(image_bytes((1000, 1000))), "width"),
+        (_resp(image_bytes((1152, 468)), "text/html"), "content_type"),
+        (_resp(image_bytes((1152, 468)), status=404), "http_404"),
+        (_resp(b"\x89PNG\r\n\x1a\n garbage"), "decode"),
+        (_resp(b""), "decode"),
+    ],
+)
+def test_bad_images_are_rejected_without_raising(items, hf_pages, caplog, response, reason):
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], response)
+    assert out.image is None
+    assert f"image=none rank=1 reason={reason}" in caplog.text
+    assert "cdn-uploads" not in caplog.text
+
+
+def test_square_ratio_lower_bound(items, hf_pages):
+    ok, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1300, 1000))))
+    assert ok.image is not None and ok.image.height == 443
+    bad, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1290, 1000))))
+    assert bad.image is None
+
+
+def test_image_never_reads_more_than_64k(items, hf_pages):
+    big = image_bytes((1152, 468)) + b"\0" * 300_000  # server ignored Range
+    out, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(big, status=200))
+    assert out.image is not None
+    assert enrich.IMAGE_MAX_BYTES == 65536
+
+
+def test_build_gives_rank1_the_only_image(hf_pages, archive_tmp):
+    issue = _build(hf_pages)
+    first = issue.items[0].image
+    assert first is not None
+    assert (first.url, first.width, first.height) == (RANK1_IMG, 576, 234)
+    assert all(it.image is None for it in issue.items[1:])
