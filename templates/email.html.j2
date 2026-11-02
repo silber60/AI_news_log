@@ -1,49 +1,55 @@
-{# template-version: 1 #}
-<!DOCTYPE html>
+{# template-version: 2 #}
+{#- Phase 1 plain table email (DSGN-03). Tables + inline CSS only, 640px.
+    The <style> block is moved inline by css_inline and then dropped.
+    The font stack is also written on every text cell for clients that strip styles. -#}
+{%- set ff = "font-family: " ~ font ~ ";" -%}
+<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ brand }} {{ issue.issue_id }}</title>
 <style>
-body, table, td, p, a, span, div { font-family: {{ font|safe }}; }
 body { margin: 0; padding: 0; background-color: #f4f4f5; }
 td { color: #18181b; font-size: 15px; line-height: 1.6; }
 a { color: #2563eb; text-decoration: underline; }
-.muted { color: #71717a; font-size: 13px; }
-.rank { font-size: 13px; font-weight: bold; color: #52525b; }
-.badge { background-color: #eef2ff; color: #3730a3; font-size: 12px; font-weight: bold; padding: 2px 8px; }
-.title-ko { font-size: 17px; font-weight: bold; color: #18181b; }
-.card { background-color: #ffffff; border: 1px solid #e4e4e7; }
 </style>
 </head>
-<body>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f4f5;">
 <tr><td align="center" style="padding: 24px 8px;">
 <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width: 640px; max-width: 640px;">
-<tr><td style="padding: 0 0 4px 0; font-size: 22px; font-weight: bold;">{{ brand }}</td></tr>
-<tr><td class="muted" style="padding: 0 0 16px 0;">{{ issue.issue_id }} · {{ label }} · Hugging Face Papers Top {{ issue.items|length }}</td></tr>
-<tr><td style="padding: 0 0 16px 0;">{{ greeting }}, 지난주 Hugging Face Papers에서 추천을 많이 받은 논문 {{ issue.items|length }}편을 정리했습니다.</td></tr>
-{% for it in issue.items %}
+<tr><td style="{{ ff }} padding: 0 0 4px 0; font-size: 22px; font-weight: bold; color: #18181b;">{{ brand }}</td></tr>
+<tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 0 0 16px 0;">{{ issue.issue_id }} · {{ label }}</td></tr>
+<tr><td style="{{ ff }} padding: 0 0 16px 0;">{{ greeting }}, 지난주 Hugging Face Papers 상위 {{ issue.items|length }}편입니다.</td></tr>
+{%- for it in issue.items %}
+{%- set badge = colors[it.ai_type] %}
 <tr><td style="padding: 0 0 12px 0;">
-<table role="presentation" class="card" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" data-card="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e4e4e7;">
 <tr><td style="padding: 16px 16px 4px 16px;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td class="rank" style="padding: 0 8px 0 0;">{{ it.rank }}위 · 추천 {{ it.upvotes }}</td>
-<td class="badge">{{ it.ai_type }}</td>
+<td style="{{ ff }} padding: 0 8px 0 0; font-size: 13px; font-weight: bold; color: #52525b;">#{{ it.rank }}</td>
+<td style="{{ ff }} padding: 0 8px 0 0; font-size: 13px; color: #52525b;">▲ {{ it.upvotes }}</td>
+<td style="{{ ff }} padding: 2px 8px; font-size: 12px; font-weight: bold; background-color: {{ badge[0] }}; color: {{ badge[1] }};">{{ it.ai_type }}</td>
 </tr></table>
 </td></tr>
-<tr><td class="title-ko" style="padding: 4px 16px 0 16px;">{{ it.title_ko }}</td></tr>
-<tr><td class="muted" style="padding: 2px 16px 0 16px;">{{ it.title_en }}{% if it.affiliation %} · {{ it.affiliation }}{% endif %}</td></tr>
-<tr><td style="padding: 8px 16px 0 16px;">{{ it.summary_ko }}</td></tr>
-{% if it.use_ideas_ko %}
-<tr><td style="padding: 8px 16px 0 16px;">활용 아이디어<br>{% for idea in it.use_ideas_ko %}· {{ idea }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
-{% endif %}
-<tr><td class="muted" style="padding: 8px 16px 16px 16px;"><a href="{{ it.hf_url }}">HF Papers</a> · <a href="{{ it.arxiv_url }}">arXiv</a>{% if it.github_url %} · <a href="{{ it.github_url }}">GitHub</a>{% endif %}{% if it.project_url %} · <a href="{{ it.project_url }}">Project</a>{% endif %}</td></tr>
+<tr><td style="{{ ff }} padding: 4px 16px 0 16px; font-size: 17px; font-weight: bold; color: #18181b;">{{ it.title_ko }}</td></tr>
+<tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 2px 16px 0 16px;">{{ it.title_en }}</td></tr>
+{%- if it.affiliation %}
+<tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 2px 16px 0 16px;">{{ it.affiliation }}</td></tr>
+{%- endif %}
+<tr><td style="{{ ff }} padding: 8px 16px 0 16px;">{{ it.summary_ko }}</td></tr>
+{%- if it.use_ideas_ko %}
+<tr><td style="{{ ff }} padding: 8px 16px 0 16px;">{% for idea in it.use_ideas_ko %}· {{ idea }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+{%- endif %}
+<tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 8px 16px 16px 16px;"><a href="{{ it.hf_url }}" style="color: #2563eb;">Hugging Face</a> · <a href="{{ it.arxiv_url }}" style="color: #2563eb;">arXiv</a>{% if it.github_url %} · <a href="{{ it.github_url }}" style="color: #2563eb;">GitHub</a>{% endif %}{% if it.project_url %} · <a href="{{ it.project_url }}" style="color: #2563eb;">Project</a>{% endif %}</td></tr>
 </table>
 </td></tr>
-{% endfor %}
-<tr><td class="muted" style="padding: 8px 0 0 0;">출처: Hugging Face Papers 주간 추천 수 기준. 요약은 Claude가 작성했습니다.</td></tr>
+{%- endfor %}
+{%- if issue.explainer %}
+{#- D-16: 기술 해설 slot reserved for Phase 3. Phase 1 renders nothing here. #}
+{%- endif %}
+<tr><td style="{{ ff }} color: #71717a; font-size: 13px; padding: 8px 0 0 0;">출처: Hugging Face Daily Papers. 이 메일은 자동으로 생성되었습니다.</td></tr>
 </table>
 </td></tr>
 </table>
