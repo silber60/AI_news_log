@@ -53,20 +53,32 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         assert it.hardware.local_run == "확인 필요"
         assert len(it.summary_lines_ko) == 3
         assert all(line.strip() for line in it.summary_lines_ko)
-        assert (it.model_info.size, it.model_info.training_data, it.model_info.release) == (
-            UNKNOWN,
-            UNKNOWN,
-            UNKNOWN,
-        )
+        assert it.poc.has_weights in (True, None)
+        assert it.poc.has_code in (True, None)
+        assert it.poc.has_demo in (True, None)
+    # Facts come from the HF paper/model captures by code (D-07); unknown stays UNKNOWN.
+    rank1, rank3 = stored.items[0], stored.items[2]
+    assert (rank1.model_info.size, rank1.model_info.training_data, rank1.model_info.release) == (
+        UNKNOWN,
+        UNKNOWN,
+        UNKNOWN,
+    )
+    assert rank3.model_info.training_data == "JusperLee/RealSSA-Real, JusperLee/RealSSA-Sim"
+    assert rank3.model_info.release == "가중치 · GitHub · 데모"
+    assert rank3.model_info.size == UNKNOWN
     assert stored.schema_version == 2
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
-    assert stored.headline_ko == f"🧠 {name} 등 이번 주 AI 모델 10"
+    assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"
+    assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
     assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
-    assert len(fake.calls) == 10
-    for text in fake.user_texts():
+    assert len(fake.calls) == 11  # 10 analysis calls + 1 headline call
+    texts = fake.user_texts()
+    for text in texts[:10]:
         assert "http" not in text
         assert text.startswith("<paper>")
+    assert texts[10].startswith("<items>")
+    assert "http" not in texts[10]
 
     raw_text = (week / "raw.json").read_text(encoding="utf-8")
     assert '"authors"' not in raw_text
