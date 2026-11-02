@@ -3,9 +3,8 @@
 import json
 from pathlib import Path
 
-import httpx
 import respx
-from conftest import FakeAnthropic
+from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.schema import HfEntry
 from newsletter.stages.select import select_top, sort_key
@@ -66,11 +65,7 @@ def test_selected_json_snapshot_lists_ranks_in_sort_order(hf_pages, archive_tmp)
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
-        for i, page in enumerate(hf_pages):
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": "2026-W44", "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
+        mock_hf_week(router, hf_pages, "2026-W44")
         run_build("2026-W44", claude_client=FakeAnthropic())
 
     path = archive_tmp / "archive" / "2026-W44" / "selected.json"

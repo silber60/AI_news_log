@@ -3,11 +3,10 @@
 import json
 
 import anthropic
-import httpx
 import httpx2
 import pytest
 import respx
-from conftest import FakeAnthropic, default_analysis, make_parsed
+from conftest import FakeAnthropic, default_analysis, make_parsed, mock_hf_week
 
 from newsletter.errors import AnalysisInvalid
 from newsletter.schema import HfEntry, ItemAnalysisLLM
@@ -36,11 +35,7 @@ def _build(hf_pages, fake):
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True) as router:
-        for i, page in enumerate(hf_pages):
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": ISSUE_ID, "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
+        mock_hf_week(router, hf_pages, ISSUE_ID)
         return run_build(ISSUE_ID, claude_client=fake)
 
 

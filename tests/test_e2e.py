@@ -2,9 +2,8 @@
 
 import json
 
-import httpx
 import respx
-from conftest import FakeAnthropic
+from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.schema import UNKNOWN, HfEntry, Issue
 from newsletter.stages.analyze import strip_urls
@@ -16,23 +15,11 @@ ISSUE_ID = "2026-W44"
 WEEK_FILES = ("raw.json", "selected.json", "issue.json", "email.html", "email.txt")
 
 
-def _mock_hf(router: respx.MockRouter, pages: list[list[dict]]) -> list[respx.Route]:
-    routes = []
-    for i, page in enumerate(pages):
-        routes.append(
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": ISSUE_ID, "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
-        )
-    return routes
-
-
 def _build(hf_pages, fake: FakeAnthropic) -> Issue:
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
-        routes = _mock_hf(router, hf_pages)
+        routes = mock_hf_week(router, hf_pages, ISSUE_ID)
         issue = run_build(ISSUE_ID, claude_client=fake)
     assert all(r.call_count == 1 for r in routes)
     return issue

@@ -1,8 +1,10 @@
 """Shared test doubles and fixtures.
 
-Wave 2 plans use these; they must not edit this file. Test modules can import
-the classes directly (`from conftest import FakeAnthropic, make_parsed, FakeSMTP`)
-or use the fixtures below.
+This file is shared by every test module. Planned work may extend it (for
+example plan 01.1-03 adds the enrich routes to `mock_hf_week`); unplanned edits
+should not. Test modules can import helpers directly
+(`from conftest import FakeAnthropic, make_parsed, FakeSMTP, mock_hf_week`) or
+use the fixtures below.
 """
 
 import json
@@ -11,11 +13,33 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, ClassVar
 
+import httpx
 import pytest
+import respx
 
 from newsletter.schema import Issue, ItemAnalysisLLM
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+# ------------------------------------------------------------------ HF routes
+
+
+def mock_hf_week(
+    router: respx.MockRouter, pages: list[list[dict]], issue_id: str = "2026-W44"
+) -> list[respx.Route]:
+    """Register the daily_papers week routes (one per page) and return them.
+
+    Every run_build test goes through here, so later plans add their HF routes
+    in one place.
+    """
+    return [
+        router.get(
+            "https://huggingface.co/api/daily_papers",
+            params={"week": issue_id, "limit": "100", "p": str(i)},
+        ).mock(return_value=httpx.Response(200, json=page))
+        for i, page in enumerate(pages)
+    ]
 
 
 # ---------------------------------------------------------------- Claude fakes

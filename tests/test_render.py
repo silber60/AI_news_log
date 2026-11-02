@@ -4,10 +4,9 @@ import html as html_lib
 import re
 from html.parser import HTMLParser
 
-import httpx
 import pytest
 import respx
-from conftest import FakeAnthropic
+from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import Explainer
@@ -28,11 +27,7 @@ def _build(hf_pages):
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
-        for i, page in enumerate(hf_pages):
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": ISSUE_ID, "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
+        mock_hf_week(router, hf_pages, ISSUE_ID)
         return run_build(ISSUE_ID, claude_client=FakeAnthropic())
 
 
