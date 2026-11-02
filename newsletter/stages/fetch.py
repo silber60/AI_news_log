@@ -1,19 +1,20 @@
-"""HF Papers fetch (tracer path: `week=` pagination only).
+"""HF Papers fetch for one ISO week (D-09).
 
-Plan 02 adds the `date=` fallback, retries and the KST filter behind the same
-signature.
+`week=` paging is the primary path. ISO week 53 and an HTTP 400 on `week=` go to
+the `date=` loop over Mon..Sun. Results are deduped by `paper.id` and filtered to
+entries whose `submittedOnDailyAt` falls in the week in KST.
 """
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Literal
 
 import httpx
 
 from newsletter.errors import EmptyFetchError, FetchError
 from newsletter.schema import HfEntry
-from newsletter.week import KST
+from newsletter.week import KST, parse_week
 
 log = logging.getLogger(__name__)
 
@@ -57,39 +58,103 @@ def trim_entry(d: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+class _WeekRejected(FetchError):
+    """HTTP 400 from HF. On `week=` this switches to the `date=` loop."""
+
+
 def _get_page(client: httpx.Client, params: dict[str, Any]) -> list[dict]:
     try:
         resp = client.get("/api/daily_papers", params=params)
-        resp.raise_for_status()
-    except httpx.HTTPError as e:
+    except httpx.TransportError as e:
         raise FetchError(type(e).__name__) from e
+    if resp.status_code == 400:
+        raise _WeekRejected("HTTP 400")
+    if resp.status_code >= 400:
+        raise FetchError(f"HTTP {resp.status_code}")
     data = resp.json()
     if not isinstance(data, list):
         raise FetchError("unexpected payload shape")
     return data
 
 
+def _page_all(client: httpx.Client, params: dict[str, Any]) -> tuple[list[dict], int]:
+    """Page one query (limit 100) until a short page, capped at MAX_PAGES."""
+    out: list[dict] = []
+    pages = 0
+    for p in range(MAX_PAGES):
+        page = _get_page(client, {**params, "limit": PAGE_LIMIT, "p": p})
+        pages += 1
+        out.extend(page)
+        if len(page) < PAGE_LIMIT:
+            break
+    return out, pages
+
+
+def fetch_by_dates(mon: date, sun: date, client: httpx.Client) -> tuple[list[dict], int]:
+    """Query `date=` for every day Mon..Sun (weekends included). Returns (entries, pages)."""
+    out: list[dict] = []
+    pages = 0
+    day = mon
+    while day <= sun:
+        got, n = _page_all(client, {"date": day.isoformat()})
+        out.extend(got)
+        pages += n
+        day += timedelta(days=1)
+    return out, pages
+
+
+def _kst_day(entry: dict) -> date | None:
+    s = (entry.get("paper") or {}).get("submittedOnDailyAt")
+    if not isinstance(s, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return None
+    return dt.astimezone(KST).date()
+
+
+def _dedupe_in_week(entries: list[dict], mon: date, sun: date) -> list[dict]:
+    """Dedupe by paper.id (first wins), keep entries whose KST daily date is in Mon..Sun."""
+    seen: dict[str, dict] = {}
+    for d in entries:
+        pid = (d.get("paper") or {}).get("id")
+        if pid and pid not in seen:
+            seen[pid] = d
+    return [d for d in seen.values() if (k := _kst_day(d)) is not None and mon <= k <= sun]
+
+
 def fetch_week(issue_id: str, *, client: httpx.Client | None = None) -> FetchResult:
+    mon, sun = parse_week(issue_id)
+    week_no = int(issue_id.rsplit("W", 1)[1])
     own = client is None
     if own:
         client = httpx.Client(base_url=HF_BASE, timeout=30)
     try:
-        seen: dict[str, dict] = {}
-        for p in range(MAX_PAGES):
-            page = _get_page(client, {"week": issue_id, "limit": PAGE_LIMIT, "p": p})
-            for d in page:
-                pid = (d.get("paper") or {}).get("id")
-                if pid and pid not in seen:
-                    seen[pid] = trim_entry(d)
-            if len(page) < PAGE_LIMIT:
-                break
+        merged: list[dict] | None = None
+        method: Literal["week", "date"] = "date"
+        pages = 0
+        if week_no <= 52:
+            try:
+                merged, pages = _page_all(client, {"week": issue_id})
+                method = "week"
+            except _WeekRejected:
+                pages += 1
+                merged = None
+        if merged is None:
+            merged, n = fetch_by_dates(mon, sun, client)
+            pages += n
+            method = "date"
     finally:
         if own:
             client.close()
 
-    raw = list(seen.values())
-    if not raw:
+    kept = _dedupe_in_week(merged, mon, sun)
+    log.info("method=%s pages=%d fetched=%d kept=%d", method, pages, len(merged), len(kept))
+    if not kept:
         raise EmptyFetchError(f"no papers for {issue_id}")
+    raw = [trim_entry(d) for d in kept]
     entries = [HfEntry.model_validate(d) for d in raw]
-    log.info("fetched=%d method=week", len(entries))
-    return FetchResult(entries=entries, raw=raw, method="week")
+    return FetchResult(entries=entries, raw=raw, method=method)
