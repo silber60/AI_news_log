@@ -182,7 +182,9 @@ def test_notify_failure_mails_owner_only(archive_tmp, fake_smtp, monkeypatch):
 
     _notify_env(monkeypatch)
     store.write_current(ISSUE_ID)
-    store.write_json(store.out_root() / "status.json", {"stage": "fetch", "error_class": "FetchError"})
+    store.write_json(
+        store.out_root() / "status.json", {"stage": "fetch", "error_class": "FetchError"}
+    )
 
     assert main(["notify-failure", "--mode", "send"]) == 0
 

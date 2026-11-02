@@ -4,6 +4,7 @@ import json
 import shutil
 import smtplib
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from conftest import FakeSMTP
@@ -57,11 +58,13 @@ class RefusingSMTP(FakeSMTP):
 
 class BadLoginSMTP(FakeSMTP):
     def login(self, user, password):
-        raise smtplib.SMTPAuthenticationError(535, f"bad credentials for {user} {password}".encode())
+        raise smtplib.SMTPAuthenticationError(
+            535, f"bad credentials for {user} {password}".encode()
+        )
 
 
 class DebugRecordingSMTP(FakeSMTP):
-    debug_calls: list = []
+    debug_calls: ClassVar[list] = []
 
     def set_debuglevel(self, level):
         DebugRecordingSMTP.debug_calls.append(level)
