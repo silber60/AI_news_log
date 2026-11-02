@@ -314,7 +314,7 @@ def test_gif_and_jpeg_accepted(items, hf_pages, fmt, ctype, name):
     [
         (_resp(image_bytes((400, 400))), "width"),
         (_resp(image_bytes((4800, 600))), "ratio"),
-        (_resp(image_bytes((1000, 1000))), "width"),
+        (_resp(image_bytes((1000, 1000))), "ratio"),
         (_resp(image_bytes((1152, 468)), "text/html"), "content_type"),
         (_resp(image_bytes((1152, 468)), status=404), "http_404"),
         (_resp(b"\x89PNG\r\n\x1a\n garbage"), "decode"),

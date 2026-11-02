@@ -7,17 +7,24 @@ as a negative fact: `poc.has_*` is only ever set to True and
 
 Enrichment is non-fatal. Any HTTP or parse problem keeps the defaults for that
 item and logs a reason code. Logs carry ranks and codes only, never ids,
-dataset names or response bodies.
+dataset names, URLs or response bodies.
+
+The per-item image (D-11) is the first HF-upload image in `paper.mediaUrls`.
+Code reads only its first 64 KB to get the size, and keeps it only when it is
+wide enough for the 576 px card with a banner-like aspect ratio.
 """
 
 import logging
 import re
+import warnings
+from io import BytesIO
 from typing import Any
 
 import httpx
+from PIL import Image
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from newsletter.schema import UNKNOWN, EvidenceLink, HfEntry, Item
+from newsletter.schema import IMAGE_HOST, UNKNOWN, EvidenceLink, HfEntry, Item, ItemImage
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +42,14 @@ PAPER_ID_RE = re.compile(r"^\d{4}\.\d{4,5}$")
 
 DATASET_SHOWN = 3
 DATASET_ID_MAX = 40
+
+# D-11 / DSGN-07: one per-item image, from the paper's HF upload media only.
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif")
+IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif"}
+IMAGE_MAX_BYTES = 65536  # T-01.1-10: header bytes only, never the whole file
+IMAGE_RANGE = "bytes=0-65535"
+IMAGE_WIDTH = 576  # card display width
+RATIO_MIN, RATIO_MAX = 1.3, 3.5
 
 
 class _RetryableStatus(Exception):
@@ -247,15 +262,86 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
     return out
 
 
+def pick_image_url(media_urls: list[str] | None) -> str | None:
+    """First HF-upload image URL (png/jpg/jpeg/gif, case-insensitive). Videos and
+    other hosts are skipped (T-01.1-09)."""
+    for url in media_urls or []:
+        if isinstance(url, str) and url.startswith(IMAGE_HOST) and url.lower().endswith(IMAGE_EXTS):
+            return url
+    return None
+
+
+class _NoImage(Exception):
+    """The candidate is unusable. The message is a short reason code."""
+
+
+def _read_head(client: httpx.Client, url: str) -> bytes:
+    with client.stream("GET", url, headers={"Range": IMAGE_RANGE}, timeout=TIMEOUT) as resp:
+        if resp.status_code not in (200, 206):
+            raise _NoImage(f"http_{resp.status_code}")
+        ctype = resp.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if ctype not in IMAGE_TYPES:
+            raise _NoImage("content_type")
+        buf = bytearray()
+        for chunk in resp.iter_bytes():
+            buf.extend(chunk)
+            if len(buf) >= IMAGE_MAX_BYTES:
+                break
+    return bytes(buf[:IMAGE_MAX_BYTES])
+
+
+def _dims(head: bytes) -> tuple[int, int]:
+    # Header-only parse: Image.open reads the size without decoding pixels. Every
+    # Pillow problem, including decompression-bomb warnings, means no image.
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with Image.open(BytesIO(head)) as im:
+                w, h = im.size
+    except Exception:  # noqa: BLE001 - any parse failure is "no image"
+        raise _NoImage("decode") from None
+    if not (isinstance(w, int) and isinstance(h, int) and w > 0 and h > 0):
+        raise _NoImage("decode")
+    return w, h
+
+
+def pick_image(client: httpx.Client, media_urls: list[str] | None, rank: int) -> ItemImage | None:
+    url = pick_image_url(media_urls)
+    if url is None:
+        log.info("image=none rank=%d reason=no_candidate", rank)
+        return None
+    try:
+        w, h = _dims(_read_head(client, url))
+        if w < IMAGE_WIDTH:
+            raise _NoImage("width")
+        if not RATIO_MIN <= w / h <= RATIO_MAX:
+            raise _NoImage("ratio")
+        image = ItemImage(url=url, width=IMAGE_WIDTH, height=round(IMAGE_WIDTH * h / w))
+    except _NoImage as e:
+        log.info("image=none rank=%d reason=%s", rank, e)
+        return None
+    except (httpx.HTTPError, ValueError) as e:
+        log.info("image=none rank=%d reason=%s", rank, type(e).__name__)
+        return None
+    log.info("image=ok rank=%d", rank)
+    return image
+
+
 def enrich_items(
     items: list[Item], entries: list[HfEntry], *, client: httpx.Client | None = None
 ) -> list[Item]:
-    """Fill code-owned model facts for each item. Never raises for HF problems."""
+    """Fill code-owned model facts and the per-item image. Never raises for HF problems."""
+    media = {e.paper.id: e.paper.mediaUrls for e in entries}
     own = client is None
     if own:
         client = httpx.Client(timeout=TIMEOUT)  # same default User-Agent as fetch
     try:
-        return [_enrich_one(client, item) for item in items]
+        out = []
+        for item in items:
+            item = _enrich_one(client, item)
+            image = pick_image(client, media.get(item.paper_id), item.rank)
+            out.append(item.model_copy(update={"image": image}))
+        return out
     finally:
         if own:
             client.close()
