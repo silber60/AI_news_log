@@ -1,0 +1,131 @@
+{
+  "2610.37381": {
+    "id": "2610.37381",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6415947858a690df103af49f/TdENf5Pa8C0iPVuP164gl.png"
+    ]
+  },
+  "2610.35684": {
+    "id": "2610.35684",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/justin4ai/OmniShowcase",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/632872d5ed473b0259e482fa/eEUbC0NeLSc1fr70XJZGw.mp4"
+    ]
+  },
+  "2610.32749": {
+    "id": "2610.32749",
+    "linkedModels": [
+      {
+        "id": "JusperLee/Falcon",
+        "gated": false,
+        "private": false,
+        "downloads": 58
+      },
+      {
+        "id": "JusperLee/Falcon-Big",
+        "gated": false,
+        "private": false,
+        "downloads": 23
+      }
+    ],
+    "linkedDatasets": [
+      {
+        "id": "JusperLee/RealSSA-Sim"
+      },
+      {
+        "id": "JusperLee/RealSSA-Real"
+      }
+    ],
+    "linkedSpaces": [
+      {
+        "id": "JusperLee/Falcon-Studio"
+      }
+    ],
+    "githubRepo": "https://github.com/JusperLee/Falcon",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6387676c23da90491eb9fb16/fyfAlyMRka4HqWEFfbAoN.mp4"
+    ]
+  },
+  "2610.36729": {
+    "id": "2610.36729",
+    "linkedModels": [
+      {
+        "id": "tencent/Hy-Nomas",
+        "gated": false,
+        "private": false,
+        "downloads": 59480
+      }
+    ],
+    "linkedDatasets": [
+      {
+        "id": "tencent/Hy-Nomas-Bench"
+      }
+    ],
+    "linkedSpaces": [
+      {
+        "id": "tencent/hy-nomas"
+      },
+      {
+        "id": "akhaliq/tencent-hy-nomas"
+      },
+      {
+        "id": "hugging-apps/tencent-hy-nomas"
+      }
+    ],
+    "githubRepo": "https://github.com/Tencent-Hunyuan/Hy-Nomas",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/63d34004b734eaa4d4faeccf/lOBvI5ytl4xxTPiMTwOCy.mp4"
+    ]
+  },
+  "2610.35845": {
+    "id": "2610.35845",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/EnjunDu/awesome-working-agent"
+  },
+  "2610.36671": {
+    "id": "2610.36671",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/hyeon9698/LOWN",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6371ce78789970f7bc673234/Iq5-Be9mMSCL-Vcy4OQAT.mp4"
+    ]
+  },
+  "2610.37230": {
+    "id": "2610.37230",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": []
+  },
+  "2610.34662": {
+    "id": "2610.34662",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/65e71f6bcd3df9b0f6b2678b/rDRpHvKCWXNBtytJY3XjT.mp4"
+    ]
+  },
+  "2610.36068": {
+    "id": "2610.36068",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": []
+  },
+  "2610.34283": {
+    "id": "2610.34283",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/yihaohu0118/ChronoReplay"
+  }
+}

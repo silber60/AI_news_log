@@ -1,0 +1,69 @@
+{
+  "JusperLee/Falcon": {
+    "id": "JusperLee/Falcon",
+    "cardData": {
+      "datasets": [
+        "JusperLee/RealSSA-Real",
+        "JusperLee/RealSSA-Sim"
+      ]
+    },
+    "gated": false,
+    "tags": [
+      "pytorch",
+      "audio-visual",
+      "target-speaker-extraction",
+      "speech-separation",
+      "streaming",
+      "audio-to-audio",
+      "dataset:JusperLee/RealSSA-Real",
+      "dataset:JusperLee/RealSSA-Sim",
+      "arxiv:2610.32749",
+      "license:apache-2.0",
+      "region:us"
+    ]
+  },
+  "JusperLee/Falcon-Big": {
+    "id": "JusperLee/Falcon-Big",
+    "cardData": {
+      "datasets": [
+        "JusperLee/RealSSA-Real",
+        "JusperLee/RealSSA-Sim"
+      ]
+    },
+    "gated": false,
+    "tags": [
+      "pytorch",
+      "audio-visual",
+      "target-speaker-extraction",
+      "speech-separation",
+      "streaming",
+      "audio-to-audio",
+      "dataset:JusperLee/RealSSA-Real",
+      "dataset:JusperLee/RealSSA-Sim",
+      "arxiv:2610.32749",
+      "license:apache-2.0",
+      "region:us"
+    ]
+  },
+  "tencent/Hy-Nomas": {
+    "id": "tencent/Hy-Nomas",
+    "cardData": {},
+    "gated": false,
+    "tags": [
+      "diffusion-single-file",
+      "diffusers",
+      "safetensors",
+      "hy-nomas",
+      "world-model",
+      "video-generation",
+      "interactive-video-generation",
+      "camera-control",
+      "autoregressive",
+      "diffusion-transformer",
+      "pytorch",
+      "arxiv:2610.36729",
+      "license:apache-2.0",
+      "region:us"
+    ]
+  }
+}

@@ -17,6 +17,9 @@
     "human-to-robot synthesis",
     "embodied chain-of-thought",
     "subtask annotation"
+   ],
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/6415947858a690df103af49f/TdENf5Pa8C0iPVuP164gl.png"
    ]
   },
   "title": "PDRVLA: A Vision-Language-Action Model with Physical Dynamics Representations",
@@ -41,7 +44,10 @@
    ],
    "githubRepo": "https://github.com/justin4ai/OmniShowcase",
    "githubStars": 11,
-   "projectPage": "https://justin4ai.github.io/OmniShowcase/"
+   "projectPage": "https://justin4ai.github.io/OmniShowcase/",
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/632872d5ed473b0259e482fa/eEUbC0NeLSc1fr70XJZGw.mp4"
+   ]
   },
   "title": "OmniShowcase: Omnidirectional Subject-Consistent Video Generation from Multi-View Images",
   "numComments": 2,
@@ -70,7 +76,10 @@
    ],
    "githubRepo": "https://github.com/JusperLee/Falcon",
    "githubStars": 41,
-   "projectPage": "https://cslikai.cn/Falcon/"
+   "projectPage": "https://cslikai.cn/Falcon/",
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/6387676c23da90491eb9fb16/fyfAlyMRka4HqWEFfbAoN.mp4"
+   ]
   },
   "title": "Efficient Streaming Audio-Visual Target Speaker Extraction for Real-World Acoustic Scenes",
   "numComments": 2,
@@ -99,7 +108,10 @@
    ],
    "githubRepo": "https://github.com/Tencent-Hunyuan/Hy-Nomas",
    "githubStars": 445,
-   "projectPage": "https://hy-nomas.hy.tencent.com/"
+   "projectPage": "https://hy-nomas.hy.tencent.com/",
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/63d34004b734eaa4d4faeccf/lOBvI5ytl4xxTPiMTwOCy.mp4"
+   ]
   },
   "title": "Hy-Nomas: Towards Free-form Interactive World Generation",
   "numComments": 2,
@@ -160,7 +172,10 @@
    ],
    "githubRepo": "https://github.com/hyeon9698/LOWN",
    "githubStars": 14,
-   "projectPage": "https://hyeon9698.github.io/LOWN/"
+   "projectPage": "https://hyeon9698.github.io/LOWN/",
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/6371ce78789970f7bc673234/Iq5-Be9mMSCL-Vcy4OQAT.mp4"
+   ]
   },
   "title": "Look Only When Needed: Certificate-Guided Visual Routing for Efficient Diffusion VLMs",
   "numComments": 3,
@@ -217,6 +232,9 @@
     "StreamVibe-Harness",
     "hierarchical memory",
     "proactive interaction"
+   ],
+   "mediaUrls": [
+    "https://cdn-uploads.huggingface.co/production/uploads/65e71f6bcd3df9b0f6b2678b/rDRpHvKCWXNBtytJY3XjT.mp4"
    ]
   },
   "title": "StreamVibe: Proactive Video Agents for Evolving User Intent",
