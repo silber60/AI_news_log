@@ -19,7 +19,7 @@ import pytest
 import respx
 from PIL import Image
 
-from newsletter.schema import Issue, ItemAnalysisLLM
+from newsletter.schema import HeadlineLLM, Issue, ItemAnalysisLLM
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -166,6 +166,18 @@ def default_analysis(kw: dict) -> ItemAnalysisLLM:
     )
 
 
+def default_headline(kw: dict) -> HeadlineLLM:
+    """Deterministic valid headline (emoji from the closed list, hook <= 24 chars)."""
+    return HeadlineLLM(emoji="🤖", hook_ko="말하면 로봇이 움직인다?")
+
+
+def default_response(kw: dict) -> SimpleNamespace:
+    """Valid default for either request type, chosen by the request's output_format."""
+    if kw.get("output_format") is HeadlineLLM:
+        return make_parsed(default_headline(kw))
+    return make_parsed(default_analysis(kw))
+
+
 class _Messages:
     def __init__(self, owner: FakeAnthropic, namespace: str):
         self._owner = owner
@@ -182,7 +194,8 @@ class FakeAnthropic:
       - a response object (e.g. from `make_parsed`), returned as is;
       - an Exception instance, raised;
       - a callable `f(kw) -> response`, called with the request kwargs.
-    When the script is exhausted, calls return a valid default analysis.
+    When the script is exhausted, calls return a valid default: an analysis, or a
+    headline when `output_format` is HeadlineLLM.
     Every call is recorded in `calls` as `{"ns": "messages"|"beta", "kw": kw}`.
     """
 
@@ -201,7 +214,7 @@ class FakeAnthropic:
             if callable(step):
                 return step(kw)
             return step
-        return make_parsed(default_analysis(kw))
+        return default_response(kw)
 
     def user_texts(self) -> list[str]:
         return [_user_text(c["kw"]) for c in self.calls]

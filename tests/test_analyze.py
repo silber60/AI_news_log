@@ -60,7 +60,7 @@ def test_refusal_is_retried_once_and_week_builds(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert len(fake.calls) == 11
+    assert len(fake.calls) == 12  # 11 analysis calls + 1 headline call
     assert all(c["ns"] == "beta" for c in fake.calls)
     texts = fake.user_texts()
     assert "previous_output_problems" not in texts[2]
@@ -75,7 +75,7 @@ def test_paper_invalid_twice_stops_the_build(hf_pages, archive_tmp):
         _build(hf_pages, fake)
 
     assert str(exc.value).startswith("rank=5 reason=")
-    assert len(fake.calls) == 6
+    assert len(fake.calls) == 6  # the build stops before the headline call
     week = archive_tmp / "archive" / ISSUE_ID
     assert not (week / "issue.json").exists()
     assert not (week / "email.html").exists()

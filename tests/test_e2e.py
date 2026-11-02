@@ -68,13 +68,17 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert rank3.model_info.size == UNKNOWN
     assert stored.schema_version == 2
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
-    assert stored.headline_ko == f"🧠 {name} 등 이번 주 AI 모델 10"
+    assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"
+    assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
     assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
-    assert len(fake.calls) == 10
-    for text in fake.user_texts():
+    assert len(fake.calls) == 11  # 10 analysis calls + 1 headline call
+    texts = fake.user_texts()
+    for text in texts[:10]:
         assert "http" not in text
         assert text.startswith("<paper>")
+    assert texts[10].startswith("<items>")
+    assert "http" not in texts[10]
 
     raw_text = (week / "raw.json").read_text(encoding="utf-8")
     assert '"authors"' not in raw_text
