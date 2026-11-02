@@ -654,15 +654,15 @@ def in_week(item, mon: date, sun: date) -> bool:
 | A7 | `SMTPRecipientsRefused`/`SMTPSenderRefused` `str()` includes addresses | Log redaction | if not, the guard is just extra safety |
 | A8 | `organization.fullname` is an acceptable "major affiliation" (D-08) | Field map | Shows lab names like "LINs lab", not only big brands; fine per "when available" |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Humanizer in Phase 1?** CLAUDE.md says *all* Claude text follows humanizer rules. CONTEXT/ROADMAP put humanizer content in Phase 3.
+1. **Humanizer in Phase 1?** (RESOLVED: D-18, core subset now) CLAUDE.md says *all* Claude text follows humanizer rules. CONTEXT/ROADMAP put humanizer content in Phase 3.
    - Recommendation: create `prompts/humanizer_ko.md` now with a short core subset (no hype words 혁신적/획기적/게임 체인저, no "단순히 ~가 아니라", no dashes or bold labels, no closing one-liners) and include it in the system prompt. Phase 3 does the full port + lint + polish. This costs a few lines and keeps the hard rule.
-2. **80-char summary: fail or trim?** ANLY-03 says "enforced in code"; D-15 says still-invalid fails.
+2. **80-char summary: fail or trim?** (RESOLVED: D-19, trim if length is the only error) ANLY-03 says "enforced in code"; D-15 says still-invalid fails.
    - Recommendation: include length in the retry feedback. After the retry, trim at a word boundary with "…" if only length is wrong. Schema/enum/empty errors still fail the run.
-3. **Archive commit-back in Phase 1?** Criterion 1 says "saves … under `archive/<YYYY-Www>/`"; commit-back is AUTO-03 (Phase 5).
+3. **Archive commit-back in Phase 1?** (RESOLVED: D-20, artifact only) Criterion 1 says "saves … under `archive/<YYYY-Www>/`"; commit-back is AUTO-03 (Phase 5).
    - Recommendation: write on the runner and upload in the artifact. No `contents: write` in Phase 1.
-4. **Secrets exist?** Unknown (no `gh` CLI locally). `ANTHROPIC_API_KEY`, `SMTP_USER`, `SMTP_PASSWORD`, `TEST_RECIPIENT`, `SUBSCRIBERS_CSV` must be set in repo `silber60/AI_news_log` before test/send. Add a `checkpoint:human-action` task.
+4. **Secrets exist?** (RESOLVED: owner checkpoint in 01-06 T2) Unknown (no `gh` CLI locally). `ANTHROPIC_API_KEY`, `SMTP_USER`, `SMTP_PASSWORD`, `TEST_RECIPIENT`, `SUBSCRIBERS_CSV` must be set in repo `silber60/AI_news_log` before test/send. Add a `checkpoint:human-action` task.
 
 ## Environment Availability
 

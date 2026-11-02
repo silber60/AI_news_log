@@ -25,7 +25,15 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
   3. A `mode=send` run reads subscribers from the `SUBSCRIBERS_CSV` secret (BOM/CP949 safe) and 홍길동 receives a mail greeting "홍길동님" (fallback "구독자님")
   4. An empty or unreachable HF fetch, or Claude output that is still invalid after one retry, fails the job and sends nothing
   5. Public Actions logs and artifacts show only counts/hashes: no addresses, names, credentials or SMTP debug output; rendered HTML stays under 90 KB and has a plain-text alternative
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Walking skeleton: uv project, offline end-to-end build + test send, frozen Issue v1 (owner checkpoint)
+- [ ] 01-02-PLAN.md — Collection hardening: KST week math, week=/date= fallback (W53), retries, empty-fail, Top N tie-break
+- [ ] 01-03-PLAN.md — Analysis hardening: retry-once, refusal + fallbacks downgrade, field checks + summary trim, full prompt + humanizer core
+- [ ] 01-04-PLAN.md — Render: full Phase 1 card email, inline CSS + KR fonts, 90 KB gate, plain text, D-01/D-03 subject
+- [ ] 01-05-PLAN.md — Delivery: send mode + CSV secret, greeting, redaction handler, failure notice, build secret isolation
+- [ ] 01-06-PLAN.md — Actions workflow + CI, push/secrets (owner), live preview/test/send/failure runs and log audit
 
 ### Phase 2: Evidence & Practical Verdicts
 **Goal**: Readers can tell at a glance whether each model is usable in practice, with verdicts decided by code from real HF/GitHub evidence and explained by Claude.
@@ -82,7 +90,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. End-to-End Skeleton | 0/TBD | Not started | - |
+| 1. End-to-End Skeleton | 0/6 | Planned | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
