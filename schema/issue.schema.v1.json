@@ -1,0 +1,622 @@
+{
+  "$defs": {
+    "ClaudeGptUse": {
+      "additionalProperties": false,
+      "properties": {
+        "reason_ko": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Ko"
+        },
+        "verdict": {
+          "default": "확인 필요",
+          "enum": [
+            "직접 사용",
+            "기법 적용 가능",
+            "해당 없음",
+            "확인 필요"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "title": "ClaudeGptUse",
+      "type": "object"
+    },
+    "CommercialUse": {
+      "additionalProperties": false,
+      "properties": {
+        "code_license": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LicenseInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/EvidenceLink"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "reason_ko": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Ko"
+        },
+        "verdict": {
+          "default": "확인 필요",
+          "enum": [
+            "가능",
+            "조건부",
+            "불가",
+            "확인 필요"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "weights_license": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LicenseInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CommercialUse",
+      "type": "object"
+    },
+    "EvidenceLink": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "url"
+      ],
+      "title": "EvidenceLink",
+      "type": "object"
+    },
+    "Explainer": {
+      "additionalProperties": false,
+      "properties": {
+        "body_ko": {
+          "title": "Body Ko",
+          "type": "string"
+        },
+        "related_ranks": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Related Ranks",
+          "type": "array"
+        },
+        "topic": {
+          "title": "Topic",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topic",
+        "body_ko",
+        "related_ranks"
+      ],
+      "title": "Explainer",
+      "type": "object"
+    },
+    "Hardware": {
+      "additionalProperties": false,
+      "properties": {
+        "est_vram_gb": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Est Vram Gb"
+        },
+        "evidence": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/EvidenceLink"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "local_run": {
+          "default": "확인 필요",
+          "enum": [
+            "가능",
+            "제한적",
+            "불가",
+            "확인 필요"
+          ],
+          "title": "Local Run",
+          "type": "string"
+        },
+        "param_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Param Count"
+        }
+      },
+      "title": "Hardware",
+      "type": "object"
+    },
+    "Highlight": {
+      "additionalProperties": false,
+      "properties": {
+        "how_ko": {
+          "title": "How Ko",
+          "type": "string"
+        },
+        "rank": {
+          "title": "Rank",
+          "type": "integer"
+        },
+        "tag": {
+          "enum": [
+            "Claude Skill",
+            "GPTs",
+            "둘 다"
+          ],
+          "title": "Tag",
+          "type": "string"
+        },
+        "why_ko": {
+          "title": "Why Ko",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rank",
+        "tag",
+        "why_ko",
+        "how_ko"
+      ],
+      "title": "Highlight",
+      "type": "object"
+    },
+    "Item": {
+      "additionalProperties": false,
+      "properties": {
+        "affiliation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Affiliation"
+        },
+        "ai_type": {
+          "enum": [
+            "LLM",
+            "비전",
+            "멀티모달",
+            "음성",
+            "에이전트",
+            "이미지/비디오 생성",
+            "기타"
+          ],
+          "title": "Ai Type",
+          "type": "string"
+        },
+        "arxiv_url": {
+          "title": "Arxiv Url",
+          "type": "string"
+        },
+        "claude_gpt": {
+          "$ref": "#/$defs/ClaudeGptUse",
+          "default": {
+            "reason_ko": null,
+            "verdict": "확인 필요"
+          }
+        },
+        "commercial": {
+          "$ref": "#/$defs/CommercialUse",
+          "default": {
+            "code_license": null,
+            "evidence": [],
+            "reason_ko": null,
+            "verdict": "확인 필요",
+            "weights_license": null
+          }
+        },
+        "github_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Github Url"
+        },
+        "hardware": {
+          "$ref": "#/$defs/Hardware",
+          "default": {
+            "est_vram_gb": null,
+            "evidence": [],
+            "local_run": "확인 필요",
+            "param_count": null
+          }
+        },
+        "hf_url": {
+          "title": "Hf Url",
+          "type": "string"
+        },
+        "num_comments": {
+          "title": "Num Comments",
+          "type": "integer"
+        },
+        "paper_id": {
+          "title": "Paper Id",
+          "type": "string"
+        },
+        "poc": {
+          "$ref": "#/$defs/PocReadiness",
+          "default": {
+            "evidence": [],
+            "has_code": null,
+            "has_demo": null,
+            "has_weights": null,
+            "reason_ko": null,
+            "verdict": "확인 필요"
+          }
+        },
+        "project_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Url"
+        },
+        "rank": {
+          "title": "Rank",
+          "type": "integer"
+        },
+        "skill_gpt": {
+          "$ref": "#/$defs/SkillGptFitInfo",
+          "default": {
+            "fit": "해당 없음",
+            "reason_ko": null
+          }
+        },
+        "submitted_on_daily_at": {
+          "format": "date",
+          "title": "Submitted On Daily At",
+          "type": "string"
+        },
+        "summary_ko": {
+          "title": "Summary Ko",
+          "type": "string"
+        },
+        "title_en": {
+          "title": "Title En",
+          "type": "string"
+        },
+        "title_ko": {
+          "title": "Title Ko",
+          "type": "string"
+        },
+        "upvotes": {
+          "title": "Upvotes",
+          "type": "integer"
+        },
+        "use_ideas_ko": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Use Ideas Ko",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rank",
+        "paper_id",
+        "title_en",
+        "upvotes",
+        "num_comments",
+        "submitted_on_daily_at",
+        "hf_url",
+        "arxiv_url",
+        "title_ko",
+        "ai_type",
+        "summary_ko"
+      ],
+      "title": "Item",
+      "type": "object"
+    },
+    "LicenseInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "source_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Url"
+        },
+        "spdx_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Spdx Id"
+        }
+      },
+      "title": "LicenseInfo",
+      "type": "object"
+    },
+    "PocReadiness": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/EvidenceLink"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "has_code": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Code"
+        },
+        "has_demo": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Demo"
+        },
+        "has_weights": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Weights"
+        },
+        "reason_ko": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Ko"
+        },
+        "verdict": {
+          "default": "확인 필요",
+          "enum": [
+            "바로 가능",
+            "코드만",
+            "논문만",
+            "확인 필요"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "title": "PocReadiness",
+      "type": "object"
+    },
+    "SkillGptFitInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "fit": {
+          "default": "해당 없음",
+          "enum": [
+            "Claude Skill",
+            "GPTs",
+            "둘 다",
+            "해당 없음"
+          ],
+          "title": "Fit",
+          "type": "string"
+        },
+        "reason_ko": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason Ko"
+        }
+      },
+      "title": "SkillGptFitInfo",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "explainer": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Explainer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "fetch_method": {
+      "enum": [
+        "week",
+        "date"
+      ],
+      "title": "Fetch Method",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "highlights": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Highlight"
+      },
+      "title": "Highlights",
+      "type": "array"
+    },
+    "issue_id": {
+      "title": "Issue Id",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/Item"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "trend_ko": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trend Ko"
+    },
+    "week_end": {
+      "format": "date",
+      "title": "Week End",
+      "type": "string"
+    },
+    "week_start": {
+      "format": "date",
+      "title": "Week Start",
+      "type": "string"
+    }
+  },
+  "required": [
+    "issue_id",
+    "week_start",
+    "week_end",
+    "generated_at",
+    "model",
+    "fetch_method",
+    "items"
+  ],
+  "title": "Issue",
+  "type": "object"
+}
