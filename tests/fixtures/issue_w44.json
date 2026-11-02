@@ -1,0 +1,494 @@
+{
+  "schema_version": 1,
+  "issue_id": "2026-W44",
+  "week_start": "2026-10-26",
+  "week_end": "2026-11-01",
+  "generated_at": "2026-11-02T12:40:53.216946+09:00",
+  "model": "claude-sonnet-5-5",
+  "fetch_method": "week",
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2610.37381",
+      "title_en": "PDRVLA: A Vision-Language-Action Model with Physical Dynamics Representations",
+      "upvotes": 153,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-28",
+      "affiliation": null,
+      "hf_url": "https://huggingface.co/papers/2610.37381",
+      "arxiv_url": "https://arxiv.org/abs/2610.37381",
+      "github_url": null,
+      "project_url": null,
+      "title_ko": "PDRVLA: A Vision-Language-Action Model w: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2610.35684",
+      "title_en": "OmniShowcase: Omnidirectional Subject-Consistent Video Generation from Multi-View Images",
+      "upvotes": 139,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-29",
+      "affiliation": "KAIST AI",
+      "hf_url": "https://huggingface.co/papers/2610.35684",
+      "arxiv_url": "https://arxiv.org/abs/2610.35684",
+      "github_url": "https://github.com/justin4ai/OmniShowcase",
+      "project_url": "https://justin4ai.github.io/OmniShowcase/",
+      "title_ko": "OmniShowcase: Omnidirectional Subject-Co: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2610.32749",
+      "title_en": "Efficient Streaming Audio-Visual Target Speaker Extraction for Real-World Acoustic Scenes",
+      "upvotes": 136,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-29",
+      "affiliation": "Tsinghua Machine Learning Group",
+      "hf_url": "https://huggingface.co/papers/2610.32749",
+      "arxiv_url": "https://arxiv.org/abs/2610.32749",
+      "github_url": "https://github.com/JusperLee/Falcon",
+      "project_url": "https://cslikai.cn/Falcon/",
+      "title_ko": "Efficient Streaming Audio-Visual Target : 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.36729",
+      "title_en": "Hy-Nomas: Towards Free-form Interactive World Generation",
+      "upvotes": 123,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-28",
+      "affiliation": "Tencent Hunyuan",
+      "hf_url": "https://huggingface.co/papers/2610.36729",
+      "arxiv_url": "https://arxiv.org/abs/2610.36729",
+      "github_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas",
+      "project_url": "https://hy-nomas.hy.tencent.com/",
+      "title_ko": "Hy-Nomas: Towards Free-form Interactive : 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2610.35845",
+      "title_en": "Work Agents: Systems, Capabilities, and Optimization",
+      "upvotes": 116,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Shanghai Jiao Tong University",
+      "hf_url": "https://huggingface.co/papers/2610.35845",
+      "arxiv_url": "https://arxiv.org/abs/2610.35845",
+      "github_url": "https://github.com/EnjunDu/awesome-working-agent",
+      "project_url": "https://enjundu.com/blog/working_agents",
+      "title_ko": "Work Agents: Systems, Capabilities, and : 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2610.36671",
+      "title_en": "Look Only When Needed: Certificate-Guided Visual Routing for Efficient Diffusion VLMs",
+      "upvotes": 107,
+      "num_comments": 3,
+      "submitted_on_daily_at": "2026-10-30",
+      "affiliation": "KAIST AI",
+      "hf_url": "https://huggingface.co/papers/2610.36671",
+      "arxiv_url": "https://arxiv.org/abs/2610.36671",
+      "github_url": "https://github.com/hyeon9698/LOWN",
+      "project_url": "https://hyeon9698.github.io/LOWN/",
+      "title_ko": "Look Only When Needed: Certificate-Guide: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2610.37230",
+      "title_en": "TAO: Tool-Aware Joint Scheduling for LLM-Based Agentic Serving",
+      "upvotes": 95,
+      "num_comments": 4,
+      "submitted_on_daily_at": "2026-10-29",
+      "affiliation": "AIOR",
+      "hf_url": "https://huggingface.co/papers/2610.37230",
+      "arxiv_url": "https://arxiv.org/abs/2610.37230",
+      "github_url": null,
+      "project_url": null,
+      "title_ko": "TAO: Tool-Aware Joint Scheduling for LLM: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2610.34662",
+      "title_en": "StreamVibe: Proactive Video Agents for Evolving User Intent",
+      "upvotes": 95,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Google",
+      "hf_url": "https://huggingface.co/papers/2610.34662",
+      "arxiv_url": "https://arxiv.org/abs/2610.34662",
+      "github_url": null,
+      "project_url": null,
+      "title_ko": "StreamVibe: Proactive Video Agents for E: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.36068",
+      "title_en": "Rollback: Experience Backtracking in World Models for Policy Improvement",
+      "upvotes": 82,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-28",
+      "affiliation": "AgiBot World",
+      "hf_url": "https://huggingface.co/papers/2610.36068",
+      "arxiv_url": "https://arxiv.org/abs/2610.36068",
+      "github_url": null,
+      "project_url": "https://rollback-wm.github.io/",
+      "title_ko": "Rollback: Experience Backtracking in Wor: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "2610.34283",
+      "title_en": "ChronoReplay: One Answer Interface Is Not Enough for Streaming Spatial Intelligence",
+      "upvotes": 74,
+      "num_comments": 2,
+      "submitted_on_daily_at": "2026-10-28",
+      "affiliation": "LINs lab",
+      "hf_url": "https://huggingface.co/papers/2610.34283",
+      "arxiv_url": "https://arxiv.org/abs/2610.34283",
+      "github_url": "https://github.com/yihaohu0118/ChronoReplay",
+      "project_url": "https://yihaohu0118.github.io/ChronoReplay/",
+      "title_ko": "ChronoReplay: One Answer Interface Is No: 테스트 제목",
+      "ai_type": "멀티모달",
+      "summary_ko": "테스트용 한줄 요약입니다.",
+      "use_ideas_ko": [
+        "테스트 아이디어"
+      ],
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "확인 필요",
+        "reason_ko": null
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    }
+  ],
+  "trend_ko": null,
+  "highlights": [],
+  "explainer": null
+}
