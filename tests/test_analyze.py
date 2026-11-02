@@ -248,6 +248,14 @@ def test_long_summary_fixture_exceeds_limit():
         ({}, []),
         ({"title_ko": "   "}, ["title_empty"]),
         ({"summary_ko": LONG_SUMMARY}, ["summary_len"]),
+        ({"does_ko": "가" * 71}, ["line_len"]),
+        ({"new_ko": "가" * 71}, ["line_len"]),
+        ({"result_ko": "가" * 71}, ["line_len"]),
+        ({"does_ko": " "}, ["line_empty"]),
+        ({"result_ko": ""}, ["line_empty"]),
+        ({"kind_ko": "가" * 31}, ["kind_len"]),
+        ({"kind_ko": " "}, ["kind_empty"]),
+        ({"architecture_ko": "가" * 61}, ["arch_len"]),
     ],
 )
 def test_check_codes(over, codes):
@@ -257,6 +265,52 @@ def test_check_codes(over, codes):
 def test_summary_exactly_80_chars_passes():
     assert analyze.check(_analysis(summary_ko="가" * 80)) == []
     assert [c for c, _ in analyze.check(_analysis(summary_ko="가" * 81))] == ["summary_len"]
+
+
+def test_new_fields_exactly_at_limit_pass():
+    at_limit = {
+        "does_ko": "가" * 70,
+        "new_ko": "가" * 70,
+        "result_ko": "가" * 70,
+        "kind_ko": "가" * 30,
+        "architecture_ko": "가" * 60,
+    }
+    assert analyze.LINE_LIMIT == 70
+    assert analyze.KIND_LIMIT == 30
+    assert analyze.ARCH_LIMIT == 60
+    assert analyze.check(_analysis(**at_limit)) == []
+
+
+def test_check_messages_name_field_and_count_only():
+    text = "모델 본문 " * 20
+    msgs = [m for _, m in analyze.check(_analysis(new_ko=text))]
+    assert len(msgs) == 1
+    assert "new_ko" in msgs[0] and str(len(text)) in msgs[0] and "70" in msgs[0]
+    assert "모델 본문" not in msgs[0]
+
+
+def test_line_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
+    long_line = "긴 영상과 문서를 함께 읽고 답하는 모델이다. " * 4
+    over = {"does_ko": long_line, "architecture_ko": "가" * 65}
+    fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=4)
+
+    assert len(fake.calls) == 2
+    assert "does_ko" in fake.user_texts()[1]
+    assert len(result.does_ko) <= 70 and result.does_ko.endswith("…")
+    assert len(result.architecture_ko) <= 60 and result.architecture_ko.endswith("…")
+    assert result.new_ko == VALID["new_ko"]
+    assert "trimmed=does_ko,architecture_ko rank=4" in caplog.text
+    assert long_line.strip() not in caplog.text
+
+
+def test_line_overrun_with_empty_kind_fails(hf_pages):
+    bad = {"result_ko": "가" * 80, "kind_ko": " "}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=5)
+    assert "line_len" in str(exc.value) and "kind_empty" in str(exc.value)
 
 
 def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
@@ -271,7 +325,7 @@ def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
     body = result.summary_ko[:-1]
     assert LONG_SUMMARY.startswith(body)
     assert LONG_SUMMARY[len(body)] in " ,." or LONG_SUMMARY[len(body) - 1] in ",."
-    assert "trimmed=summary rank=6" in caplog.text
+    assert "trimmed=summary_ko rank=6" in caplog.text
     assert LONG_SUMMARY not in caplog.text
 
 
