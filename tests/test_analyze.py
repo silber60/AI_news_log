@@ -213,3 +213,126 @@ def test_real_sdk_400_downgrades_without_fallbacks(hf_pages):
     assert "server-side-fallback" not in second.headers.get("anthropic-beta", "")
     assert "fallbacks" not in json.loads(second.content)
     assert analyze._fallbacks_supported(client) is False
+
+
+# ------------------------------------------------- field checks / D-19 trim
+
+
+def _analysis(**over) -> ItemAnalysisLLM:
+    base = dict(VALID)
+    base.update(over)
+    return ItemAnalysisLLM(**base)
+
+
+def _parsed(**over):
+    return make_parsed(_analysis(**over))
+
+
+LONG_SUMMARY = (
+    "이 논문은 긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했고, "
+    "여러 벤치마크에서 기존 공개 모델보다 높은 점수를 기록했으며 학습 데이터 구성도 함께 설명했다."
+)
+
+
+def test_long_summary_fixture_is_95ish_chars():
+    assert len(LONG_SUMMARY) > 80
+
+
+@pytest.mark.parametrize(
+    ("over", "codes"),
+    [
+        ({}, []),
+        ({"use_ideas_ko": []}, []),
+        ({"title_ko": "   "}, ["title_empty"]),
+        ({"summary_ko": LONG_SUMMARY}, ["summary_len"]),
+        ({"use_ideas_ko": ["a", "b", "c"]}, ["ideas_count"]),
+        ({"use_ideas_ko": ["a", " "]}, ["idea_empty"]),
+    ],
+)
+def test_check_codes(over, codes):
+    assert [code for code, _ in analyze.check(_analysis(**over))] == codes
+
+
+def test_summary_exactly_80_chars_passes():
+    assert analyze.check(_analysis(summary_ko="가" * 80)) == []
+    assert [c for c, _ in analyze.check(_analysis(summary_ko="가" * 81))] == ["summary_len"]
+
+
+def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
+    fake = FakeAnthropic([_parsed(summary_ko=LONG_SUMMARY), _parsed(summary_ko=LONG_SUMMARY)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=6)
+
+    assert len(fake.calls) == 2
+    assert "previous_output_problems" in fake.user_texts()[1]
+    assert len(result.summary_ko) <= 80
+    assert result.summary_ko.endswith("…")
+    body = result.summary_ko[:-1]
+    assert LONG_SUMMARY.startswith(body)
+    assert LONG_SUMMARY[len(body)] in " ,." or LONG_SUMMARY[len(body) - 1] in ",."
+    assert "trimmed=summary rank=6" in caplog.text
+    assert LONG_SUMMARY not in caplog.text
+
+
+def test_summary_overrun_with_other_error_fails(hf_pages):
+    bad = {"summary_ko": LONG_SUMMARY, "use_ideas_ko": ["a", "b", "c"]}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert "summary_len" in str(exc.value) and "ideas_count" in str(exc.value)
+
+
+def test_three_ideas_then_valid_returns_second(hf_pages):
+    fake = FakeAnthropic([_parsed(use_ideas_ko=["a", "b", "c"]), _parsed()])
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 2
+    assert result.use_ideas_ko == VALID["use_ideas_ko"]
+    assert "use_ideas_ko" in fake.user_texts()[1]
+
+
+def test_unknown_ai_type_goes_through_retry(hf_pages):
+    with pytest.raises(ValueError):
+        ItemAnalysisLLM(**{**VALID, "ai_type": "로보틱스"})
+    try:
+        ItemAnalysisLLM.model_validate({**VALID, "ai_type": "로보틱스"})
+    except ValueError as e:
+        err = e
+    fake = FakeAnthropic([err, ok])
+    analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 2
+
+
+def test_free_text_newlines_are_normalized(hf_pages):
+    fake = FakeAnthropic(
+        [
+            _parsed(
+                title_ko="Qwen3-VL:\r\nlong-context 개선",
+                summary_ko="첫 줄\n둘째 줄\t끝.",
+                use_ideas_ko=["회의\r영상 요약"],
+            )
+        ]
+    )
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert result.title_ko == "Qwen3-VL: long-context 개선"
+    assert result.summary_ko == "첫 줄 둘째 줄 끝."
+    assert result.use_ideas_ko == ["회의 영상 요약"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        LONG_SUMMARY,
+        "가" * 120,
+        "모델을 공개했다. " * 12,
+        "a,b," * 40,
+    ],
+)
+def test_trim_summary_limits(text):
+    out = analyze.trim_summary(text, limit=80)
+    assert len(out) <= 80
+    assert out.endswith("…")
+    assert text.startswith(out[:-1])
+
+
+def test_trim_summary_keeps_short_text():
+    assert analyze.trim_summary("짧은 요약.", limit=80) == "짧은 요약."
