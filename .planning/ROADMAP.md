@@ -48,7 +48,14 @@ Plans:
   3. Otter images and an optional single per-item image load from public HTTPS URLs with alt text; the email stays under 90 KB and reads fine with images blocked
   4. The subject is a headline-style line about the week's top topic (no fixed brand prefix), `[TEST]` still prefixes test mode, and nothing in the email says it is AI- or auto-generated
   5. `Issue` schema v2 is committed with a snapshot test, v1 fixtures are migrated, and the full test suite passes
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01.1-01-PLAN.md — Issue v2 contract (owner checkpoint) + tracer: Claude 3-line summary and 유형/구조 to card, code fallback headline_ko, v1 tests rewritten, length caps, shared HF route helper (wave 1)
+- [ ] 01.1-02-PLAN.md — Static inputs: keyed/compressed otter assets in docs/assets/email/v1, build script, Pillow, halo tests; trimmed HF paper/model fixtures (wave 1)
+- [ ] 01.1-03-PLAN.md — Enrich stage (code-decided 크기/학습 데이터/공개 범위, one HF image per card) + Claude headline with fallback (wave 2)
+- [ ] 01.1-04-PLAN.md — Figma v2 template: section order, otters, Top 3 / 4-10, full card, Phase 3 slots, headline subject, no AI wording, size/images-off guards (wave 2)
+- [ ] 01.1-05-PLAN.md — Hosting choice, push, image URL check, live preview run; 01-06 live runs follow on v2 (D-20) (wave 3)
 
 ### Phase 2: Evidence & Practical Verdicts
 **Goal**: Readers can tell at a glance whether each model is usable in practice, with verdicts decided by code from real HF/GitHub evidence and explained by Claude.
@@ -106,7 +113,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. End-to-End Skeleton | 0/6 | Planned | - |
-| 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 0/TBD | Not started | - |
+| 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 0/5 | Planned | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |

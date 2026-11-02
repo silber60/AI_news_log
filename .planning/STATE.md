@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of 6 in current phase
-Status: Phase 1 code done (5/6 plans; 01-06 live runs pending: preview passed, test/send/failure runs not yet). Phase 1.1 inserted, ready to plan
-Last activity: 2026-11-02 - Phase 1.1 (Newsletter Design v2 & Model Detail Fields) inserted after Phase 1
+Status: Phase 1.1 planned (5 plans, 3 waves; plan-check passed after 2 iterations). Phase 1 01-06 live runs deferred until after 1.1 (Phase 1.1 D-20)
+Last activity: 2026-11-02 - Phase 1.1 planned
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -74,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 1.1 inserted and context captured
+Stopped at: Phase 1.1 planned
 Resume file: .planning/phases/01.1-newsletter-design-v2/01.1-CONTEXT.md
