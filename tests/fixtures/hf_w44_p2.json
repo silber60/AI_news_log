@@ -1,0 +1,374 @@
+[
+ {
+  "paper": {
+   "id": "2610.33877",
+   "title": "Semantic Concept Steering Breaks the Explanation Drift Loop in Continual Learning",
+   "summary": "Catastrophic forgetting in continual learning (CL) manifests not only as accuracy degradation but also as explanation drift: models maintain predictive accuracy while silently shifting attention from diagnostic features to spurious correlations. This work identifies and resolves a previously overlooked structural flaw in explanation-aware CL: pixel-level saliency regularization derives supervision targets from the model's own frozen saliency maps, creating a self-referential drift loop that actively reinforces spurious attention across tasks. We introduce C^3L (Concept-Consistent Continual Learning), which breaks this loop by anchoring regularization to class-consistent semantic concepts (e.g., ``curved beak'', ``striped pattern'') discovered offline, independent of model state, providing (i) target independence from model drift, and (ii) cross-instance semantic consistency across every instance of a class. We identify that our concept-based objective, combined with approximate LRP relevance conservation, induces a crowding-out effect: since concept and background regions compete for the relevance of the same prediction, enforcing high relevance within concept regions implicitly suppresses spurious background correlations without explicit penalization. \\method does not require human-annotated concept sets, as it employs a fully automated concept discovery and spatial grounding. Extensive evaluation across five benchmarks and over 20 baselines demonstrates state-of-the-art performance in accuracy, forgetting, explanation quality, spurious correlation mitigation, and out-of-distribution robustness.",
+   "upvotes": 3,
+   "publishedAt": "2026-10-24T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "C3L prevents explanation drift in continual learning by anchoring saliency regularization to offline-discovered semantic concepts, suppressing spurious correlations through a relevance crowding-out effect.",
+   "ai_keywords": [
+    "continual learning",
+    "catastrophic forgetting",
+    "explanation drift",
+    "saliency regularization",
+    "self-referential drift loop",
+    "concept-consistent continual learning",
+    "LRP relevance conservation",
+    "crowding-out effect",
+    "concept discovery",
+    "spurious correlation mitigation"
+   ]
+  },
+  "title": "Semantic Concept Steering Breaks the Explanation Drift Loop in Continual Learning",
+  "numComments": 2,
+  "organization": {
+   "name": "kbag01",
+   "fullname": "Tel Aviv University"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.31572",
+   "title": "On the Token Collapse Phenomenon in Textual Graph Soft Prompting",
+   "summary": "Recent methods for injecting graph structure into LLM prompts include graph soft prompting, in which a graph neural network (GNN) learns graph-specific tokens that capture relational information among entities in textual prompts. G-Retriever combines graph soft prompts with a verbalized description of the same graph to strengthen the textual prompt signal. We conduct an in-depth analysis of G-Retriever and uncover a pathological behavior we term token collapse. Across three benchmarks, three graph encoders, two LLM families, and both frozen and LoRA-adapted models, G-Retriever's graph tokens become almost indistinguishable across inputs. We provide evidence that the same failure is inherited by subsequent methods, even with multi-token pooling. Under the standard setup, swapping a token with the dataset mean, a token from another example, or one derived from a corrupted graph produces no resolved answer-level effect in accuracy. Moreover, a learned constant prompt that never accesses the graph matches or surpasses G-Retriever on all three benchmarks. These findings indicate that, rather than conveying graph content as intended, the collapsed token functions primarily as a generic soft prompt. We also examine conditions linked to this collapse and propose a two-stage procedure that yields non-collapsed tokens while maintaining competitive performance in most cases. However, token variability alone does not prove that the model uses graph information: via interventions and decoding probes, we show that depending on the configuration, a token can reflect the question, an answer prior, or graph-derived content that the LLM may or may not use. Overall, our results offer a practical approach to evaluating graph-token alignment rather than inferring it from task accuracy alone. Code to reproduce our experiments is available at https://github.com/difra100/Token_Collapse_KGQA.",
+   "upvotes": 3,
+   "publishedAt": "2026-10-22T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-26T00:00:00.000Z",
+   "ai_summary": "Graph soft prompting in LLMs suffers from token collapse, where learned graph tokens become indistinguishable and function as generic prompts rather than conveying relational structure, prompting evaluation via alignment probes rather than accuracy alone.",
+   "ai_keywords": [
+    "graph soft prompting",
+    "graph neural network",
+    "GNN",
+    "G-Retriever",
+    "token collapse",
+    "LoRA",
+    "multi-token pooling",
+    "soft prompt",
+    "decoding probes"
+   ],
+   "githubRepo": "https://github.com/difra100/Token_Collapse_KGQA",
+   "githubStars": 1
+  },
+  "title": "On the Token Collapse Phenomenon in Textual Graph Soft Prompting",
+  "numComments": 2,
+  "organization": {
+   "name": "Sapienza",
+   "fullname": "Sapienza University of Rome"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.31779",
+   "title": "FLORA: An Open Model Suite for Scaling Robotics Data Engines",
+   "summary": "The life-cycle of robotics foundation models crucially depends on data labels. Outcome reward labels are needed for monitoring real-world deployments. Process reward labels are needed during RL post-training. Timestamped captions are needed for filtering and balancing pretraining data. We present Flora, an industrial-quality data engine used for training GR00T models, that simultaneously covers these capabilities. Flora achieves SOTA scores on the captioning benchmark WGO-Bench and reward benchmarks RoboReward and Robometer. On internal benchmarks it is competitive with GPT-6 Astra while beating other frontier models. The model is substantially cheaper than API-based alternatives, roughly 125 times cheaper than GPT-6 Astra. Florais battle tested at scale, labeling 200,000 hours of data per day across 512 GB300s. By open-sourcing our data engine, we enable researchers to scale custom robotics datasets and explore emerging applications such as physical auto-research and human-to-robot transfer.",
+   "upvotes": 3,
+   "publishedAt": "2026-10-22T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-26T00:00:00.000Z",
+   "ai_summary": "Flora is an open-source industrial data engine for robotics foundation models that provides captioning, outcome and process reward labeling, and pretraining data curation at scale with high accuracy and low cost.",
+   "ai_keywords": [
+    "robotics foundation models",
+    "outcome reward labels",
+    "process reward labels",
+    "RL post-training",
+    "timestamped captions",
+    "data engine",
+    "GR00T",
+    "WGO-Bench",
+    "RoboReward",
+    "Robometer",
+    "physical auto-research",
+    "human-to-robot transfer"
+   ],
+   "githubRepo": "https://github.com/NVIDIA/Flora",
+   "githubStars": 62,
+   "projectPage": "https://research.nvidia.com/labs/gear/flora/"
+  },
+  "title": "FLORA: An Open Model Suite for Scaling Robotics Data Engines",
+  "numComments": 2,
+  "organization": {
+   "name": "nvidia",
+   "fullname": "NVIDIA"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.39423",
+   "title": "FDSML: Formula-Driven Supervised Metric Learning with Parameter-Aware Triplet Loss",
+   "summary": "Formula-Driven Supervised Learning (FDSL) enables vision pre-training without real images, but existing methods cast pre-training as classification on discretized labels, discarding continuity in the generative process. We propose Formula-Driven Supervised Metric Learning (FDSML), which derives relational supervision from image-generation parameters beyond discrete class labels. FDSML combines FineFractalDB, our refined fractal dataset with higher intra-class variation and more stable structures, with a Parameter-Aware Triplet (PA-Triplet) Loss that assigns positives and negatives according to distances in the underlying Iterated Function System parameter space. This objective trains embeddings to respect parameter-derived relative similarity orderings. Experiments show that FDSML improves transferability to image retrieval while remaining competitive on downstream classification and improving robustness under several corruption settings. On ResNet-50, Recall@1 improves from 65.6% to 74.0% on Stanford Online Products and from 56.2% to 78.4% on Stanford Cars over FDSL pre-training. These results suggest that parameter-derived relational supervision provides a stronger synthetic pre-training signal than label-based classification for transfer beyond recognition.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-29T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-30T00:00:00.000Z",
+   "ai_summary": "Formula-driven supervised metric learning uses continuous generative parameters to train embeddings with parameter-aware triplet loss, improving synthetic pre-training for image retrieval and robustness.",
+   "ai_keywords": [
+    "Formula-Driven Supervised Learning",
+    "FineFractalDB",
+    "Parameter-Aware Triplet Loss",
+    "Iterated Function System",
+    "metric learning",
+    "synthetic pre-training",
+    "image retrieval"
+   ],
+   "githubRepo": "https://github.com/ShineiArakawa/fdsml",
+   "githubStars": 0,
+   "projectPage": "https://shineiarakawa.github.io/fdsml/"
+  },
+  "title": "FDSML: Formula-Driven Supervised Metric Learning with Parameter-Aware Triplet Loss",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2610.37626",
+   "title": "Know, then Draw: A New Learning Paradigm for Visual Generation",
+   "summary": "Visual generation requires both high-level semantic knowledge and fine-grained pixel details. We propose a learning paradigm that assigns these roles to autoregressive pretraining for knowledge acquisition and diffusion post-training for high-fidelity rendering. Within this framework, we study the objective, representation, and scaling of knowledge acquisition and rendering. Controlled comparisons identify autoregression as the stronger pretraining objective for downstream rendering, improving both learning efficiency and final generation quality. We further find that AR-only generation quality does not necessarily correlate with final performance; semantic quality matters more. This motivates a purely semantic tokenizer trained with language supervision alone, without an image decoder or reconstruction loss. We establish compute-optimal scaling laws for knowledge acquisition and rendering, and find that autoregressive pretraining lowers the fitted asymptotic rendering loss compared with pixel diffusion models trained from scratch. Guided by the laws, we train a 3B-parameter text-to-image model with only 6,600 H100 GPU-hours, achieving 86 on GenEval and 87 on DPG-Bench and validating the proposed paradigm at scale.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-27T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-29T00:00:00.000Z",
+   "ai_summary": "A hybrid paradigm combining autoregressive pretraining for semantics and diffusion post-training for rendering achieves efficient, high-quality text-to-image generation with favorable scaling laws.",
+   "ai_keywords": [
+    "autoregressive pretraining",
+    "diffusion post-training",
+    "semantic tokenizer",
+    "language supervision",
+    "compute-optimal scaling laws",
+    "text-to-image model",
+    "GenEval",
+    "DPG-Bench"
+   ]
+  },
+  "title": "Know, then Draw: A New Learning Paradigm for Visual Generation",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2509.05512",
+   "title": "Quaternion Approximate Networks for Enhanced Image Classification and Oriented Object Detection",
+   "summary": "This paper introduces Quaternion Approximate Networks (QUAN), a novel deep learning framework that leverages quaternion algebra for rotation equivariant image classification and object detection. Unlike conventional quaternion neural networks attempting to operate entirely in the quaternion domain, QUAN approximates quaternion convolution through Hamilton product decomposition using real-valued operations. This approach preserves geometric properties while enabling efficient implementation with custom CUDA kernels. We introduce Independent Quaternion Batch Normalization (IQBN) for training stability and extend quaternion operations to spatial attention mechanisms. QUAN is evaluated on image classification (CIFAR-10/100, ImageNet), object detection (COCO, DOTA), and robotic perception tasks. In classification tasks, QUAN achieves higher accuracy with fewer parameters and faster convergence compared to existing convolution and quaternion-based models. For objection detection, QUAN demonstrates improved parameter efficiency and rotation handling over standard Convolutional Neural Networks (CNNs) while establishing the SOTA for quaternion CNNs in this downstream task. These results highlight its potential for deployment in resource-constrained robotic systems requiring rotation-aware perception and application in other domains. Code: https://cwru-aism.github.io/ QUANpaper/",
+   "upvotes": 2,
+   "publishedAt": "2026-10-27T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-28T00:00:00.000Z",
+   "ai_summary": "QUAN is a quaternion-based deep learning framework that approximates quaternion convolution with real-valued operations to achieve rotation-equivariant image classification and object detection with improved efficiency.",
+   "ai_keywords": [
+    "quaternion algebra",
+    "rotation equivariant",
+    "quaternion convolution",
+    "Hamilton product decomposition",
+    "Independent Quaternion Batch Normalization",
+    "spatial attention",
+    "quaternion neural networks",
+    "Convolutional Neural Networks"
+   ],
+   "githubRepo": "https://github.com/bryceag11/QUAN_ultralytics",
+   "githubStars": 1,
+   "projectPage": "https://cwru-aism.github.io/QUANpaper/"
+  },
+  "title": "Quaternion Approximate Networks for Enhanced Image Classification and Oriented Object Detection",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2610.31566",
+   "title": "CellTrack-Bench: Microscopic Cell Tracking Benchmark for Vision-Language Models",
+   "summary": "Large language models have shown outstanding performance on text-first tasks such as coding, math, and writing. Recent efforts are shifting models' training to include scientific problems that often live in highly specialized domains beyond text, such as protein structure and biological images. However, in these scenarios, their general-purpose accuracy compared with specialized algorithms remains in question. One such domain is cell tracking, which requires spatiotemporal awareness of cell dynamics. To evaluate this, we created a new benchmark, CellTrack-Bench, which assesses Vision-Language Models' (VLMs) cell-tracking-related performance against specialized trackers. The full benchmark draws from 15 standard cell-tracking datasets across four imaging modalities and comprises 1,537 problems corresponding to 9,041 cell-linking decisions. We selected a hard subset requiring greater reasoning effort by identifying failures shared across distinct algorithmic trackers. With this proposed dataset, we: (i) evaluated different environment harnesses for VLMs; (ii) benchmarked 9 frontier closed-source models and 13 open-weight models; and (iii) provided a detailed analysis of their failure modes. Code, the stored model outputs, and a pipeline that regenerates the benchmark from the source datasets are available at https://github.com/royerlab/celltrack-bench.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-22T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "A new benchmark evaluates vision-language models on cell tracking against specialized algorithms, revealing reasoning gaps across diverse imaging modalities.",
+   "ai_keywords": [
+    "Vision-Language Models",
+    "cell tracking",
+    "CellTrack-Bench",
+    "spatiotemporal awareness",
+    "imaging modalities",
+    "algorithmic trackers"
+   ],
+   "githubRepo": "https://github.com/royerlab/celltrack-bench",
+   "githubStars": 3
+  },
+  "title": "CellTrack-Bench: Microscopic Cell Tracking Benchmark for Vision-Language Models",
+  "numComments": 2,
+  "organization": {
+   "name": "biohub",
+   "fullname": "Biohub"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.32177",
+   "title": "Ψ-0.6: Adaptive Streams of Thought in a Unified Vision-Language World Model",
+   "summary": "Humans reason about the physical world by flexibly combining different forms of inference as a problem unfolds. Achieving this flexibility is a major open challenge in AI: capabilities often remain separated across specialized models, limiting how they can be composed and jointly adapted to a task. We introduce Ψ-0.6, a unified vision-language world model that adaptively composes perception, language, geometry, and simulation within a shared reasoning process we call streams of thought. These streams interleave images, text, and explicit representations of geometry and motion, all of which the model can generate and interpret through a shared token interface. Ψ-0.6 surpasses leading open-weight models zero-shot on multi-view spatial reasoning, with further gains from reasoning through geometric intermediates. It also supports counterfactual simulation: generating and interpreting imagined scenes to determine, for example, whether moving an object would obstruct a pathway. Reinforcement learning from task feedback jointly optimizes the selection, generation, and use of intermediate representations, improving visual question-answering accuracy with gains that transfer to unseen benchmarks. Ψ-0.6 offers a path toward adaptive physical reasoning -- not only predicting the physical world but also choosing the representations through which to reason.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-23T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "A unified vision-language world model adaptively combines perception, language, geometry, and simulation through interleaved reasoning streams to improve spatial reasoning and counterfactual simulation.",
+   "ai_keywords": [
+    "vision-language world model",
+    "streams of thought",
+    "token interface",
+    "multi-view spatial reasoning",
+    "geometric intermediates",
+    "counterfactual simulation",
+    "reinforcement learning",
+    "visual question-answering"
+   ],
+   "githubRepo": "https://github.com/neuroailab/psi-0.6",
+   "githubStars": 20,
+   "projectPage": "https://neuroailab.github.io/psi-website/blog/psi-0-6.html"
+  },
+  "title": "Ψ-0.6: Adaptive Streams of Thought in a Unified Vision-Language World Model",
+  "numComments": 2,
+  "organization": {
+   "name": "Stanford",
+   "fullname": "Stanford AI"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.33817",
+   "title": "EnvLunch: The Environment as a Free Lunch for Learning to Interact",
+   "summary": "For agentic data analysis, language-model agents often require a large number of annotated tasks to learn how to interact effectively with executable environments (i.e., databases). While high-quality annotated tasks require heavy manual effort, an executable environment already provides rich interaction structure and verifiable outcomes. In this sense, the environment itself offers a free lunch, an additional set of verifiable tasks that require no human annotation. We propose EnvLunch, a warm-up stage that turns this environmental signal into agent training without human-written or model-generated task descriptions, before downstream agentic reinforcement learning. EnvLunch samples valid action trajectories, executes them to obtain final observations, and trains an agent to recover a functionally equivalent trajectory given only its final observation. This label-free warm-up enables the model to outperform the baseline by over 9 points on average across all downstream training budgets, and with few labels, the baseline needs 8 to 32 times as many annotated examples to match the accuracy that the EnvLunch model reaches at its smallest training budget. Letting the environment alone define the task yields a larger gain than having the model write its own tasks over the same environments, and this warm-up also improves fine-tuning on benchmarks beyond data analysis. EnvLunch therefore saves annotated tasks and provides a better starting point for fine-tuning agentic models when such tasks are limited.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-24T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "EnvLunch leverages executable environments to generate verifiable training trajectories without human annotations, improving agent performance and reducing labeled data requirements for downstream tasks.",
+   "ai_keywords": [
+    "agentic reinforcement learning",
+    "action trajectories",
+    "label-free warm-up",
+    "executable environments",
+    "verifiable outcomes"
+   ],
+   "githubRepo": "https://github.com/thinkwee/EnvLunch",
+   "githubStars": 0
+  },
+  "title": "EnvLunch: The Environment as a Free Lunch for Learning to Interact",
+  "numComments": 2,
+  "organization": {
+   "name": "KingsCollegeLondon",
+   "fullname": "King's College London"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.34886",
+   "title": "ThinkBit: Search Codewords, Recalibrate Scales, Select by Reasoning",
+   "summary": "Reasoning language models generate thousands of tokens per answer, and generation speed is limited by memory bandwidth, so storing weights in two bits instead of bfloat16 can potentially make inference 8times cheaper. Two-bit methods are usually judged by perplexity and multiple-choice question-answering accuracy, both of which say little about whether a model can still reason through more difficult problems. We present ThinkBit, a strictly scalar two-bit framework built to preserve reasoning, in which every weight is an integer codeword times a bfloat16 scale shared by a group of weights. We first use a sensitivity metric to assign each layer a ternary, 2-bit, or 3-bit tier to allocate bitwidths optimally among layers. This is followed by a layerwise Gumbel-softmax-based scalar quantization algorithm that searches for optimal codewords block by block. Since a layerwise scheme does not capture how quantized layers interact with each other, we recalibrate scales, with the codewords frozen, using a knowledge-distillation-based loss against the teacher model. We then perform a short quantization-aware training (QAT) stage that lets the model mimic the base model's distribution by reassigning codewords. Finally, a paired reasoning test on training problems selects the final checkpoint between the recalibration stage and the QAT stage. On Qwen3-1.7B at matched size, our recalibrated checkpoint scores 46.7 on MATH-500 against 30.0 for EfficientQAT trained on the same data, and 73.0 after QAT on reasoning traces; at 0.52 GB it is smaller than every published 2-bit GGUF of the model yet more accurate on MATH-500. We show that this framework scales and up to 14B, a 3.74 GB model scores 94.8 on MATH-500, against 97.5 for the 29.5 GB bfloat16 model.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-26T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "ThinkBit is a scalar two-bit quantization framework that preserves reasoning by assigning layerwise bit tiers, optimizing codewords via Gumbel-softmax, and recalibrating with knowledge distillation followed by quantization-aware training.",
+   "ai_keywords": [
+    "two-bit quantization",
+    "scalar quantization",
+    "Gumbel-softmax",
+    "knowledge distillation",
+    "quantization-aware training",
+    "reasoning preservation",
+    "layerwise bit allocation"
+   ]
+  },
+  "title": "ThinkBit: Search Codewords, Recalibrate Scales, Select by Reasoning",
+  "numComments": 3,
+  "organization": {
+   "name": "microsoft",
+   "fullname": "Microsoft"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.34149",
+   "title": "Humans in Space: Can MLLMs Construct Human-Centric Spatial Understanding via Active Exocentric Exploration?",
+   "summary": "While Multimodal Large Language Models (MLLMs) excel at zero-shot reasoning, their spatial capabilities are primarily evaluated through static, passive observation. In complex, human-centric scenes, occlusion often hides crucial geometric evidence, and passive benchmarks force models to guess rather than recognize their own visual uncertainty. To bridge this gap, we introduce SATE-Bench, a novel interactive benchmark comprising 316 real-world scenes and 2,525 multi-turn QA pairs to evaluate visual self-awareness and active exocentric view-exploration. It combines a Passive multi-view control with an Active exploration setting, where models start from a severely occluded view and must iteratively query adjacent viewpoints until they gather enough evidence to fully ``sate'' the question, scored by a step-penalized efficiency reward. Evaluating state-of-the-art MLLMs reveals that they terminate exploration prematurely while reporting high confidence, and struggle with fine-grained 3D geometric tasks; matched-view controls further attribute the Active--Passive gap primarily to insufficient evidence acquisition. Moreover, fine-tuning with Group Relative Policy Optimization (GRPO) shows that rewarding view-seeking increases active exploration but lowers overall accuracy, as models over-explore and fail to fuse expanding multi-view contexts across turns. These findings indicate that scaling passive multi-view perception does not intrinsically yield active spatial reasoning, highlighting the need for models that know where to look, how to integrate what they see, and when to stop. Code and data are available at https://gtc-gh.github.io/SATE-Bench/",
+   "upvotes": 2,
+   "publishedAt": "2026-10-25T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "githubRepo": "https://github.com/gtc-gh/SATE-Bench",
+   "githubStars": 1,
+   "projectPage": "https://gtc-gh.github.io/SATE-Bench/"
+  },
+  "title": "Humans in Space: Can MLLMs Construct Human-Centric Spatial Understanding via Active Exocentric Exploration?",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2610.27597",
+   "title": "WORTH Benchmark: Evidence Discovery under Not-Fully-Cooperative Information -- A Two-Episode Pilot",
+   "summary": "Existing reasoning evaluations typically provide task-relevant information to models as available premises, rarely examining concurrently how models discover evidence autonomously and how information presentation within narratives guides or obscures judgment. This paper proposes the WORTH Benchmark: models read original mystery narratives without clue annotations, autonomously select key clue sentences, identify case participants, and explain their reasoning process. The narrative materials are designed by professional authors such that evidence facilitating reasoning coexists with narrative arrangements that delay the revelation of truth. We report a pilot experiment under full-story conditions across two episodes, conducting a total of 70 formal runs on models, of which 67 runs are content-scorable. Scoring separately records hits on author-designated key clue sentences and participant selections; natural language explanations are used for case diagnosis and are not scored independently. The results show that clue hits and participant judgments are not synchronized; across 37 content-scorable runs in Episode 02, 31 runs simultaneously selected the same set of incorrect participants, while adjacent suspicion-oriented and exoneration-oriented sentences were selected 25 times and 0 times, respectively. These phenomena illustrate the diagnostic value of component-wise analysis and suggest that not-fully-cooperative informational relationships may influence evidence selection and judgment. This study only implements full-story conditions for two episodes, and does not establish stable model rankings or infer general mechanisms on this basis; human player records have not yet been cleaned, and this version does not report human-model comparisons.",
+   "upvotes": 2,
+   "publishedAt": "2026-10-20T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-26T00:00:00.000Z",
+   "ai_summary": "The WORTH Benchmark evaluates autonomous evidence discovery and reasoning in mystery narratives, revealing that models select clues and participants inconsistently due to narrative structure.",
+   "ai_keywords": [
+    "WORTH Benchmark",
+    "mystery narratives",
+    "clue sentences",
+    "reasoning process",
+    "component-wise analysis",
+    "evidence selection"
+   ],
+   "projectPage": "https://huggingface.co/spaces/BreadStudio/worth-ep01-en"
+  },
+  "title": "WORTH Benchmark: Evidence Discovery under Not-Fully-Cooperative Information -- A Two-Episode Pilot",
+  "numComments": 1,
+  "organization": {
+   "name": "BreadStudio",
+   "fullname": "Bread Studio"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.36184",
+   "title": "Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It",
+   "summary": "Bengali, spoken by over 230 million people, remains severely under-resourced in spoken language research. Existing open Bengali ASR corpora are confined to short, read or crowd-sourced speech and lack speaker diarization and long-form audio.\n  We present Lipi-Ghor, a large-scale weakly-supervised Bengali speech corpus comprising 885 hours of audio sourced from 998 YouTube videos across 596 unique channels, spanning 17 diverse domains including audiobooks, drama, religious sermons, news, and regional dialects. Each recording is annotated in SSTT format (Speaker, Speech, Transcription, Timestamp), which combines automated diarization with Bengali YouTube caption tracks.\n  To our knowledge, Lipi-Ghor is the first Bengali speech corpus to pair large-scale coverage with speaker-diarized, long-form audio annotations, both of which are absent from existing open Bengali resources. We also present the construction methodology as a replicable pipeline for any language with a sufficient captioned YouTube presence. Targeted channel curation across a handful of rich domains yields corpus scales that were previously out of reach for low-resource languages.\n  We benchmark four widely-used ASR models under zero-shot and fine-tuned conditions. All four degrade consistently on emotive, dialectal, and long-form content. Because caption targets are noisy, we also release a human-annotated gold evaluation split, verified by 17 volunteer annotators over 30 hours of human-in-the-loop correction and stratified across all 17 domains.\n  We release our original contributions (video-ID lists, diarization output, pipeline code, and the gold annotations) under CC-BY-4.0, and distribute caption-derived transcripts for research use only; no raw audio is redistributed.",
+   "upvotes": 1,
+   "publishedAt": "2026-10-26T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-28T00:00:00.000Z",
+   "ai_summary": "Lipi-Ghor is a large-scale weakly supervised Bengali speech corpus with speaker-diarized long-form annotations and a gold evaluation split for benchmarking ASR models.",
+   "ai_keywords": [
+    "weakly-supervised",
+    "speaker diarization",
+    "SSTT format",
+    "ASR",
+    "zero-shot",
+    "fine-tuned",
+    "gold evaluation split"
+   ],
+   "githubRepo": "https://github.com/Sanjidh090/Lipi-Ghor-bn-882-SSTT",
+   "githubStars": 1,
+   "projectPage": "https://lipi-ghor.github.io/"
+  },
+  "title": "Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It",
+  "numComments": 2,
+  "organization": {
+   "name": "teamvillagers",
+   "fullname": "Team Villagers"
+  }
+ },
+ {
+  "paper": {
+   "id": "2610.28490",
+   "title": "Learning from Automatic 3D Gaussian Splatting Edits for Online Bayesian Scene Change Detection",
+   "summary": "Online scene change detection requires integrating incoming observations to determine which regions have changed relative to a reference scene. We update change beliefs as new images arrive using generalised Bayesian evidence fusion. However, the prior probability of change and evidence models are unknown beforehand, and numerical Bayesian inference can be costly. We address these challenges by learning offline from automatic edits to a reference 3D Gaussian Splatting (3DGS) model. These edits generate labelled training views without manual annotations. Together with unchanged reference observations, they provide supervision for learning scene-specific evidence models and estimating the effective pixel prior and response statistics. Online prediction combines current evidence with historical support, while closed-form local Bayes factors, parameterized by the learned response statistics, update an accumulated 3D Gaussian field. Object-guided refinement produces the final change masks. Our method achieves state-of-the-art accuracy on PASLCD and CCS3D, with 67.64% and 75.82% mIoU, respectively. On PASLCD, the complete pipeline runs at 17.2\\,FPS over complete query sequences, the fastest among the evaluated online methods. Project page: https://changruizhu96.github.io/work/lego-scd/",
+   "upvotes": 1,
+   "publishedAt": "2026-10-21T00:00:00.000Z",
+   "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+   "ai_summary": "The method learns scene-specific evidence models and priors from automatically edited 3D Gaussian Splatting representations to perform efficient online change detection via Bayesian fusion and object-guided refinement.",
+   "ai_keywords": [
+    "3D Gaussian Splatting",
+    "3DGS",
+    "Bayesian evidence fusion",
+    "evidence models",
+    "local Bayes factors",
+    "3D Gaussian field",
+    "object-guided refinement",
+    "mIoU"
+   ],
+   "githubRepo": "https://github.com/changruizhu96/LEGO-SCD",
+   "githubStars": 0,
+   "projectPage": "https://changruizhu96.github.io/work/lego-scd/"
+  },
+  "title": "Learning from Automatic 3D Gaussian Splatting Edits for Online Bayesian Scene Change Detection",
+  "numComments": 2
+ }
+]

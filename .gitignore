@@ -1,0 +1,15 @@
+# Python / tooling
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# Pipeline output. Phase 1 keeps archive/ on the runner and in the artifact only (D-20).
+# Phase 5 removes the archive/ line when archive commit-back lands.
+archive/
+out/
+
+# Subscriber data and secrets must never be committed (public repo)
+subscribers*.csv
+!subscribers.example.csv
+.env
