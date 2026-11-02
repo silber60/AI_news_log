@@ -43,7 +43,10 @@ def strip_urls(text: str | None) -> str:
 
 
 def system_prompt() -> str:
-    return (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8")
+    """analyze_paper.md + humanizer_ko.md as one text, sent as one cached block (D-18)."""
+    paper = (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8").strip()
+    humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8").strip()
+    return paper + "\n\n" + humanizer
 
 
 def paper_block(entry: HfEntry) -> str:
@@ -57,8 +60,8 @@ def paper_block(entry: HfEntry) -> str:
         f"hf_ai_summary: {strip_urls(p.ai_summary)}",
         f"hf_ai_keywords: {', '.join(keywords)}",
         f"affiliation: {affiliation or '없음'}",
-        f"has_github: {_is_https(p.githubRepo)}",
-        f"has_project_page: {_is_https(p.projectPage)}",
+        f"has_github: {_yes_no(_is_https(p.githubRepo))}",
+        f"has_project_page: {_yes_no(_is_https(p.projectPage))}",
         "</paper>",
     ]
     return "\n".join(lines)
@@ -217,6 +220,10 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
         return last.model_copy(update={"summary_ko": trim_summary(last.summary_ko)})
     reason = "+".join(code for code, _ in problems) or "unknown"
     raise AnalysisInvalid(f"rank={rank} reason={reason}")
+
+
+def _yes_no(flag: bool) -> str:
+    return "yes" if flag else "no"
 
 
 def _is_https(url: str | None) -> bool:
