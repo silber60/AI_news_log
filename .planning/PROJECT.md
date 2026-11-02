@@ -26,6 +26,8 @@
   - 라이선스·공개 여부 (가중치/코드 공개, HF 모델 링크)
   - 실행 난이도·필요 GPU (모델 크기, 로컬 실행 가능 여부)
 - [ ] 이번 주 트렌드 총평 (2~3문장) 생성
+- [ ] Claude가 생성한 모든 본문 텍스트는 humanizer skill 규칙 적용 필수 (AI 티 나는 문장 제거: not-X-but-Y 대비, 강제 3단 나열, 과장·영업 문구, 대시 남발 등). 파이프라인에서 humanizer 규칙을 프롬프트에 넣거나 별도 다듬기 패스로 적용
+- [ ] 상단 "이번 주 바로 써볼 만한 것" 하이라이트 섹션: Claude Skill 또는 GPTs(커스텀 GPT)로 만들기 좋은 항목을 Top 10 위에 별도로 한 번 더 강조·홍보 (왜 좋은지 + 어떻게 만들지 한두 줄)
 - [ ] Figma 파일에 웹형 뉴스레터 디자인 제작 (기존 모바일 디자인의 폰트·스타일 참고)
 - [ ] Figma 디자인을 이메일 클라이언트 호환 HTML 템플릿으로 구현 (Gmail, 네이버 메일)
 - [ ] CSV 구독자 목록(이메일, 이름)을 읽어 개인화 인사(예: "홍길동님")와 함께 발송
@@ -49,6 +51,8 @@
 - 수신자는 한국어 사용자. 뉴스레터 본문은 한국어.
 - 작업 환경 Mac에 Node.js 미설치 — 런타임은 GitHub Actions 위에서 동작하도록 설계 (언어는 Python 또는 Node, 리서치 후 결정).
 - 사용자 이메일(작성자): owner@example.com
+- GitHub 계정: silber60 (GitHub Actions용 repo는 이 계정 아래 생성)
+- humanizer skill 원본: `~/.claude/skills/humanizer/SKILL.md` — Actions 환경엔 Claude Code skill이 없으므로 규칙을 repo에 프롬프트 파일로 복사해 사용
 
 ## Constraints
 
@@ -69,6 +73,8 @@
 | Claude API로 완전 자동 분석·발송 | 사람 개입 없이 매주 발송 | — Pending |
 | Top 10, upvote 순 | 읽기 좋은 분량 | — Pending |
 | Figma에 웹형 디자인 새로 제작 후 HTML 구현 | 기존 모바일 디자인 톤 유지 | — Pending |
+| Claude 생성 텍스트에 humanizer 필수 | 사용자 요구: AI 티 안 나는 뉴스레터 | — Pending |
+| Claude Skill / GPTs 활용 후보를 상단에서 별도 강조 | 사용자 요구: 바로 써볼 만한 것 홍보 | — Pending |
 | 추가 필드: 한줄요약+활용, 라이선스·공개, 실행 난이도·GPU, 주간 트렌드 | 사용자 선택 | — Pending |
 
 ## Evolution
