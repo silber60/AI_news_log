@@ -38,8 +38,7 @@ def test_build_renders_full_card_email(hf_pages, archive_tmp):
     assert out.count("data-card=") == 10
     for it in issue.items:
         assert html_lib.escape(it.title_ko, quote=False) in out
-        assert f"#{it.rank}<" in out
-        assert f"▲ {it.upvotes}<" in out
+        assert f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}" in out
     assert "구독자님" in out
     assert "2026.11.02 월요일" in out
 
@@ -202,6 +201,11 @@ def _imgs(out: str) -> list[dict]:
     return p.imgs
 
 
+def _cards(out: str) -> list[str]:
+    """Each card's markup, cut before the next card or section."""
+    return [c.split("data-section=")[0] for c in out.split("data-card=")[1:]]
+
+
 def _with_item(issue, idx: int, **update):
     items = list(issue.items)
     items[idx] = items[idx].model_copy(update=update)
@@ -251,12 +255,134 @@ def test_absent_links_are_omitted_and_present_links_exact(issue_w44):
     out = render_html(issue, "구독자님")
     cards = out.split("data-card=")[1:]
     assert len(cards) == 10
-    assert ">GitHub<" not in cards[0] and ">Project<" not in cards[0]
-    assert 'href="https://github.com/acme/repo"' in cards[1]
-    assert 'href="https://acme.example/p"' in cards[1]
-    assert ">GitHub<" in cards[1] and ">Project<" in cards[1]
-    for card in cards:
-        assert ">Hugging Face<" in card and ">arXiv<" in card
+    assert "코드 →" not in cards[0] and "프로젝트 →" not in cards[0]
+    assert re.search(r'href="https://github\.com/acme/repo"[^>]*>코드 →<', cards[1])
+    assert re.search(r'href="https://acme\.example/p"[^>]*>프로젝트 →<', cards[1])
+    for it, card in zip(issue.items, cards, strict=True):
+        assert re.search(rf'href="{re.escape(it.hf_url)}"[^>]*>논문 보기 →<', card), it.rank
+
+
+def _ordered(text: str, parts: list[str]) -> bool:
+    pos = [text.index(p) for p in parts]
+    return pos == sorted(pos)
+
+
+def test_card_content_in_figma_order(issue_w44):
+    issue = _with_item(issue_w44, 1, image=issue_w44.items[0].image)
+    cards = _cards(render_html(issue, "구독자님"))
+    it = issue.items[1]
+    esc = lambda s: html_lib.escape(s, quote=False)
+    assert _ordered(
+        cards[1],
+        [
+            "<img",
+            f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}",
+            esc(it.title_ko),
+            esc(it.title_en),
+            esc(it.summary_ko),
+            "· " + esc(it.summary_lines_ko[0]),
+            "🧩 모델 정보",
+            "논문 보기 →",
+        ],
+    )
+    assert "활용 아이디어" not in "".join(cards)
+
+
+def test_card1_drops_image_when_hero_shows_it(issue_w44):
+    assert issue_w44.items[0].image is not None
+    issue = _with_item(issue_w44, 1, image=issue_w44.items[0].image)
+    out = render_html(issue, "구독자님")
+    cards = _cards(out)
+    assert "<img" not in cards[0]
+    assert "<img" in cards[1]
+    hero = out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
+    assert out.count(issue_w44.items[0].image.url) == 2  # hero + card 2
+    assert issue_w44.items[0].image.url in hero
+
+
+def test_card_without_image_has_no_img(issue_w44):
+    cards = _cards(render_html(issue_w44, "구독자님"))
+    for it, card in zip(issue_w44.items, cards, strict=True):
+        if it.rank > 1 and it.image is None:
+            assert "<img" not in card, it.rank
+
+
+def test_badge_row_hidden_while_all_verdicts_unknown(issue_w44):
+    out = render_html(issue_w44, "구독자님")
+    for word in ("상업적 사용", "PoC", "Claude/GPT"):
+        assert word not in out
+
+
+def test_badge_row_shows_when_only_poc_known(issue_w44):
+    it = issue_w44.items[4]
+    issue = _with_item(issue_w44, 4, poc=it.poc.model_copy(update={"verdict": "바로 가능"}))
+    cards = _cards(render_html(issue, "구독자님"))
+    assert "상업적 사용 확인 필요" in cards[4]
+    assert "PoC 바로 가능" in cards[4]
+    assert "Claude/GPT 확인 필요" in cards[4]
+    assert _ordered(cards[4], ["🧩 모델 정보", "PoC 바로 가능", "논문 보기 →"])
+    for i, card in enumerate(cards):
+        if i != 4:
+            assert "PoC" not in card
+
+
+def test_highlight_pick_content(issue_w44):
+    out = render_html(_full_issue(issue_w44), "구독자님")
+    block = out[_section_pos(out, "highlight") : _section_pos(out, "trend")]
+    assert "이번 주 바로 써볼 만한 것 ✨" in block
+    assert ">Claude Skill<" in block
+    assert html_lib.escape(issue_w44.items[1].title_ko, quote=False) in block
+    assert "왜 좋은지: 왜 좋은지 문장" in block
+    assert "어떻게 만들지: 만드는 법 문장" in block
+    assert "otter-tool.png" in block
+
+
+def test_explainer_point_and_example_boxes_only_when_set(issue_w44):
+    full = render_html(_full_issue(issue_w44), "구독자님")
+    block = full[_section_pos(full, "explainer") : _section_pos(full, "rest")]
+    assert _ordered(block, ["AI 기술 쉽게 보기 🔍", "오늘의 포인트", "핵심 한 줄", "MoE 해설"])
+    assert _ordered(block, ["전문가 혼합 설명", "예를 들어", "예시 문장"])
+    assert "otter-chalkboard.png" in block
+    bare = issue_w44.model_copy(
+        update={"explainer": Explainer(topic="MoE 해설", body_ko="본문", related_ranks=[1])}
+    )
+    out = render_html(bare, "구독자님")
+    assert "오늘의 포인트" not in out and "예를 들어" not in out
+    assert "MoE 해설" in out and "본문" in out
+
+
+def test_text_part_card_format(issue_w44):
+    issue = _with_item(
+        issue_w44,
+        1,
+        github_url="https://github.com/acme/repo",
+        project_url="https://acme.example/p",
+    )
+    txt = render_text(issue, "구독자님")
+    for it in issue.items:
+        assert f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}" in txt
+        assert f"논문: {it.hf_url}" in txt
+        assert f"arXiv: {it.arxiv_url}" in txt
+    assert "코드: https://github.com/acme/repo" in txt
+    assert "프로젝트: https://acme.example/p" in txt
+
+
+def test_text_part_phase3_slots(issue_w44):
+    txt = render_text(_full_issue(issue_w44), "구독자님")
+    for s in (
+        "이번 주 바로 써볼 만한 것 ✨",
+        "왜 좋은지: 왜 좋은지 문장",
+        "어떻게 만들지: 만드는 법 문장",
+        "이번 주 흐름 한눈에 📈",
+        "이번 주 트렌드 문장",
+        "AI 기술 쉽게 보기 🔍",
+        "오늘의 포인트",
+        "핵심 한 줄",
+        "예를 들어",
+        "예시 문장",
+    ):
+        assert s in txt, s
+    assert _ordered(txt, ["바로 써볼 만한", "흐름 한눈에", "Top 3", "AI 기술 쉽게", "4위부터"])
 
 
 def test_affiliation_not_rendered_in_html(issue_w44):
