@@ -7,8 +7,8 @@ Run from the repo root:
 Reads the five PNGs in the phase 1.1 figma-assets directory and writes
 docs/assets/email/v1/. Banners become JPEGs flattened on white. The tool,
 magnifier and chalkboard otters were exported on an opaque (30, 30, 30) Figma
-canvas, so the background is keyed out with a border flood-fill and the result
-is saved as a quantized PNG with real alpha.
+canvas, so the background is keyed out with an exact-color border flood-fill,
+grown by one pixel to drop the anti-aliased fringe, and the result is saved as a quantized PNG with real alpha.
 
 Published files are immutable: an existing output is left alone unless
 --force is given. Only use --force before the first push; new art goes to v2/.
@@ -27,8 +27,11 @@ OUT_DIR = Path("docs/assets/email/v1")
 
 CANVAS = (30, 30, 30)
 KEY = (255, 0, 255)
-FLOOD_THRESH = 12
+# The canvas is exactly (30, 30, 30). The wrench outline is about (33, 35, 41),
+# so any tolerance above 0 lets the flood-fill eat parts of the drawing.
+FLOOD_THRESH = 0
 JPEG_QUALITY = 72
+ALPHA_SNAP = 4
 
 BANNERS = {
     "otter-banner.png": "otter-banner.jpg",
@@ -70,7 +73,22 @@ def key_background(im: Image.Image) -> Image.Image:
 def build_otter(src: Path, out: Path, size: int) -> None:
     rgba = key_background(Image.open(src))
     small = rgba.resize((size, size), Image.Resampling.LANCZOS)
-    small.quantize(256, method=Image.Quantize.FASTOCTREE).save(out, "PNG", optimize=True)
+    pal = small.quantize(256, method=Image.Quantize.FASTOCTREE)
+    # FASTOCTREE buckets alpha too and turns fully opaque pixels into 254.
+    # Snap the palette alpha back so the body is opaque and the key is clear.
+    entries = pal.getpalette("RGBA")
+    for i in range(3, len(entries), 4):
+        entries[i] = _snap_alpha(entries[i])
+    pal.putpalette(entries, "RGBA")
+    pal.save(out, "PNG", optimize=True)
+
+
+def _snap_alpha(a: int) -> int:
+    if a >= 255 - ALPHA_SNAP:
+        return 255
+    if a <= ALPHA_SNAP:
+        return 0
+    return a
 
 
 def build_banner(src: Path, out: Path) -> None:
