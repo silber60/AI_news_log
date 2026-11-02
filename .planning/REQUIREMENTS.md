@@ -10,6 +10,7 @@
 - [ ] **COLL-01**: Pipeline resolves the target issue as the previous ISO week in Asia/Seoul time, regardless of runner clock (UTC), and can be overridden with `--week YYYY-Www`
 - [ ] **COLL-02**: Pipeline fetches all papers for the target week from HF `daily_papers` (paginated, `week=` primary with `date=` loop fallback, weekend days covered) and dedupes by paper id
 - [ ] **COLL-03**: Pipeline selects the Top 10 papers by upvotes and snapshots raw and selected JSON to `archive/<YYYY-Www>/`
+- [ ] **COLL-05**: Pipeline ranks the week's papers by GitHub stars (from HF repo data or the GitHub API): N = papers with ≥ 100 stars, clamped to 3..10; below 3, take the 3 most-starred, topping up by HF upvotes when fewer than 3 have a repo; ties break by upvotes (replaces the upvote ranking of COLL-03)
 - [ ] **COLL-04**: Pipeline stops without sending (job fails) when the fetch returns no papers or HF is unreachable after retries
 
 ### Evidence & Verdicts (EVID)
@@ -29,6 +30,8 @@
 - [ ] **ANLY-05**: Reader sees a 이번 주 트렌드 총평 (2–3 sentences) that only references this week's 10 items
 - [ ] **ANLY-07**: Reader sees a 3-line 여러 줄 요약 per item (what it does, what is new, reported result), grounded in the abstract/project page
 - [ ] **ANLY-08**: Reader sees a 모델 정보 table per item: 유형 and 구조 written by Claude from the abstract; 크기, 학습 데이터 and 공개 범위 taken from HF/GitHub evidence by code, otherwise `확인 필요`
+- [ ] **ANLY-09**: All Claude text is friendly 해요체 (e.g. "…골랐어요!"), explains what the model is so a non-specialist understands, and keeps technical terms in English
+- [ ] **ANLY-10**: Each article has one line of 활용 아이디어 grounded in the paper/project page (reinstates a single idea; ANLY-03's two ideas stay removed)
 - [ ] **ANLY-06**: Claude output is produced via `messages.parse` into the frozen Pydantic `Issue` schema; invalid output is retried once, and a still-invalid issue fails the run without sending
 
 ### Humanizer (HUMN)
@@ -56,6 +59,7 @@
 - [ ] **DSGN-04**: Rendered HTML is under 90 KB (asserted at render time) and a plain-text alternative is generated from the same data
 - [ ] **DSGN-06**: Email HTML follows the Figma v2 draft (node 7:22): otter banner and closing banner, section order with Top 3 → AI 기술 쉽게 보기 → 4위~10위, orange/navy palette, no AI/auto-generated wording
 - [ ] **DSGN-07**: Otter images and at most one per-item model image are served from public HTTPS URLs with alt text; the email stays readable with images blocked
+- [ ] **DSGN-08**: No image under the headline; each article shows its own image at its position (HF media first, else the first GitHub README image), and 모델 정보 rows that would read `확인 필요` are omitted
 - [ ] **DSGN-05**: Email renders correctly in Naver Mail and Gmail (web + mobile app, light + dark) — verified by real test sends
 
 ### Delivery (DLVR)
@@ -117,6 +121,7 @@
 | COLL-02 | Phase 1 | Pending |
 | COLL-03 | Phase 1 | Pending |
 | COLL-04 | Phase 1 | Pending |
+| COLL-05 | Phase 1.2 | Pending |
 | EVID-01 | Phase 2 | Pending |
 | EVID-02 | Phase 2 | Pending |
 | EVID-03 | Phase 2 | Pending |
@@ -130,6 +135,8 @@
 | ANLY-06 | Phase 1 | Pending |
 | ANLY-07 | Phase 1.1 | Pending |
 | ANLY-08 | Phase 1.1 | Pending |
+| ANLY-09 | Phase 1.2 | Pending |
+| ANLY-10 | Phase 1.2 | Pending |
 | HUMN-01 | Phase 3 | Pending |
 | HUMN-02 | Phase 3 | Pending |
 | HUMN-03 | Phase 3 | Pending |
@@ -145,6 +152,7 @@
 | DSGN-05 | Phase 4 | Pending |
 | DSGN-06 | Phase 1.1 | Pending |
 | DSGN-07 | Phase 1.1 | Pending |
+| DSGN-08 | Phase 1.2 | Pending |
 | DLVR-01 | Phase 1 | Pending |
 | DLVR-02 | Phase 1 | Pending |
 | DLVR-03 | Phase 1 | Pending |
@@ -161,8 +169,8 @@
 | AUTO-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 46
+- v1 requirements: 50 total
+- Mapped to phases: 50
 - Unmapped: 0 ✓
 
 ---

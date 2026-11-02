@@ -7,7 +7,8 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 ## Phases
 
 - [ ] **Phase 1: End-to-End Skeleton** - Manual Actions run fetches last week's Top 10, analyzes minimally, renders a basic email, and previews or test-sends it
-- [ ] **Phase 1.1: Newsletter Design v2 & Model Detail Fields** (INSERTED) - The email follows the approved Figma v2 draft (otter mascot, Top 3 → explainer → 4-10 layout, headline-style subject) and each card shows one-line + multi-line summaries and a model info table
+- [x] **Phase 1.1: Newsletter Design v2 & Model Detail Fields** (INSERTED) - The email follows the approved Figma v2 draft (otter mascot, Top 3 → explainer → 4-10 layout, headline-style subject) and each card shows one-line + multi-line summaries and a model info table
+- [ ] **Phase 1.2: GitHub-Star Selection & Friendly Content** (INSERTED) - Items are picked by GitHub stars (3-10, star ≥ 100 decides the count), each article carries its own image, empty model-info rows disappear, and every text reads in friendly 해요체 with a one-line use idea
 - [ ] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
 - [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
@@ -56,6 +57,19 @@ Plans:
 - [ ] 01.1-03-PLAN.md — Enrich stage (code-decided 크기/학습 데이터/공개 범위, one HF image per card) + Claude headline with fallback (wave 2)
 - [ ] 01.1-04-PLAN.md — Figma v2 template: section order, otters, Top 3 / 4-10, full card, Phase 3 slots, headline subject, no AI wording, size/images-off guards (wave 2)
 - [ ] 01.1-05-PLAN.md — Hosting choice, push, image URL check, live preview run; 01-06 live runs follow on v2 (D-20) (wave 3)
+
+### Phase 1.2: GitHub-Star Selection & Friendly Content (INSERTED)
+**Goal**: Readers get the week's most-starred models, explained so a non-specialist understands what each one is, with each article's own picture next to it.
+**Mode:** mvp
+**Depends on**: Phase 1.1
+**Requirements**: COLL-05, DSGN-08, ANLY-09, ANLY-10
+**Success Criteria** (what must be TRUE):
+  1. For the target ISO week (Mon-Sun KST, unchanged), items are ranked by GitHub stars; the count N is the number of papers with ≥ 100 stars, clamped to 3..10; with fewer than 3 such papers the 3 most-starred are used, topped up by HF upvotes when fewer than 3 papers have a repo; ties break by upvotes
+  2. The headline and greeting use N ("이번 주 AI 모델 {N}", "…GitHub star를 많이 받은 {N}개를 골랐어요!"), and there is no image under the headline
+  3. Each article shows its own image at its position when one exists (HF media first, else the first image of its GitHub README), loaded from a public https URL with alt text, and the email stays under 90 KB
+  4. 모델 정보 rows whose value would be `확인 필요` are omitted (the box disappears when all are unknown)
+  5. All Claude text is friendly 해요체 like "…골랐어요!", explains what the model is for a non-specialist while keeping technical terms in English, and each article has a one-line 활용 아이디어
+**Plans**: TBD
 
 ### Phase 2: Evidence & Practical Verdicts
 **Goal**: Readers can tell at a glance whether each model is usable in practice, with verdicts decided by code from real HF/GitHub evidence and explained by Claude.
@@ -113,7 +127,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. End-to-End Skeleton | 0/6 | Planned | - |
-| 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 0/5 | Planned | - |
+| 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
+| 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 0/TBD | Not started | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |

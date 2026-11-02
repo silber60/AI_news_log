@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of 6 in current phase
-Status: Phase 1.1 planned (5 plans, 3 waves; plan-check passed after 2 iterations). Phase 1 01-06 live runs deferred until after 1.1 (Phase 1.1 D-20)
-Last activity: 2026-11-02 - Phase 1.1 planned
+Status: Phase 1.1 complete. Phase 1.2 (GitHub-Star Selection & Friendly Content) inserted, context captured, ready to plan. Phase 1 01-06 live runs pending (SMTP secrets)
+Last activity: 2026-11-03 - Phase 1.1 closed; Phase 1.2 inserted
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -50,6 +50,8 @@ Recent decisions affecting current work:
 
 - Phase 1.1 inserted after Phase 1: Newsletter Design v2 & Model Detail Fields (owner-approved Figma v2 draft, node 7:22)
 
+- Phase 1.2 inserted after Phase 1.1: GitHub-Star Selection & Friendly Content (owner request after first v2 preview)
+
 ### Pending Todos
 
 None yet.
@@ -74,5 +76,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 1.1 planned
-Resume file: .planning/phases/01.1-newsletter-design-v2/01.1-CONTEXT.md
+Stopped at: Phase 1.2 context gathered
+Resume file: .planning/phases/01.2-star-selection-friendly-content/01.2-CONTEXT.md
