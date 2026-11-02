@@ -7,7 +7,7 @@ from datetime import date, timedelta
 import httpx
 import pytest
 import respx
-from conftest import FakeAnthropic
+from conftest import FakeAnthropic, mock_enrich
 
 HF_URL = "https://huggingface.co/api/daily_papers"
 W53 = "2026-W53"
@@ -53,6 +53,7 @@ def test_w53_builds_end_to_end_via_date_loop(hf_pages, archive_tmp):
             return_value=httpx.Response(400, json={"error": "must match pattern"})
         )
         date_routes = _mock_dates(router, pages)
+        mock_enrich(router)
         issue = run_build(W53, claude_client=FakeAnthropic())
 
     assert week_route.call_count == 0

@@ -26,20 +26,69 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def mock_hf_week(
-    router: respx.MockRouter, pages: list[list[dict]], issue_id: str = "2026-W44"
+    router: respx.MockRouter,
+    pages: list[list[dict]],
+    issue_id: str = "2026-W44",
+    *,
+    enrich_fail: bool = False,
 ) -> list[respx.Route]:
     """Register the daily_papers week routes (one per page) and return them.
 
     Every run_build test goes through here, so later plans add their HF routes
-    in one place.
+    in one place. The enrich routes (`mock_enrich`) are registered too;
+    `enrich_fail=True` makes them all answer 500.
     """
-    return [
+    routes = [
         router.get(
             "https://huggingface.co/api/daily_papers",
             params={"week": issue_id, "limit": "100", "p": str(i)},
         ).mock(return_value=httpx.Response(200, json=page))
         for i, page in enumerate(pages)
     ]
+    mock_enrich(router, fail=enrich_fail)
+    return routes
+
+
+def _load_fixture(name: str) -> dict:
+    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def mock_enrich(
+    router: respx.MockRouter,
+    *,
+    fail: bool = False,
+    papers: dict | None = None,
+    models: dict | None = None,
+) -> dict[str, respx.Route]:
+    """Register the enrich routes (HF paper / model APIs) backed by the W44 captures.
+
+    Unknown ids get 404. `fail=True` answers 500 everywhere. `papers` / `models`
+    override the fixture dicts for single-case tests.
+    """
+    papers = _load_fixture("hf_papers_w44.json") if papers is None else papers
+    models = _load_fixture("hf_models_w44.json") if models is None else models
+
+    def lookup(table: dict, key: str) -> httpx.Response:
+        if fail:
+            return httpx.Response(500)
+        if key in table:
+            return httpx.Response(200, json=table[key])
+        return httpx.Response(404, json={"error": "not found"})
+
+    def paper_side(request: httpx.Request) -> httpx.Response:
+        return lookup(papers, request.url.path.removeprefix("/api/papers/"))
+
+    def model_side(request: httpx.Request) -> httpx.Response:
+        return lookup(models, request.url.path.removeprefix("/api/models/"))
+
+    return {
+        "papers": router.get(url__regex=r"^https://huggingface\.co/api/papers/").mock(
+            side_effect=paper_side
+        ),
+        "models": router.get(url__regex=r"^https://huggingface\.co/api/models/").mock(
+            side_effect=model_side
+        ),
+    }
 
 
 # ---------------------------------------------------------------- Claude fakes

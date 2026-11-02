@@ -53,11 +53,19 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         assert it.hardware.local_run == "확인 필요"
         assert len(it.summary_lines_ko) == 3
         assert all(line.strip() for line in it.summary_lines_ko)
-        assert (it.model_info.size, it.model_info.training_data, it.model_info.release) == (
-            UNKNOWN,
-            UNKNOWN,
-            UNKNOWN,
-        )
+        assert it.poc.has_weights in (True, None)
+        assert it.poc.has_code in (True, None)
+        assert it.poc.has_demo in (True, None)
+    # Facts come from the HF paper/model captures by code (D-07); unknown stays UNKNOWN.
+    rank1, rank3 = stored.items[0], stored.items[2]
+    assert (rank1.model_info.size, rank1.model_info.training_data, rank1.model_info.release) == (
+        UNKNOWN,
+        UNKNOWN,
+        UNKNOWN,
+    )
+    assert rank3.model_info.training_data == "JusperLee/RealSSA-Real, JusperLee/RealSSA-Sim"
+    assert rank3.model_info.release == "가중치 · GitHub · 데모"
+    assert rank3.model_info.size == UNKNOWN
     assert stored.schema_version == 2
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
     assert stored.headline_ko == f"🧠 {name} 등 이번 주 AI 모델 10"

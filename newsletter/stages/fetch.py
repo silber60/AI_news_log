@@ -38,6 +38,7 @@ _PAPER_KEYS = (
     "githubRepo",
     "githubStars",
     "projectPage",
+    "mediaUrls",
 )
 
 
