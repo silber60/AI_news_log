@@ -64,6 +64,56 @@ def paper_block(entry: HfEntry) -> str:
     return "\n".join(lines)
 
 
+SUMMARY_LIMIT = 80  # ANLY-03, measured in Python len() characters
+_WS_RE = re.compile(r"[\r\n\t]+")
+_BOUNDARY_CHARS = " ,."
+
+
+def _one_line(text: str) -> str:
+    """CR/LF/tab -> single space. These fields feed the Subject header and plain text."""
+    return re.sub(r" {2,}", " ", _WS_RE.sub(" ", text)).strip()
+
+
+def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
+    return a.model_copy(
+        update={
+            "title_ko": _one_line(a.title_ko),
+            "summary_ko": _one_line(a.summary_ko),
+            "use_ideas_ko": [_one_line(i) for i in a.use_ideas_ko],
+        }
+    )
+
+
+def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
+    """Code-enforced ANLY-03 / D-07 limits. Messages carry counts, never model text."""
+    errs: list[tuple[str, str]] = []
+    if not a.title_ko.strip():
+        errs.append(("title_empty", "title_ko가 비어 있음"))
+    if len(a.summary_ko) > SUMMARY_LIMIT:
+        errs.append(
+            ("summary_len", f"summary_ko가 {len(a.summary_ko)}자로 {SUMMARY_LIMIT}자를 넘음")
+        )
+    if len(a.use_ideas_ko) > 2:
+        errs.append(("ideas_count", f"use_ideas_ko가 {len(a.use_ideas_ko)}개로 2개를 넘음"))
+    if any(not i.strip() for i in a.use_ideas_ko):
+        errs.append(("idea_empty", "use_ideas_ko에 빈 항목이 있음"))
+    return errs
+
+
+def trim_summary(s: str, limit: int = SUMMARY_LIMIT) -> str:
+    """D-19: cut at the last phrase boundary (space, comma, period, 다.) within
+    limit-1 characters and append an ellipsis. Hard cut if no usable boundary."""
+    if len(s) <= limit:
+        return s
+    head = s[: limit - 1]
+    cut = max(head.rfind(c) for c in _BOUNDARY_CHARS)
+    if cut >= limit // 2:
+        # keep a closing comma or period with the text, drop a space
+        head = head[: cut + 1] if head[cut] in ",." else head[:cut]
+    head = head.rstrip(" ,")
+    return head + "…"
+
+
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 # Clients whose API or SDK rejected server-side fallbacks (Assumption A2). Keyed by
@@ -140,6 +190,7 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
     block = paper_block(entry)
     problems: list[tuple[str, str]] = []
     for attempt in (1, 2):
+        last: ItemAnalysisLLM | None = None
         try:
             resp = _request(client, _with_feedback(block, problems))
         except ValueError as e:  # pydantic.ValidationError from client-side validation (A4)
@@ -156,7 +207,14 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
         if resp.parsed_output is None:
             problems = [("no_output", "구조화된 출력이 비어 있음")]
             continue
-        return resp.parsed_output
+        last = normalize(resp.parsed_output)
+        problems = check(last)
+        if not problems:
+            return last
+    if last is not None and [code for code, _ in problems] == ["summary_len"]:
+        # D-19: a pure length overrun after the retry is repaired, not fatal.
+        log.info("trimmed=summary rank=%d", rank)
+        return last.model_copy(update={"summary_ko": trim_summary(last.summary_ko)})
     reason = "+".join(code for code, _ in problems) or "unknown"
     raise AnalysisInvalid(f"rank={rank} reason={reason}")
 

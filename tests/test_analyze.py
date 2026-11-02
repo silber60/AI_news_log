@@ -234,7 +234,7 @@ LONG_SUMMARY = (
 )
 
 
-def test_long_summary_fixture_is_95ish_chars():
+def test_long_summary_fixture_exceeds_limit():
     assert len(LONG_SUMMARY) > 80
 
 
