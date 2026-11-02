@@ -73,7 +73,7 @@ def test_build_step_gets_only_anthropic_key():
     build = _named(blocks, "Build")
     assert "ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}" in build
     assert build.count("secrets.") == 1
-    assert "python -m newsletter build --week \"$WEEK_INPUT\"" in build
+    assert 'python -m newsletter build --week "$WEEK_INPUT"' in build
 
 
 def test_delivery_secret_values_are_mode_gated():
