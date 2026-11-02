@@ -3,11 +3,10 @@
 import json
 
 import anthropic
-import httpx
 import httpx2
 import pytest
 import respx
-from conftest import FakeAnthropic, default_analysis, make_parsed
+from conftest import FakeAnthropic, default_analysis, make_parsed, mock_hf_week
 
 from newsletter.errors import AnalysisInvalid
 from newsletter.schema import HfEntry, ItemAnalysisLLM
@@ -36,11 +35,7 @@ def _build(hf_pages, fake):
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True) as router:
-        for i, page in enumerate(hf_pages):
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": ISSUE_ID, "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
+        mock_hf_week(router, hf_pages, ISSUE_ID)
         return run_build(ISSUE_ID, claude_client=fake)
 
 
@@ -160,7 +155,11 @@ VALID = {
     "title_ko": "Qwen3-VL: long-context 멀티모달 추론 개선",
     "ai_type": "멀티모달",
     "summary_ko": "긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했다.",
-    "use_ideas_ko": ["긴 회의 영상 요약"],
+    "does_ko": "긴 영상과 문서를 함께 읽고 답한다.",
+    "new_ko": "long-context 처리 방식을 바꿔 더 긴 입력을 다룬다.",
+    "result_ko": "공개 benchmark에서 기존 공개 모델보다 높은 점수를 보고했다.",
+    "kind_ko": "Vision-Language 모델",
+    "architecture_ko": "확인 필요",
 }
 
 
@@ -242,11 +241,16 @@ def test_long_summary_fixture_exceeds_limit():
     ("over", "codes"),
     [
         ({}, []),
-        ({"use_ideas_ko": []}, []),
         ({"title_ko": "   "}, ["title_empty"]),
         ({"summary_ko": LONG_SUMMARY}, ["summary_len"]),
-        ({"use_ideas_ko": ["a", "b", "c"]}, ["ideas_count"]),
-        ({"use_ideas_ko": ["a", " "]}, ["idea_empty"]),
+        ({"does_ko": "가" * 71}, ["line_len"]),
+        ({"new_ko": "가" * 71}, ["line_len"]),
+        ({"result_ko": "가" * 71}, ["line_len"]),
+        ({"does_ko": " "}, ["line_empty"]),
+        ({"result_ko": ""}, ["line_empty"]),
+        ({"kind_ko": "가" * 31}, ["kind_len"]),
+        ({"kind_ko": " "}, ["kind_empty"]),
+        ({"architecture_ko": "가" * 61}, ["arch_len"]),
     ],
 )
 def test_check_codes(over, codes):
@@ -256,6 +260,52 @@ def test_check_codes(over, codes):
 def test_summary_exactly_80_chars_passes():
     assert analyze.check(_analysis(summary_ko="가" * 80)) == []
     assert [c for c, _ in analyze.check(_analysis(summary_ko="가" * 81))] == ["summary_len"]
+
+
+def test_new_fields_exactly_at_limit_pass():
+    at_limit = {
+        "does_ko": "가" * 70,
+        "new_ko": "가" * 70,
+        "result_ko": "가" * 70,
+        "kind_ko": "가" * 30,
+        "architecture_ko": "가" * 60,
+    }
+    assert analyze.LINE_LIMIT == 70
+    assert analyze.KIND_LIMIT == 30
+    assert analyze.ARCH_LIMIT == 60
+    assert analyze.check(_analysis(**at_limit)) == []
+
+
+def test_check_messages_name_field_and_count_only():
+    text = "모델 본문 " * 20
+    msgs = [m for _, m in analyze.check(_analysis(new_ko=text))]
+    assert len(msgs) == 1
+    assert "new_ko" in msgs[0] and str(len(text)) in msgs[0] and "70" in msgs[0]
+    assert "모델 본문" not in msgs[0]
+
+
+def test_line_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
+    long_line = "긴 영상과 문서를 함께 읽고 답하는 모델이다. " * 4
+    over = {"does_ko": long_line, "architecture_ko": "가" * 65}
+    fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=4)
+
+    assert len(fake.calls) == 2
+    assert "does_ko" in fake.user_texts()[1]
+    assert len(result.does_ko) <= 70 and result.does_ko.endswith("…")
+    assert len(result.architecture_ko) <= 60 and result.architecture_ko.endswith("…")
+    assert result.new_ko == VALID["new_ko"]
+    assert "trimmed=does_ko,architecture_ko rank=4" in caplog.text
+    assert long_line.strip() not in caplog.text
+
+
+def test_line_overrun_with_empty_kind_fails(hf_pages):
+    bad = {"result_ko": "가" * 80, "kind_ko": " "}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=5)
+    assert "line_len" in str(exc.value) and "kind_empty" in str(exc.value)
 
 
 def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
@@ -270,24 +320,24 @@ def test_summary_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
     body = result.summary_ko[:-1]
     assert LONG_SUMMARY.startswith(body)
     assert LONG_SUMMARY[len(body)] in " ,." or LONG_SUMMARY[len(body) - 1] in ",."
-    assert "trimmed=summary rank=6" in caplog.text
+    assert "trimmed=summary_ko rank=6" in caplog.text
     assert LONG_SUMMARY not in caplog.text
 
 
 def test_summary_overrun_with_other_error_fails(hf_pages):
-    bad = {"summary_ko": LONG_SUMMARY, "use_ideas_ko": ["a", "b", "c"]}
+    bad = {"summary_ko": LONG_SUMMARY, "title_ko": " "}
     fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
     with pytest.raises(AnalysisInvalid) as exc:
         analyze.analyze_one(fake, _entry(hf_pages), rank=2)
-    assert "summary_len" in str(exc.value) and "ideas_count" in str(exc.value)
+    assert "summary_len" in str(exc.value) and "title_empty" in str(exc.value)
 
 
-def test_three_ideas_then_valid_returns_second(hf_pages):
-    fake = FakeAnthropic([_parsed(use_ideas_ko=["a", "b", "c"]), _parsed()])
+def test_empty_title_then_valid_returns_second(hf_pages):
+    fake = FakeAnthropic([_parsed(title_ko=" "), _parsed()])
     result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
     assert len(fake.calls) == 2
-    assert result.use_ideas_ko == VALID["use_ideas_ko"]
-    assert "use_ideas_ko" in fake.user_texts()[1]
+    assert result.title_ko == VALID["title_ko"]
+    assert "title_ko" in fake.user_texts()[1]
 
 
 def test_unknown_ai_type_goes_through_retry(hf_pages):
@@ -308,14 +358,18 @@ def test_free_text_newlines_are_normalized(hf_pages):
             _parsed(
                 title_ko="Qwen3-VL:\r\nlong-context 개선",
                 summary_ko="첫 줄\n둘째 줄\t끝.",
-                use_ideas_ko=["회의\r영상 요약"],
+                does_ko="긴 영상을\r\n읽는다.",
+                new_ko="입력\t처리를 바꾼다.",
+                result_ko="점수가\n올랐다.",
             )
         ]
     )
     result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
     assert result.title_ko == "Qwen3-VL: long-context 개선"
     assert result.summary_ko == "첫 줄 둘째 줄 끝."
-    assert result.use_ideas_ko == ["회의 영상 요약"]
+    assert result.does_ko == "긴 영상을 읽는다."
+    assert result.new_ko == "입력 처리를 바꾼다."
+    assert result.result_ko == "점수가 올랐다."
 
 
 @pytest.mark.parametrize(

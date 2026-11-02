@@ -1,8 +1,9 @@
 """Data contracts.
 
-`Issue` (schema_version 1) is FROZEN in Phase 1. Later phases fill its fields;
-they do not add or rename them outside a planned phase. The committed snapshot
-`schema/issue.schema.v1.json` guards against drift.
+`Issue` (schema_version 2) is FROZEN since Phase 1.1. Later phases fill its
+fields; they do not add or rename them outside a planned phase. The committed
+snapshot `schema/issue.schema.v2.json` guards against drift
+(`schema/issue.schema.v1.json` is kept as history).
 
 Code owns ranks, URLs, affiliation and every verdict. Claude only fills
 `ItemAnalysisLLM` (and, in later phases, other small sub-models) which code
@@ -12,9 +13,11 @@ merges into `Item` / `Issue`.
 from datetime import date, datetime
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+UNKNOWN = "확인 필요"
+IMAGE_HOST = "https://cdn-uploads.huggingface.co/"
 
 # Enum labels quoted from .planning/REQUIREMENTS.md.
 AiType = Literal["LLM", "비전", "멀티모달", "음성", "에이전트", "이미지/비디오 생성", "기타"]
@@ -33,6 +36,12 @@ def _require_https(v: str) -> str:
 
 
 HttpsUrl = Annotated[str, AfterValidator(_require_https)]
+
+
+def _require_hf_image(v: str) -> str:
+    if not v.startswith(IMAGE_HOST):
+        raise ValueError("image URL must be on cdn-uploads.huggingface.co")
+    return v
 
 
 class Strict(BaseModel):
@@ -85,6 +94,21 @@ class SkillGptFitInfo(Strict):  # Phase 3 (HILT-01)
     reason_ko: str | None = None
 
 
+class ItemImage(Strict):  # DSGN-07, D-11: code-chosen, never base64
+    url: Annotated[HttpsUrl, AfterValidator(_require_hf_image)]
+    width: Annotated[int, Field(gt=0)]  # display px
+    height: Annotated[int, Field(gt=0)]
+
+
+class ModelInfo(Strict):  # ANLY-08, D-07
+    kind_ko: str  # 유형 (Claude)
+    architecture_ko: str  # 구조 (Claude; may be UNKNOWN)
+    size: str = UNKNOWN  # 크기 (code only)
+    training_data: str = UNKNOWN  # 학습 데이터 (code only)
+    release: str = UNKNOWN  # 공개 범위 (code only)
+    evidence: list[EvidenceLink] = []  # model / space / repo pages (not rendered in 1.1)
+
+
 class Item(Strict):
     # Code-owned facts (Phase 1)
     rank: int
@@ -101,8 +125,10 @@ class Item(Strict):
     # Claude-written (Phase 1)
     title_ko: str
     ai_type: AiType
-    summary_ko: str
-    use_ideas_ko: list[str] = []
+    summary_ko: str  # bold one-liner, <= 80 (checked in analyze)
+    summary_lines_ko: list[str]  # ANLY-07: exactly 3 (does, new, result)
+    model_info: ModelInfo  # ANLY-08
+    image: ItemImage | None = None  # D-11: code-chosen
     # Later phases (defaults keep Phase 1 valid)
     commercial: CommercialUse = CommercialUse()
     poc: PocReadiness = PocReadiness()
@@ -111,9 +137,9 @@ class Item(Strict):
     skill_gpt: SkillGptFitInfo = SkillGptFitInfo()
 
     @model_validator(mode="after")
-    def _check_ideas(self) -> Item:
-        if len(self.use_ideas_ko) > 2:
-            raise ValueError("use_ideas_ko allows at most 2 entries")
+    def _check_lines(self) -> Item:
+        if len(self.summary_lines_ko) != 3 or any(not s.strip() for s in self.summary_lines_ko):
+            raise ValueError("summary_lines_ko needs exactly 3 non-empty lines")
         return self
 
 
@@ -128,10 +154,13 @@ class Explainer(Strict):  # Phase 3 (EXPL-01/02, D-16)
     topic: str
     body_ko: str
     related_ranks: list[int]
+    point_ko: str | None = None  # D-19: 오늘의 포인트
+    example_ko: str | None = None  # D-19: 예를 들어
+    image: ItemImage | None = None  # owner v2 checkpoint: code-filled from a related item
 
 
 class Issue(Strict):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     issue_id: str
     week_start: date
     week_end: date
@@ -139,6 +168,7 @@ class Issue(Strict):
     model: str
     fetch_method: Literal["week", "date"]
     items: list[Item]
+    headline_ko: str  # DLVR-07, D-12: subject/hero line without [TEST]
     trend_ko: str | None = None  # Phase 2 (ANLY-05)
     highlights: list[Highlight] = []  # Phase 3 (HILT-02/03)
     explainer: Explainer | None = None  # Phase 3 (D-16)
@@ -182,6 +212,7 @@ class HfPaper(HfInput):
     githubRepo: str | None = None
     githubStars: int | None = None
     projectPage: str | None = None
+    mediaUrls: list[str] | None = None
 
 
 class HfOrg(HfInput):
@@ -204,4 +235,17 @@ class ItemAnalysisLLM(BaseModel):
     title_ko: str  # D-04: Korean gloss, model names and AI terms in English
     ai_type: AiType  # ANLY-01 closed enum
     summary_ko: str  # ANLY-03: one sentence, <= 80 chars (checked in code)
-    use_ideas_ko: list[str]  # D-07: 0..2 grounded ideas
+    does_ko: str  # ANLY-07: 무엇을 하는지, <= 70
+    new_ko: str  # ANLY-07: 이전과 무엇이 다른지, <= 70
+    result_ko: str  # ANLY-07: 보고된 결과, <= 70
+    kind_ko: str  # ANLY-08: 유형, <= 30
+    architecture_ko: str  # ANLY-08: 구조, <= 60, or exactly UNKNOWN
+
+
+HeadlineEmoji = Literal["🤖", "💬", "👀", "🎬", "🎙️", "🧠", "🛠️", "🔍", "📈", "⚡️"]
+
+
+class HeadlineLLM(BaseModel):  # DLVR-07 (plan 03 calls Claude with it)
+    model_config = ConfigDict(extra="forbid")
+    emoji: HeadlineEmoji
+    hook_ko: str  # <= 24 chars (checked in code)

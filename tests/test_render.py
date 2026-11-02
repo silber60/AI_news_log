@@ -4,10 +4,9 @@ import html as html_lib
 import re
 from html.parser import HTMLParser
 
-import httpx
 import pytest
 import respx
-from conftest import FakeAnthropic
+from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import Explainer
@@ -28,11 +27,7 @@ def _build(hf_pages):
     from newsletter.pipeline import run_build
 
     with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
-        for i, page in enumerate(hf_pages):
-            router.get(
-                "https://huggingface.co/api/daily_papers",
-                params={"week": ISSUE_ID, "limit": "100", "p": str(i)},
-            ).mock(return_value=httpx.Response(200, json=page))
+        mock_hf_week(router, hf_pages, ISSUE_ID)
         return run_build(ISSUE_ID, claude_client=FakeAnthropic())
 
 
@@ -152,12 +147,16 @@ def test_affiliation_row_only_when_present(issue_w44):
     assert out.count("Acme Research Lab") == 1
 
 
-def test_empty_ideas_row_omitted(issue_w44):
-    issue = _with_item(issue_w44, 0, use_ideas_ko=[])
-    issue = _with_item(issue, 1, use_ideas_ko=["첫째 아이디어", "둘째 아이디어"])
-    cards = render_html(issue, "구독자님").split("data-card=")[1:]
-    assert ">· " not in cards[0]
-    assert "· 첫째 아이디어<br>· 둘째 아이디어" in cards[1]
+def test_card_has_three_lines_and_info_rows(issue_w44):
+    cards = render_html(issue_w44, "구독자님").split("data-card=")[1:]
+    assert len(cards) == 10
+    for it, card in zip(issue_w44.items, cards, strict=True):
+        a, b, c = (html_lib.escape(s, quote=False) for s in it.summary_lines_ko)
+        assert f"· {a}<br>· {b}<br>· {c}" in card
+        assert "🧩 모델 정보" in card
+        for label in ("유형", "구조", "크기", "학습 데이터", "공개 범위"):
+            assert f">{label}<" in card, label
+        assert "활용 아이디어" not in card
 
 
 def test_greeting_is_escaped(issue_w44):
@@ -189,7 +188,12 @@ def test_later_phase_fields_not_rendered(issue_w44):
     issue = issue_w44.model_copy(update={"trend_ko": "이번 주 트렌드 문장"})
     out = render_html(issue, "구독자님")
     assert "이번 주 트렌드 문장" not in out
-    assert "확인 필요" not in out
+    # D-07: unknown model facts must show as 확인 필요 on the card.
+    cards = out.split("data-card=")[1:]
+    for it, card in zip(issue.items, cards, strict=True):
+        mi = it.model_info
+        if "확인 필요" in (mi.architecture_ko, mi.size, mi.training_data, mi.release):
+            assert "확인 필요" in card, it.rank
 
 
 # ---------------------------------- Task 3 size gate, text part and subject
@@ -213,12 +217,17 @@ def test_oversized_html_raises_with_byte_count_only(issue_w44):
 
 
 def test_render_text_has_all_content_and_no_tags(issue_w44):
-    issue = _with_item(issue_w44, 1, use_ideas_ko=["첫째 아이디어", "둘째 아이디어"])
+    issue = issue_w44
     txt = render_text(issue, "구독자님")
     assert "구독자님" in txt
     assert not re.search(r"<[a-zA-Z/][^>]*>", txt)
     for it in issue.items:
-        for s in (it.title_ko, it.title_en, it.summary_ko, *it.use_ideas_ko):
+        mi = it.model_info
+        for s in (it.title_ko, it.title_en, it.summary_ko):
+            assert s in txt
+        for line in it.summary_lines_ko:
+            assert f"· {line}" in txt
+        for s in (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release):
             assert s in txt
         for url in (it.hf_url, it.arxiv_url, it.github_url, it.project_url):
             if url:

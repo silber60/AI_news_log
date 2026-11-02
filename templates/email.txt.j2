@@ -1,4 +1,4 @@
-{# template-version: 2 #}
+{# template-version: 3 #}
 {{ brand }} {{ issue.issue_id }} ({{ label }})
 
 {{ greeting }}, 지난주 Hugging Face Papers 상위 {{ issue.items|length }}편입니다.
@@ -10,8 +10,15 @@
 {% if it.affiliation %}{{ it.affiliation }}
 {% endif %}
 {{ it.summary_ko }}
-{% for idea in it.use_ideas_ko %}· {{ idea }}
+{% for line in it.summary_lines_ko %}· {{ line }}
 {% endfor %}
+🧩 모델 정보
+유형: {{ it.model_info.kind_ko }}
+구조: {{ it.model_info.architecture_ko }}
+크기: {{ it.model_info.size }}
+학습 데이터: {{ it.model_info.training_data }}
+공개 범위: {{ it.model_info.release }}
+
 Hugging Face: {{ it.hf_url }}
 arXiv: {{ it.arxiv_url }}
 {% if it.github_url %}GitHub: {{ it.github_url }}

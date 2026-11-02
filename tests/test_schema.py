@@ -1,4 +1,4 @@
-"""Frozen Issue v1 contract: validators and committed JSON-schema snapshot."""
+"""Frozen Issue v2 contract: validators and committed JSON-schema snapshot."""
 
 import json
 from pathlib import Path
@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from newsletter.schema import Explainer, HfEntry, Issue, Item
+from newsletter.schema import UNKNOWN, Explainer, HfEntry, Issue, Item, ItemImage, ModelInfo
 
-SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v1.json"
+SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v2.json"
 FIXTURE = Path(__file__).parent / "fixtures" / "issue_w44.json"
 
 
@@ -30,7 +30,8 @@ def _issue_with(n_items: int = 5, **update) -> dict:
 
 
 def test_fixture_issue_validates_with_phase1_defaults(issue_w44):
-    assert issue_w44.schema_version == 1
+    assert issue_w44.schema_version == 2
+    assert issue_w44.headline_ko
     assert issue_w44.explainer is None
     assert issue_w44.highlights == []
     assert issue_w44.trend_ko is None
@@ -59,10 +60,62 @@ def test_local_run_labels_confirmed_by_owner():
         Item.model_validate(_item_data(hardware={"local_run": "부분 가능"}))
 
 
-def test_three_ideas_rejected_zero_accepted():
+@pytest.mark.parametrize("lines", [["a", "b"], ["a", "b", "c", "d"], ["a", " ", "c"]])
+def test_summary_lines_need_exactly_three_non_empty(lines):
     with pytest.raises(ValidationError):
-        Item.model_validate(_item_data(use_ideas_ko=["a", "b", "c"]))
-    assert Item.model_validate(_item_data(use_ideas_ko=[])).use_ideas_ko == []
+        Item.model_validate(_item_data(summary_lines_ko=lines))
+
+
+def test_three_summary_lines_accepted():
+    item = Item.model_validate(_item_data(summary_lines_ko=["a", "b", "c"]))
+    assert item.summary_lines_ko == ["a", "b", "c"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://cdn-uploads.huggingface.co/x.png",
+        "javascript:alert(1)",
+        "https://example.com/x.png",
+        "https://cdn-uploads.huggingface.co.evil.com/x.png",
+    ],
+)
+def test_item_image_rejects_other_schemes_and_hosts(url):
+    with pytest.raises(ValidationError):
+        ItemImage(url=url, width=576, height=234)
+
+
+def test_item_image_needs_positive_size():
+    url = "https://cdn-uploads.huggingface.co/x.png"
+    assert ItemImage(url=url, width=576, height=234).width == 576
+    with pytest.raises(ValidationError):
+        ItemImage(url=url, width=0, height=234)
+
+
+def test_model_info_facts_default_to_unknown():
+    info = ModelInfo(kind_ko="VLA 모델", architecture_ko=UNKNOWN)
+    assert UNKNOWN == "확인 필요"
+    assert (info.size, info.training_data, info.release) == (UNKNOWN, UNKNOWN, UNKNOWN)
+    assert info.evidence == []
+
+
+def test_v1_ideas_key_rejected():
+    with pytest.raises(ValidationError):
+        Item.model_validate(_item_data(use_ideas_ko=["a"]))
+
+
+def test_v1_issue_rejected():
+    data = _issue_data()
+    data["schema_version"] = 1
+    with pytest.raises(ValidationError):
+        Issue.model_validate(data)
+
+
+def test_issue_requires_headline():
+    data = _issue_data()
+    del data["headline_ko"]
+    with pytest.raises(ValidationError):
+        Issue.model_validate(data)
 
 
 def test_non_contiguous_ranks_rejected():
@@ -112,6 +165,27 @@ def test_explainer_slot_validates_related_ranks():
     assert issue.explainer == Explainer(**good)
 
 
+def test_explainer_accepts_point_example_and_image():
+    img = {"url": "https://cdn-uploads.huggingface.co/x.png", "width": 576, "height": 220}
+    full = {
+        "topic": "VLA",
+        "body_ko": "설명",
+        "related_ranks": [1],
+        "point_ko": "포인트",
+        "example_ko": "예시",
+        "image": img,
+    }
+    issue = Issue.model_validate(_issue_with(5, explainer=full))
+    assert issue.explainer.point_ko == "포인트"
+    assert issue.explainer.example_ko == "예시"
+    assert issue.explainer.image == ItemImage(**img)
+    plain = Explainer(topic="VLA", body_ko="설명", related_ranks=[1])
+    assert (plain.point_ko, plain.example_ko, plain.image) == (None, None, None)
+    bad = {**full, "image": {**img, "url": "https://example.com/x.png"}}
+    with pytest.raises(ValidationError):
+        Issue.model_validate(_issue_with(5, explainer=bad))
+
+
 @pytest.mark.parametrize("url", ["http://x", "javascript:alert(1)"])
 def test_non_https_link_rejected(url):
     with pytest.raises(ValidationError):
@@ -149,7 +223,7 @@ def test_schema_snapshot_matches():
     assert SNAPSHOT.is_file(), f"missing {SNAPSHOT}"
     committed = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     assert Issue.model_json_schema() == committed, (
-        "Issue schema drifted from schema/issue.schema.v1.json. The v1 contract is frozen: "
+        "Issue schema drifted from schema/issue.schema.v2.json. The v2 contract is frozen: "
         "change it only in a planned phase and bump schema_version (new snapshot file). "
         "Do not regenerate this snapshot silently."
     )
