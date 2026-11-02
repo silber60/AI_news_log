@@ -57,10 +57,10 @@
 ## Constraints
 
 - **실행 환경**: GitHub Actions — PC 상태와 무관한 무료 cron
-- **스케줄**: 월요일 08:00 KST = cron `0 23 * * 0` (UTC 일요일 23:00) — Actions cron은 수 분~수십 분 지연 가능
+- **스케줄**: `cron: "0 8 * * 1"` + `timezone: "Asia/Seoul"` (2026-03 GitHub 지원). YAML 위치는 구현 시 공식 문서로 확인. Actions cron은 수 분~수십 분 지연 가능
 - **메일**: Gmail SMTP + 앱 비밀번호 (GitHub Secrets 저장), Gmail 일일 발송 한도 존재
 - **보안**: SMTP 비밀번호, Anthropic API 키는 Secrets로만 관리, 코드/로그에 노출 금지
-- **구독자 CSV**: 개인정보 — 공개 repo라면 CSV를 Secret 또는 private repo로 관리 필요
+- **Public repo**: 구독자 CSV는 절대 커밋 금지 → `SUBSCRIBERS_CSV` Secret으로만 관리, `subscribers.example.csv`만 커밋. 발송 장부는 이메일 해시만 저장. Actions 로그도 공개되므로 주소·이름 로그 금지(개수만). 60일 무활동 시 cron 비활성화 → 주간 아카이브 커밋으로 유지
 - **이메일 HTML**: 테이블 기반 레이아웃 + 인라인 CSS, 웹폰트는 fallback 필요 (Gmail/네이버는 웹폰트 제한)
 - **비용**: Claude API 주 1회 10건 분석 — 저비용
 
@@ -73,6 +73,8 @@
 | Claude API로 완전 자동 분석·발송 | 사람 개입 없이 매주 발송 | — Pending |
 | Top 10, upvote 순 | 읽기 좋은 분량 | — Pending |
 | Figma에 웹형 디자인 새로 제작 후 HTML 구현 | 기존 모바일 디자인 톤 유지 | — Pending |
+| Public repo (silber60) | 사용자 선택. GitHub Pages 무료로 웹 버전/아카이브 가능 | — Pending |
+| cron `0 8 * * 1` + `timezone: Asia/Seoul` | 사용자 선택. KST 기준이라 계산 단순 | — Pending |
 | Claude 생성 텍스트에 humanizer 필수 | 사용자 요구: AI 티 안 나는 뉴스레터 | — Pending |
 | Claude Skill / GPTs 활용 후보를 상단에서 별도 강조 | 사용자 요구: 바로 써볼 만한 것 홍보 | — Pending |
 | 추가 필드: 한줄요약+활용, 라이선스·공개, 실행 난이도·GPU, 주간 트렌드 | 사용자 선택 | — Pending |
