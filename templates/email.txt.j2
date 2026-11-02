@@ -1,7 +1,7 @@
 {# template-version: 4 #}
 {%- macro card(it) %}
 ----------------------------------------
-#{{ it.rank }} · ▲ {{ it.upvotes }} · {{ it.ai_type }}
+{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ ▲ {{ it.upvotes }}
 {{ it.title_ko }}
 {{ it.title_en }}
 
@@ -14,11 +14,13 @@
 크기: {{ it.model_info.size }}
 학습 데이터: {{ it.model_info.training_data }}
 공개 범위: {{ it.model_info.release }}
-
-Hugging Face: {{ it.hf_url }}
+{% if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
+상업적 사용 {{ it.commercial.verdict }} · PoC {{ it.poc.verdict }} · Claude/GPT {{ it.claude_gpt.verdict }}
+{% endif %}
+논문: {{ it.hf_url }}
 arXiv: {{ it.arxiv_url }}
-{% if it.github_url %}GitHub: {{ it.github_url }}
-{% endif %}{% if it.project_url %}Project: {{ it.project_url }}
+{% if it.github_url %}코드: {{ it.github_url }}
+{% endif %}{% if it.project_url %}프로젝트: {{ it.project_url }}
 {% endif %}
 {%- endmacro -%}
 {{ brand }}
@@ -32,7 +34,9 @@ arXiv: {{ it.arxiv_url }}
 ========================================
 이번 주 바로 써볼 만한 것 ✨
 {% for h in issue.highlights %}
-[{{ h.tag }}] {{ h.why_ko }} {{ h.how_ko }}
+[{{ h.tag }}] {{ issue.items[h.rank - 1].title_ko }}
+왜 좋은지: {{ h.why_ko }}
+어떻게 만들지: {{ h.how_ko }}
 {% endfor %}{% endif %}
 {%- if issue.trend_ko %}
 ========================================
@@ -47,11 +51,15 @@ Hugging Face 추천 수 기준
 {%- if issue.explainer %}
 ========================================
 AI 기술 쉽게 보기 🔍
-
+{% if issue.explainer.point_ko %}
+[오늘의 포인트] {{ issue.explainer.point_ko }}
+{% endif %}
 {{ issue.explainer.topic }}
 
 {{ issue.explainer.body_ko }}
-{% endif %}
+{% if issue.explainer.example_ko %}
+[예를 들어] {{ issue.explainer.example_ko }}
+{% endif %}{% endif %}
 {%- if rest %}
 ========================================
 놓치기 아까운 4위부터 10위까지 👀

@@ -17,33 +17,50 @@
 </tr></table>
 {%- endmacro -%}
 
+{%- macro pill(text, bg, fg) -%}
+<td style="{{ ff }} padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background-color: {{ bg }}; color: {{ fg }}; white-space: nowrap;">{{ text }}</td>
+{%- endmacro -%}
+
+{%- macro box_cell(label, text) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color: #ffffff; border-radius: 8px; padding: 14px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #303A83;">{{ label }}</td></tr>
+<tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 15px; line-height: 170%; color: #222222;">{{ text }}</td></tr>
+</table>
+</td></tr></table>
+{%- endmacro -%}
+
+{#- Figma card (node 7:2): image, meta, titles, summary, 3 lines, 모델 정보, badges, links. #}
 {%- macro card(it, show_image) -%}
 <tr><td style="padding: 0 0 24px 0;">
 <table role="presentation" data-card="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0">
 {%- if show_image and it.image %}
 <tr><td style="padding: 0 0 10px 0;"><img src="{{ it.image.url }}" width="{{ it.image.width }}" height="{{ it.image.height }}" alt="{{ it.title_ko }} 대표 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
 {%- endif %}
-<tr><td style="padding: 0 0 4px 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="{{ ff }} padding: 0 8px 0 0; font-size: 13px; font-weight: bold; color: #FF6B00;">#{{ it.rank }}</td>
-<td style="{{ ff }} padding: 0 8px 0 0; font-size: 13px; color: #FF6B00;">▲ {{ it.upvotes }}</td>
-<td style="{{ ff }} font-size: 13px; color: #FF6B00;">{{ it.ai_type }}</td>
-</tr></table>
-</td></tr>
-<tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 19px; font-weight: bold; color: #222222;">{{ it.title_ko }}</td></tr>
-<tr><td style="{{ ff }} color: #A3A3A3; font-size: 13px; padding: 2px 0 0 0;">{{ it.title_en }}</td></tr>
-<tr><td style="{{ ff }} padding: 8px 0 0 0; font-size: 16px; font-weight: bold; color: #222222;">{{ it.summary_ko }}</td></tr>
-<tr><td style="{{ ff }} padding: 8px 0 0 0; font-size: 15px; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ ▲ {{ it.upvotes }}</td></tr>
+<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 19px; font-weight: bold; line-height: 145%; color: #222222;">{{ it.title_ko }}</td></tr>
+<tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 13px; color: #A3A3A3;">{{ it.title_en }}</td></tr>
+<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 16px; font-weight: bold; line-height: 170%; color: #222222;">{{ it.summary_ko }}</td></tr>
+<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 15px; line-height: 165%; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
 {%- set mi = it.model_info %}
-<tr><td style="padding: 8px 0 0 0;">
-<table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F7F7F9;">
-<tr><td colspan="2" style="{{ ff }} padding: 8px 12px 4px 12px; font-size: 14px; font-weight: bold; color: #303A83;">🧩 모델 정보</td></tr>
+<tr><td style="padding: 10px 0 0 0;">
+<table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F7F7F9; border-radius: 8px;">
+<tr><td colspan="2" style="{{ ff }} padding: 14px 16px 4px 16px; font-size: 14px; font-weight: bold; color: #303A83;">🧩 모델 정보</td></tr>
 {%- for label, value in [("유형", mi.kind_ko), ("구조", mi.architecture_ko), ("크기", mi.size), ("학습 데이터", mi.training_data), ("공개 범위", mi.release)] %}
-<tr><td width="84" style="{{ ff }} padding: 2px 12px 2px 12px; font-size: 13px; color: #737373; vertical-align: top;">{{ label }}</td><td style="{{ ff }} padding: 2px 12px 2px 0; font-size: 14px; color: #222222;">{{ value }}</td></tr>
+<tr><td width="84" valign="top" style="{{ ff }} padding: 4px 0 {% if loop.last %}14px{% else %}4px{% endif %} 16px; font-size: 13px; font-weight: 500; color: #737373;">{{ label }}</td><td valign="top" style="{{ ff }} padding: 4px 16px {% if loop.last %}14px{% else %}4px{% endif %} 0; font-size: 14px; color: #222222;">{{ value }}</td></tr>
 {%- endfor %}
 </table>
 </td></tr>
-<tr><td style="{{ ff }} font-size: 13px; padding: 8px 0 24px 0; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00;">Hugging Face</a> · <a href="{{ it.arxiv_url }}" style="color: #FF6B00;">arXiv</a>{% if it.github_url %} · <a href="{{ it.github_url }}" style="color: #FF6B00;">GitHub</a>{% endif %}{% if it.project_url %} · <a href="{{ it.project_url }}" style="color: #FF6B00;">Project</a>{% endif %}</td></tr>
+{%- if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
+<tr><td style="padding: 10px 0 0 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+{{ pill("상업적 사용 " ~ it.commercial.verdict, "#F0F0F0", "#666666") }}<td width="6"></td>
+{{ pill("PoC " ~ it.poc.verdict, "#E8F5E9", "#2E7D32") }}<td width="6"></td>
+{{ pill("Claude/GPT " ~ it.claude_gpt.verdict, "#EDF6FF", "#303A83") }}
+</tr></table>
+</td></tr>
+{%- endif %}
+<tr><td style="{{ ff }} padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
 </table>
 </td></tr>
 {%- endmacro -%}
@@ -93,7 +110,15 @@ a { color: #FF6B00; text-decoration: none; }
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color: #FFF6F0; border-radius: 12px; padding: 22px;">
 {{ title_row("이번 주 바로 써볼 만한 것 ✨", None, "otter-tool.png", 150, "공구를 든 해달", "#FF6B00") }}
 {%- for h in issue.highlights %}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 14px; color: #222222;">{{ h.tag }} {{ h.why_ko }} {{ h.how_ko }}</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding: 14px 0 0 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+{{ pill(h.tag, "#ffffff", "#FF6B00") }}<td width="8"></td>
+<td style="{{ ff }} font-size: 15px; font-weight: bold; color: #222222;">{{ issue.items[h.rank - 1].title_ko }}</td>
+</tr></table>
+</td></tr>
+<tr><td style="{{ ff }} padding: 8px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">왜 좋은지: {{ h.why_ko }}<br>어떻게 만들지: {{ h.how_ko }}</td></tr>
+</table>
 {%- endfor %}
 </td></tr></table>
 </td></tr>
@@ -123,8 +148,14 @@ a { color: #FF6B00; text-decoration: none; }
 <tr data-section="explainer"><td style="padding: 32px; background-color: #EDF6FF;">
 {{ title_row("AI 기술 쉽게 보기 🔍", None, "otter-chalkboard.png", 170, "칠판 앞의 해달", "#303A83", "center") }}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+{%- if ex.point_ko %}
+<tr><td style="padding: 14px 0 0 0;">{{ box_cell("오늘의 포인트", ex.point_ko) }}</td></tr>
+{%- endif %}
 <tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #222222;">{{ ex.topic }}</td></tr>
 <tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 15px; line-height: 180%; color: #222222;">{{ ex.body_ko }}</td></tr>
+{%- if ex.example_ko %}
+<tr><td style="padding: 14px 0 0 0;">{{ box_cell("예를 들어", ex.example_ko) }}</td></tr>
+{%- endif %}
 </table>
 </td></tr>
 {%- endif %}

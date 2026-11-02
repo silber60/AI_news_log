@@ -277,9 +277,9 @@ def test_card_content_in_figma_order(issue_w44):
         [
             "<img",
             f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}",
-            esc(it.title_ko),
-            esc(it.title_en),
-            esc(it.summary_ko),
+            f">{esc(it.title_ko)}<",
+            f">{esc(it.title_en)}<",
+            f">{esc(it.summary_ko)}<",
             "· " + esc(it.summary_lines_ko[0]),
             "🧩 모델 정보",
             "논문 보기 →",
