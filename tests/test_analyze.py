@@ -626,3 +626,102 @@ def test_issue_w44_haeyo_regression():
         assert not analyze.bad_info_prose(info["architecture_ko"]), rank
         assert len(info["kind_ko"]) <= analyze.KIND_LIMIT, rank
         assert len(info["architecture_ko"]) <= analyze.ARCH_LIMIT, rank
+
+
+# ------------------------------------------------- claude_gpt / ANLY-02, D-06
+
+CG_LABELS = ("직접 사용", "기법 적용 가능", "해당 없음")
+
+
+def test_cg_reason_limit_is_60():
+    assert analyze.CLAUDE_GPT_REASON_LIMIT == 60
+    assert analyze.check(_analysis(claude_gpt_reason_ko="가" * 59 + "요")) == []
+
+
+@pytest.mark.parametrize(
+    ("reason", "codes"),
+    [
+        ("", ["cg_reason_empty"]),
+        ("  ", ["cg_reason_empty"]),
+        ("가" * 60 + "요", ["cg_reason_len"]),
+        ("대화에서 따라 할 수 있다.", ["tone"]),
+    ],
+)
+def test_cg_reason_check_codes(reason, codes):
+    assert [c for c, _ in analyze.check(_analysis(claude_gpt_reason_ko=reason))] == codes
+
+
+@pytest.mark.parametrize("label", CG_LABELS)
+def test_cg_label_in_reason_is_flagged(label):
+    reason = f"초록 기준으로 {label}에 가까워요."
+    codes = [c for c, _ in analyze.check(_analysis(claude_gpt_reason_ko=reason))]
+    assert codes == ["cg_label_in_reason"]
+
+
+def test_cg_check_messages_carry_no_model_text():
+    reason = "비밀문장 직접 사용에 가까워요."
+    msgs = [m for _, m in analyze.check(_analysis(claude_gpt_reason_ko=reason))]
+    assert msgs and all("claude_gpt_reason_ko" in m and "비밀문장" not in m for m in msgs)
+
+
+def test_cg_reason_overrun_is_retried_then_trimmed(hf_pages, caplog):
+    long = "가" * 70 + "요."
+    fake = FakeAnthropic([_parsed(claude_gpt_reason_ko=long), _parsed(claude_gpt_reason_ko=long)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert len(fake.calls) == 2
+    assert "claude_gpt_reason_ko" in fake.user_texts()[1]
+    assert len(result.claude_gpt_reason_ko) <= 60
+    assert result.claude_gpt_reason_ko.endswith("…")
+    assert result.claude_gpt == VALID["claude_gpt"]
+    assert "trimmed=claude_gpt_reason_ko rank=2" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "reason", ["", "초록 기준으로 직접 사용에 가까워요.", "해당 없음이라고 볼 수 있어요."]
+)
+def test_cg_bad_reason_twice_downgrades_and_keeps_the_build(hf_pages, caplog, reason):
+    over = {"claude_gpt": "직접 사용", "claude_gpt_reason_ko": reason}
+    fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=5)
+    assert len(fake.calls) == 2
+    assert (result.claude_gpt, result.claude_gpt_reason_ko) == ("확인 필요", "")
+    assert result.summary_ko == VALID["summary_ko"]
+    item = analyze.to_item(5, _entry(hf_pages), result)
+    assert (item.claude_gpt.verdict, item.claude_gpt.reason_ko) == ("확인 필요", None)
+    warn = [r.getMessage() for r in caplog.records if "claude_gpt=downgraded" in r.getMessage()]
+    assert len(warn) == 1 and warn[0].startswith("claude_gpt=downgraded rank=5 codes=cg_")
+    if reason:
+        assert reason not in caplog.text
+
+
+def test_cg_bad_reason_then_fixed_uses_second(hf_pages):
+    bad = _parsed(claude_gpt_reason_ko="기법 적용 가능해요.")
+    fake = FakeAnthropic([bad, _parsed()])
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 2
+    assert result.claude_gpt_reason_ko == VALID["claude_gpt_reason_ko"]
+
+
+def test_cg_tone_twice_is_kept_with_warning(hf_pages, caplog):
+    reason = "대화에서 따라 할 수 있다."
+    fake = FakeAnthropic([_parsed(claude_gpt_reason_ko=reason)] * 2)
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=3)
+    assert result.claude_gpt_reason_ko == reason
+    assert "tone=unfixed rank=3 fields=claude_gpt_reason_ko" in caplog.text
+
+
+def test_cg_bad_reason_with_fatal_error_still_fails(hf_pages):
+    bad = {"claude_gpt_reason_ko": "", "title_ko": " "}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert "title_empty" in str(exc.value)
+
+
+def test_claude_gpt_is_copied_to_item(hf_pages):
+    item = analyze.to_item(1, _entry(hf_pages), _analysis())
+    assert item.claude_gpt.verdict == VALID["claude_gpt"]
+    assert item.claude_gpt.reason_ko == VALID["claude_gpt_reason_ko"]

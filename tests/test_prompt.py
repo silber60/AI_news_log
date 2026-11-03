@@ -55,7 +55,22 @@ def test_system_carries_rules_and_ai_types(hf_pages):
     assert "<paper>" in text
     for word in ("혁신적", "획기적", "게임 체인저", "단순히", "—"):
         assert word in text
-    assert text.splitlines()[0] == "<!-- prompt-version: 4 -->"
+    assert text.splitlines()[0] == "<!-- prompt-version: 5 -->"
+
+
+def test_prompt_claude_gpt_section(hf_pages):
+    """ANLY-02, D-06: four labels, base rate, self-hosted weights never 직접 사용."""
+    text = _call(hf_pages)["system"][0]["text"]
+    paper = (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8")
+    assert "### `claude_gpt`" in paper and "### `claude_gpt_reason_ko`" in paper
+    for label in ("직접 사용", "기법 적용 가능", "해당 없음", "확인 필요"):
+        assert f"`{label}`" in text, label
+    assert "대부분의 논문은 `기법 적용 가능` 또는 `해당 없음`이에요." in text
+    assert "직접 호스팅해야 하는 가중치는 `직접 사용`이 아닙니다" in text
+    for term in ("MCP server", "plugin", "Skill", "API"):
+        assert term in text, term
+    assert "60자" in paper
+    assert "열한 필드" in paper and "`claude_gpt_reason_ko`)" in paper
 
 
 def test_tone_rule_is_haeyo_in_both_prompts():
