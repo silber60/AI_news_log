@@ -1,4 +1,4 @@
-{# template-version: 4 #}
+{# template-version: 5 #}
 {%- macro card(it) %}
 ----------------------------------------
 {{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}
@@ -7,14 +7,10 @@
 
 {{ it.summary_ko }}
 {% for line in it.summary_lines_ko %}· {{ line }}
-{% endfor %}
-🧩 모델 정보
-유형: {{ it.model_info.kind_ko }}
-구조: {{ it.model_info.architecture_ko }}
-크기: {{ it.model_info.size }}
-학습 데이터: {{ it.model_info.training_data }}
-공개 범위: {{ it.model_info.release }}
-{% if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
+{% endfor %}💡 {{ it.use_idea_ko }}
+{% if info_rows[it.rank] %}🧩 모델 정보
+{% for label, value in info_rows[it.rank] %}{{ label }}: {{ value }}
+{% endfor %}{% endif %}{% if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
 상업적 사용 {{ it.commercial.verdict }} · PoC {{ it.poc.verdict }} · Claude/GPT {{ it.claude_gpt.verdict }}
 {% endif %}
 논문: {{ it.hf_url }}
@@ -29,7 +25,7 @@ arXiv: {{ it.arxiv_url }}
 
 {{ issue.headline_ko }}
 
-{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에서 추천을 많이 받은 AI 모델 {{ issue.items|length }}개를 골랐어요.
+{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 {{ issue.items|length }}개를 골랐어요!
 {% if issue.highlights %}
 ========================================
 이번 주 바로 써볼 만한 것 ✨
@@ -46,7 +42,7 @@ arXiv: {{ it.arxiv_url }}
 {% endif %}
 ========================================
 이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️
-Hugging Face 추천 수 기준
+{{ basis_note }}
 {% for it in top3 %}{{ card(it) }}{% endfor %}
 {%- if issue.explainer %}
 ========================================
@@ -62,8 +58,8 @@ AI 기술 쉽게 보기 🔍
 {% endif %}{% endif %}
 {%- if rest %}
 ========================================
-놓치기 아까운 4위부터 10위까지 👀
-Hugging Face 추천 수 기준
+{{ rest_title }}
+{{ basis_note }}
 {% for it in rest %}{{ card(it) }}{% endfor %}
 {%- endif %}
 ========================================

@@ -1,4 +1,4 @@
-{# template-version: 4 #}
+{# template-version: 5 #}
 {#- Figma v2 email (Phase 1.1, D-01..D-05). Tables + inline CSS only, 640px.
     One <tr data-section="..."> per section, in Figma order. Phase 3 sections
     (highlight, trend, explainer) render only when their data exists (D-04).
@@ -31,27 +31,30 @@
 </td></tr></table>
 {%- endmacro -%}
 
-{#- Figma card (node 7:2): image, meta, titles, summary, 3 lines, 모델 정보, badges, links. #}
-{%- macro card(it, show_image) -%}
+{#- Figma card (node 7:2): image, meta, titles, summary, 3 lines + 💡 idea, 모델 정보, badges, links.
+    v1.2 (D-07, D-08): no hero image; every card shows its own image, card 1 included. #}
+{%- macro card(it) -%}
 <tr><td style="padding: 0 0 24px 0;">
 <table role="presentation" data-card="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0">
-{%- if show_image and it.image %}
+{%- if it.image %}
 <tr><td style="padding: 0 0 10px 0;"><img src="{{ it.image.url }}" width="{{ it.image.width }}" height="{{ it.image.height }}" alt="{{ it.title_ko }} 대표 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
 {%- endif %}
 <tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}</td></tr>
 <tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 19px; font-weight: bold; line-height: 145%; color: #222222;">{{ it.title_ko }}</td></tr>
 <tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 13px; color: #A3A3A3;">{{ it.title_en }}</td></tr>
 <tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 16px; font-weight: bold; line-height: 170%; color: #222222;">{{ it.summary_ko }}</td></tr>
-<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 15px; line-height: 165%; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
-{%- set mi = it.model_info %}
+<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 15px; line-height: 165%; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}<br>💡 {{ it.use_idea_ko }}</td></tr>
+{%- set rows = info_rows[it.rank] %}
+{%- if rows %}
 <tr><td style="padding: 10px 0 0 0;">
 <table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F7F7F9; border-radius: 8px;">
 <tr><td colspan="2" style="{{ ff }} padding: 14px 16px 4px 16px; font-size: 14px; font-weight: bold; color: #303A83;">🧩 모델 정보</td></tr>
-{%- for label, value in [("유형", mi.kind_ko), ("구조", mi.architecture_ko), ("크기", mi.size), ("학습 데이터", mi.training_data), ("공개 범위", mi.release)] %}
+{%- for label, value in rows %}
 <tr><td width="84" valign="top" style="{{ ff }} padding: 4px 0 {% if loop.last %}14px{% else %}4px{% endif %} 16px; font-size: 13px; font-weight: 500; color: #737373;">{{ label }}</td><td valign="top" style="{{ ff }} padding: 4px 16px {% if loop.last %}14px{% else %}4px{% endif %} 0; font-size: 14px; color: #222222;">{{ value }}</td></tr>
 {%- endfor %}
 </table>
 </td></tr>
+{%- endif %}
 {%- if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
 <tr><td style="{{ ff }} padding: 14px 0 4px 0; font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill("상업적 사용 " ~ it.commercial.verdict, "#F0F0F0", "#666666") }} {{ pill("PoC " ~ it.poc.verdict, "#E8F5E9", "#2E7D32") }} {{ pill("Claude/GPT " ~ it.claude_gpt.verdict, "#EDF6FF", "#303A83") }}</td></tr>
 {%- endif %}
@@ -92,13 +95,10 @@ a { color: #FF6B00; text-decoration: none; }
 <tr data-section="hero"><td style="padding: 20px 32px 8px 32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="{{ ff }} font-size: 22px; font-weight: bold; line-height: 145%; color: #222222;">{{ issue.headline_ko }}</td></tr>
-{%- if hero_image %}
-<tr><td style="padding: 14px 0 0 0;"><img src="{{ hero_image.url }}" width="{{ hero_image.width }}" height="{{ hero_image.height }}" alt="{{ issue.items[0].title_ko }} 대표 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
-{%- endif %}
 </table>
 </td></tr>
 
-<tr data-section="greeting"><td style="{{ ff }} padding: 20px 32px 8px 32px; font-size: 16px; line-height: 175%; color: #222222;">{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에서 추천을 많이 받은 AI 모델 {{ issue.items|length }}개를 골랐어요.</td></tr>
+<tr data-section="greeting"><td style="{{ ff }} padding: 20px 32px 8px 32px; font-size: 16px; line-height: 175%; color: #222222;">{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 {{ issue.items|length }}개를 골랐어요!</td></tr>
 
 {%- if issue.highlights %}
 <tr data-section="highlight"><td style="padding: 20px 32px 20px 32px;">
@@ -129,11 +129,11 @@ a { color: #FF6B00; text-decoration: none; }
 {%- endif %}
 
 <tr data-section="top3"><td style="padding: 28px 32px 12px 32px;">
-{{ title_row("이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️", "Hugging Face 추천 수 기준", "otter-magnifier.png", 150, "돋보기를 든 해달") }}
+{{ title_row("이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️", basis_note, "otter-magnifier.png", 150, "돋보기를 든 해달") }}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding: 24px 0 0 0;"></td></tr>
 {%- for it in top3 %}
-{{ card(it, not (loop.first and hero_image)) }}
+{{ card(it) }}
 {%- endfor %}
 </table>
 </td></tr>
@@ -157,11 +157,11 @@ a { color: #FF6B00; text-decoration: none; }
 
 {%- if rest %}
 <tr data-section="rest"><td style="padding: 32px 32px 12px 32px;">
-{{ title_row("놓치기 아까운 4위부터 10위까지 👀", "Hugging Face 추천 수 기준", None, 0, "") }}
+{{ title_row(rest_title, basis_note, None, 0, "") }}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding: 24px 0 0 0;"></td></tr>
 {%- for it in rest %}
-{{ card(it, true) }}
+{{ card(it) }}
 {%- endfor %}
 </table>
 </td></tr>

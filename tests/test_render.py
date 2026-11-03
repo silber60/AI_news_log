@@ -9,7 +9,7 @@ import respx
 from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import Explainer, Highlight, ItemImage
+from newsletter.schema import IMAGE_URL_MAX, UNKNOWN, Explainer, Highlight, ItemImage
 from newsletter.stages import render as render_mod
 from newsletter.stages.render import (
     ASSET_BASE_URL,
@@ -127,7 +127,7 @@ def test_cards_split_between_top3_and_rest(issue_w44):
             assert pos > rest, rank
     assert "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️" in out
     assert "놓치기 아까운 4위부터 10위까지 👀" in out
-    assert out.count("Hugging Face 추천 수 기준") == 2
+    assert out.count(BASIS_MIXED) == 2
 
 
 def test_two_item_issue_has_no_rest_section(issue_w44):
@@ -147,19 +147,93 @@ def test_header_date_is_monday_after_week(issue_w44):
     assert "매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요" in out
 
 
-def test_hero_shows_headline_and_rank1_image(issue_w44):
+def test_hero_shows_headline_and_no_image(issue_w44):
+    # D-07: nothing under the headline; the top otter banner stays.
+    assert issue_w44.items[0].image is not None
     out = render_html(issue_w44, "구독자님")
     hero = out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
     assert html_lib.escape(issue_w44.headline_ko, quote=False) in hero
-    assert issue_w44.items[0].image.url in hero
+    assert "<img" not in hero
+    banner = out[_section_pos(out, "banner") : _section_pos(out, "header")]
+    assert "otter-banner.jpg" in banner
 
 
-def test_greeting_line(issue_w44):
-    out = render_html(issue_w44, "구독자님")
-    assert (
-        "구독자님, 안녕하세요. 지난주 Hugging Face Papers에서 "
-        "추천을 많이 받은 AI 모델 10개를 골랐어요." in out
+def _greeting(name: str, n: int) -> str:
+    return (
+        f"{name}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 "
+        f"GitHub star를 많이 받은 {n}개를 골랐어요!"
     )
+
+
+def _n_items(issue, n: int):
+    return issue.model_copy(update={"items": issue.items[:n]})
+
+
+def test_star_greeting_line(issue_w44):
+    # D-06: the star-based sentence with the real N.
+    assert _greeting("구독자님", 10) in render_html(issue_w44, "구독자님")
+    assert _greeting("구독자님", 10) in render_text(issue_w44, "구독자님")
+    assert "추천을 많이 받은" not in render_html(issue_w44, "구독자님")
+
+
+@pytest.mark.parametrize("n", [3, 10])
+def test_star_greeting_counts_items(issue_w44, n):
+    issue = _n_items(issue_w44, n)
+    assert _greeting("구독자님", n) in render_html(issue, "구독자님")
+    assert _greeting("구독자님", n) in render_text(issue, "구독자님")
+
+
+def test_star_greeting_uses_name_as_given(issue_w44):
+    assert _greeting("홍길동님", 10) in render_html(issue_w44, "홍길동님")
+    assert _greeting("홍길동님", 10) in render_text(issue_w44, "홍길동님")
+
+
+BASIS_STARS = "GitHub star 기준"
+BASIS_MIXED = "GitHub star 기준 (코드 없는 논문은 Hugging Face 추천 수)"
+
+
+@pytest.mark.parametrize(
+    ("n", "title"),
+    [
+        (3, None),
+        (4, "놓치기 아까운 4위 👀"),
+        (7, "놓치기 아까운 4위부터 7위까지 👀"),
+        (10, "놓치기 아까운 4위부터 10위까지 👀"),
+    ],
+)
+def test_rest_title_follows_n(issue_w44, n, title):
+    # D-04, D-21: the rest title names the real last rank; N == 3 has no rest section.
+    issue = _n_items(issue_w44, n)
+    out = render_html(issue, "구독자님")
+    txt = render_text(issue, "구독자님")
+    if title is None:
+        assert "rest" not in _sections(out)
+        assert "놓치기 아까운" not in out and "놓치기 아까운" not in txt
+    else:
+        rest = out[_section_pos(out, "rest") : _section_pos(out, "closing")]
+        assert title in rest
+        assert title in txt
+        assert out.count("놓치기 아까운") == 1 and txt.count("놓치기 아까운") == 1
+    assert "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️" in out
+
+
+def test_basis_note_stars_only_when_every_item_has_stars(issue_w44):
+    items = [it.model_copy(update={"github_stars": 100 + it.rank}) for it in issue_w44.items]
+    issue = issue_w44.model_copy(update={"items": items})
+    out = render_html(issue, "구독자님")
+    txt = render_text(issue, "구독자님")
+    for part in (out, txt):
+        assert part.count(BASIS_STARS) == 2
+        assert BASIS_MIXED not in part
+        assert "Hugging Face 추천 수 기준" not in part
+
+
+def test_basis_note_mentions_upvotes_when_an_item_has_no_stars(issue_w44):
+    items = [it.model_copy(update={"github_stars": 100 + it.rank}) for it in issue_w44.items]
+    items[9] = items[9].model_copy(update={"github_stars": None})
+    issue = issue_w44.model_copy(update={"items": items})
+    for part in (render_html(issue, "구독자님"), render_text(issue, "구독자님")):
+        assert part.count(BASIS_MIXED) == 2
 
 
 # ------------------------------------------------- Task 2 email-safe markup
@@ -292,6 +366,7 @@ def test_card_content_in_figma_order(issue_w44):
             f">{esc(it.title_en)}<",
             f">{esc(it.summary_ko)}<",
             "· " + esc(it.summary_lines_ko[0]),
+            "💡 " + esc(it.use_idea_ko),
             "🧩 모델 정보",
             "논문 보기 →",
         ],
@@ -299,22 +374,34 @@ def test_card_content_in_figma_order(issue_w44):
     assert "활용 아이디어" not in "".join(cards)
 
 
-def test_card1_drops_image_when_hero_shows_it(issue_w44):
+def test_every_item_image_is_on_its_own_card(issue_w44):
+    # D-08: each card shows its own image at the top, card 1 included (no hero).
     assert issue_w44.items[0].image is not None
-    issue = _with_item(issue_w44, 1, image=issue_w44.items[0].image)
+    img2 = ItemImage(
+        url="https://raw.githubusercontent.com/acme/repo/main/assets/teaser.png",
+        width=576,
+        height=300,
+    )
+    issue = _with_item(issue_w44, 1, image=img2)
     out = render_html(issue, "구독자님")
     cards = _cards(out)
-    assert "<img" not in cards[0]
-    assert "<img" in cards[1]
-    hero = out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
-    assert out.count(issue_w44.items[0].image.url) == 2  # hero + card 2
-    assert issue_w44.items[0].image.url in hero
+    for it, card in zip(issue.items, cards, strict=True):
+        if it.image is None:
+            continue
+        imgs = _imgs(card)
+        assert len(imgs) == 1, it.rank
+        assert imgs[0]["src"] == it.image.url
+        assert imgs[0]["alt"] == f"{it.title_ko} 대표 그림"
+        assert imgs[0]["width"] == str(it.image.width)
+        assert imgs[0]["height"] == str(it.image.height)
+        assert card.index("<img") < card.index(_meta(it)), it.rank
+        assert out.count(it.image.url) == 1, it.rank
 
 
 def test_card_without_image_has_no_img(issue_w44):
     cards = _cards(render_html(issue_w44, "구독자님"))
     for it, card in zip(issue_w44.items, cards, strict=True):
-        if it.rank > 1 and it.image is None:
+        if it.image is None:
             assert "<img" not in card, it.rank
 
 
@@ -378,6 +465,8 @@ def test_text_part_card_format(issue_w44):
     assert "1위 ㅣ 멀티모달 ㅣ ▲ 153" in txt  # no repo: upvotes
     assert "4위 ㅣ 멀티모달 ㅣ ★ 445" in txt
     assert "프로젝트: https://acme.example/p" in txt
+    for it in issue.items:
+        assert f"· {it.summary_lines_ko[2]}\n💡 {it.use_idea_ko}\n" in txt, it.rank
 
 
 def test_text_part_phase3_slots(issue_w44):
@@ -409,9 +498,11 @@ def test_card_has_three_lines_and_info_rows(issue_w44):
     assert len(cards) == 10
     for it, card in zip(issue_w44.items, cards, strict=True):
         a, b, c = (html_lib.escape(s, quote=False) for s in it.summary_lines_ko)
-        assert f"· {a}<br>· {b}<br>· {c}" in card
+        idea = html_lib.escape(it.use_idea_ko, quote=False)
+        # D-22: the idea sits inside the 3-line cell, after the three lines.
+        assert f"· {a}<br>· {b}<br>· {c}<br>💡 {idea}</td>" in card
         assert "🧩 모델 정보" in card
-        for label in ("유형", "구조", "크기", "학습 데이터", "공개 범위"):
+        for label, _ in _known_info(it):
             assert f">{label}<" in card, label
         assert "활용 아이디어" not in card
 
@@ -455,14 +546,66 @@ def test_trend_renders_only_when_set(issue_w44):
     assert "이번 주 흐름 한눈에" not in plain
 
 
-def test_unknown_facts_render_as_needs_check(issue_w44):
-    out = render_html(issue_w44, "구독자님")
-    # D-07: unknown model facts must show as 확인 필요 on the card.
-    cards = out.split("data-card=")[1:]
-    for it, card in zip(issue_w44.items, cards, strict=True):
-        mi = it.model_info
-        if "확인 필요" in (mi.architecture_ko, mi.size, mi.training_data, mi.release):
-            assert "확인 필요" in card, it.rank
+def _info_box(card: str) -> str | None:
+    if "data-model-info=" not in card:
+        return None
+    return card.split("data-model-info=")[1].split("</table>")[0]
+
+
+def _known_info(it) -> list[tuple[str, str]]:
+    mi = it.model_info
+    values = (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release)
+    return [(lb, v) for lb, v in zip(INFO_LABELS, values, strict=True) if v != UNKNOWN]
+
+
+def test_info_rows_hidden_when_unknown(issue_w44):
+    # D-10: rank 1 has size, training data and release unknown.
+    it = issue_w44.items[0]
+    mi = it.model_info
+    assert (mi.size, mi.training_data, mi.release) == (UNKNOWN,) * 3
+    assert UNKNOWN not in (mi.kind_ko, mi.architecture_ko)
+    box = _info_box(_cards(render_html(issue_w44, "구독자님"))[0])
+    assert "🧩 모델 정보" in box
+    assert ">유형<" in box and ">구조<" in box
+    for label in ("크기", "학습 데이터", "공개 범위"):
+        assert f">{label}<" not in box, label
+    rows = box.split("<tr>")[2:]
+    assert len(rows) == 2
+    pads = ("padding: 4px 0 14px 16px", "padding: 4px 16px 14px 0")
+    assert not any(p in rows[0] for p in pads)
+    assert all(p in rows[1] for p in pads)  # last visible row gets the bottom padding
+
+
+def test_info_rows_hidden_drops_box_when_all_unknown(issue_w44):
+    mi = issue_w44.items[6].model_info.model_copy(
+        update={"kind_ko": UNKNOWN, "architecture_ko": UNKNOWN}
+    )
+    issue = _with_item(issue_w44, 6, model_info=mi)
+    cards = _cards(render_html(issue, "구독자님"))
+    assert "data-model-info=" not in cards[6]
+    assert "🧩 모델 정보" not in cards[6]
+    assert all("🧩 모델 정보" in c for i, c in enumerate(cards) if i != 6)
+    txt = render_text(issue, "구독자님")
+    assert txt.count("🧩 모델 정보") == 9
+
+
+@pytest.mark.parametrize("full", [False, True])
+def test_info_rows_hidden_never_show_needs_check(issue_w44, full):
+    issue = _full_issue(issue_w44) if full else issue_w44
+    cards = _cards(render_html(issue, "구독자님"))
+    for it, card in zip(issue.items, cards, strict=True):
+        box = _info_box(card) or ""
+        assert UNKNOWN not in box, it.rank
+        for label, value in _known_info(it):
+            assert f">{label}<" in box and html_lib.escape(value, quote=False) in box
+
+
+def test_info_rows_hidden_in_text_part(issue_w44):
+    txt = render_text(issue_w44, "구독자님")
+    assert UNKNOWN not in txt  # verdict badges are also hidden in W44
+    for it in issue_w44.items:
+        for label, value in _known_info(it):
+            assert f"{label}: {value}" in txt, (it.rank, label)
 
 
 # ---------------------------------- Task 3 size gate, text part and subject
@@ -491,13 +634,12 @@ def test_render_text_has_all_content_and_no_tags(issue_w44):
     assert "구독자님" in txt
     assert not re.search(r"<[a-zA-Z/][^>]*>", txt)
     for it in issue.items:
-        mi = it.model_info
         for s in (it.title_ko, it.title_en, it.summary_ko):
             assert s in txt
         for line in it.summary_lines_ko:
             assert f"· {line}" in txt
-        for s in (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release):
-            assert s in txt
+        for _, value in _known_info(it):
+            assert value in txt
         for url in (it.hf_url, it.arxiv_url, it.github_url, it.project_url):
             if url:
                 assert url in txt
@@ -552,10 +694,20 @@ SECTION_TITLES = (
 INFO_LABELS = ("유형", "구조", "크기", "학습 데이터", "공개 범위")
 
 
+def _raw_image_url(rank: int) -> str:
+    """A README image on raw.githubusercontent.com at the schema's 300-char cap."""
+    head = f"https://raw.githubusercontent.com/some-organization/some-long-repo-{rank:02d}/main/"
+    url = head + "f" * (IMAGE_URL_MAX - len(head) - len(".png")) + ".png"
+    assert len(url) == IMAGE_URL_MAX == 300
+    return url
+
+
 def _worst_case(issue):
-    """Plan 01.1-04 worst case: 10 images, every link, max-length fields, all Phase 3 slots.
+    """v1.2 worst case (DSGN-08): 10 card images and no hero, every link, max-length fields,
+    50-char ideas, 99,999 stars, all Phase 3 slots.
 
     Titles stay as in W44 and verdicts stay 확인 필요 (no badge row) as in Phase 1.1.
+    Every 모델 정보 value is known, so all five rows render.
     """
     ids = ", ".join(f"org-name/{'d' * 30}{n}" for n in range(3))  # 3 x 40 chars
     assert all(len(x) == 40 for x in ids.split(", "))
@@ -574,11 +726,9 @@ def _worst_case(issue):
         items.append(
             it.model_copy(
                 update={
-                    "image": ItemImage(
-                        url=f"https://cdn-uploads.huggingface.co/production/uploads/{'a' * 24}/{'b' * 20}{r:02d}.png",
-                        width=576,
-                        height=260,
-                    ),
+                    "image": ItemImage(url=_raw_image_url(r), width=576, height=260),
+                    "use_idea_ko": "활" * 50,
+                    "github_stars": 99999,
                     "github_url": f"https://github.com/some-organization/some-long-repository-name-{r}",
                     "project_url": f"https://some-organization.github.io/some-long-project-page-{r}/",
                     "summary_ko": "요" * 80,
@@ -644,28 +794,37 @@ def test_worst_case_images_and_phase3_otters(issue_w44):
         "otter-tool.png",
         "otter-chalkboard.png",
     }
-    # hero + cards 2-10 (card 1 skips the hero image, D-18)
-    hf = [i for i in imgs if i["src"].startswith("https://cdn-uploads.huggingface.co/")]
-    assert len(hf) == 10
+    # 10 card images (D-08) and none in the hero (D-07)
+    raw = [i for i in imgs if i["src"].startswith("https://raw.githubusercontent.com/")]
+    assert len(raw) == 10
+    assert all(len(i["src"]) == 300 for i in raw)
+    out = render_html(_worst_case(issue_w44), "구독자님")
+    assert "<img" not in out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
+    assert all(c.count("<img") == 1 for c in _cards(out))
 
 
 def _strip_imgs(out: str) -> str:
     return html_lib.unescape(re.sub(r"<img\b[^>]*>", "", out))
 
 
-@pytest.mark.parametrize("full", [False, True])
-def test_email_reads_with_images_blocked(issue_w44, full):
-    issue = _full_issue(issue_w44) if full else issue_w44
+@pytest.mark.parametrize("variant", ["w44", "full", "worst"])
+def test_email_reads_with_images_blocked(issue_w44, variant):
+    full = variant != "w44"
+    issue = {"w44": issue_w44, "full": _full_issue(issue_w44), "worst": _worst_case(issue_w44)}[
+        variant
+    ]
     text = _strip_imgs(render_html(issue, "구독자님"))
     titles = SECTION_TITLES if full else SECTION_TITLES[2:3] + SECTION_TITLES[4:]
     for t in titles:
         assert t in text, t
     assert issue.headline_ko in text
     for it in issue.items:
-        for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko):
+        for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko, "💡 " + it.use_idea_ko):
             assert s in text, (it.rank, s)
+        known = {label for label, _ in _known_info(it)}
+        box = _info_box(text.split(f'data-card="{it.rank}"')[1]) or ""
         for label in INFO_LABELS:
-            assert f">{label}<" in text
+            assert (f">{label}<" in box) == (label in known), (it.rank, label)
 
 
 def _all_parts(issue) -> list[str]:
@@ -716,8 +875,13 @@ def test_web_links_appear_once_web_url_is_set(issue_w44, monkeypatch):
 
 
 def test_worst_case_under_byte_limit(issue_w44):
-    n = len(render_html(_worst_case(issue_w44), "구독자님").encode("utf-8"))
-    print(f"worst-case email.html bytes={n}")
+    worst = _worst_case(issue_w44)
+    assert all(len(it.use_idea_ko) == 50 and it.github_stars == 99999 for it in worst.items)
+    out = render_html(worst, "구독자님")
+    n = len(out.encode("utf-8"))
+    print(f"worst-case email.html bytes={n} headroom={MAX_EMAIL_BYTES - n}")
+    assert "★ 99,999" in out
+    assert out.count("💡 " + "활" * 50) == 10
     assert n < MAX_EMAIL_BYTES
 
 
@@ -728,13 +892,11 @@ def test_text_part_complete_and_asset_free(issue_w44):
     assert "구독자님, 안녕하세요." in txt
     assert issue.headline_ko in txt
     for it in issue.items:
-        mi = it.model_info
         for s in (it.title_ko, it.title_en, it.summary_ko):
             assert s in txt
         for line in it.summary_lines_ko:
             assert f"· {line}" in txt
-        values = (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release)
-        for label, value in zip(INFO_LABELS, values, strict=True):
+        for label, value in _known_info(it):
             assert f"{label}: {value}" in txt
         assert it.hf_url in txt and it.arxiv_url in txt
     assert ASSET_BASE_URL not in txt
