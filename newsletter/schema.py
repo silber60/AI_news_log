@@ -267,3 +267,20 @@ class HeadlineLLM(BaseModel):  # DLVR-07 (plan 03 calls Claude with it)
     model_config = ConfigDict(extra="forbid")
     emoji: HeadlineEmoji
     hook_ko: str  # <= 24 chars (checked in code)
+
+
+class TrendLLM(BaseModel):  # ANLY-05, D-07 (plan 02-03): 이번 주 트렌드 총평
+    model_config = ConfigDict(extra="forbid")
+    trend_ko: str  # 2-3 해요체 sentences, <= 300 chars (checked in code)
+
+
+class VerdictNoteLLM(BaseModel):  # ANLY-04, D-14 (plan 02-03): one item's reasons
+    model_config = ConfigDict(extra="forbid")
+    rank: int
+    commercial_reason_ko: str  # one 해요체 sentence, <= 60 chars (checked in code)
+    poc_reason_ko: str  # one 해요체 sentence, <= 60 chars (checked in code)
+
+
+class VerdictNotesLLM(BaseModel):  # ANLY-04, D-14: one batched call for all items
+    model_config = ConfigDict(extra="forbid")
+    notes: list[VerdictNoteLLM]

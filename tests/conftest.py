@@ -20,7 +20,14 @@ import pytest
 import respx
 from PIL import Image
 
-from newsletter.schema import HeadlineLLM, Issue, ItemAnalysisLLM
+from newsletter.schema import (
+    HeadlineLLM,
+    Issue,
+    ItemAnalysisLLM,
+    TrendLLM,
+    VerdictNoteLLM,
+    VerdictNotesLLM,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -270,10 +277,37 @@ def default_headline(kw: dict) -> HeadlineLLM:
     return HeadlineLLM(emoji="🤖", hook_ko="말하면 로봇이 움직인다?")
 
 
+DEFAULT_TREND = "이번 주에는 로봇과 멀티모달 연구가 많았어요. 코드를 함께 공개한 연구도 많았어요."
+
+
+def default_trend(kw: dict) -> TrendLLM:
+    """Deterministic valid trend: two plain 해요체 sentences, no names or digits."""
+    return TrendLLM(trend_ko=DEFAULT_TREND)
+
+
+def default_notes(kw: dict) -> VerdictNotesLLM:
+    """One neutral, grounded note per `rank: N` line in the user content."""
+    ranks = [int(r) for r in re.findall(r"^rank: (\d+)$", _user_text(kw), re.MULTILINE)]
+    return VerdictNotesLLM(
+        notes=[
+            VerdictNoteLLM(
+                rank=r,
+                commercial_reason_ko="공개된 라이선스 정보를 근거로 판단했어요.",
+                poc_reason_ko="공개된 자료 범위를 근거로 판단했어요.",
+            )
+            for r in ranks
+        ]
+    )
+
+
 def default_response(kw: dict) -> SimpleNamespace:
-    """Valid default for either request type, chosen by the request's output_format."""
+    """Valid default for any request type, chosen by the request's output_format."""
     if kw.get("output_format") is HeadlineLLM:
         return make_parsed(default_headline(kw))
+    if kw.get("output_format") is TrendLLM:
+        return make_parsed(default_trend(kw))
+    if kw.get("output_format") is VerdictNotesLLM:
+        return make_parsed(default_notes(kw))
     return make_parsed(default_analysis(kw))
 
 
@@ -293,8 +327,9 @@ class FakeAnthropic:
       - a response object (e.g. from `make_parsed`), returned as is;
       - an Exception instance, raised;
       - a callable `f(kw) -> response`, called with the request kwargs.
-    When the script is exhausted, calls return a valid default: an analysis, or a
-    headline when `output_format` is HeadlineLLM.
+    When the script is exhausted, calls return a valid default chosen by
+    `output_format`: a headline (HeadlineLLM), a trend (TrendLLM), one note per
+    input rank (VerdictNotesLLM), or else an analysis.
     Every call is recorded in `calls` as `{"ns": "messages"|"beta", "kw": kw}`.
     """
 
