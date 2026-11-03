@@ -9,7 +9,7 @@ import respx
 from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import Explainer, Highlight, ItemImage
+from newsletter.schema import UNKNOWN, Explainer, Highlight, ItemImage
 from newsletter.stages import render as render_mod
 from newsletter.stages.render import (
     ASSET_BASE_URL,
@@ -127,7 +127,7 @@ def test_cards_split_between_top3_and_rest(issue_w44):
             assert pos > rest, rank
     assert "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️" in out
     assert "놓치기 아까운 4위부터 10위까지 👀" in out
-    assert out.count("Hugging Face 추천 수 기준") == 2
+    assert out.count(BASIS_MIXED) == 2
 
 
 def test_two_item_issue_has_no_rest_section(issue_w44):
@@ -158,12 +158,82 @@ def test_hero_shows_headline_and_no_image(issue_w44):
     assert "otter-banner.jpg" in banner
 
 
-def test_greeting_line(issue_w44):
-    out = render_html(issue_w44, "구독자님")
-    assert (
-        "구독자님, 안녕하세요. 지난주 Hugging Face Papers에서 "
-        "추천을 많이 받은 AI 모델 10개를 골랐어요." in out
+def _greeting(name: str, n: int) -> str:
+    return (
+        f"{name}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 "
+        f"GitHub star를 많이 받은 {n}개를 골랐어요!"
     )
+
+
+def _n_items(issue, n: int):
+    return issue.model_copy(update={"items": issue.items[:n]})
+
+
+def test_star_greeting_line(issue_w44):
+    # D-06: the star-based sentence with the real N.
+    assert _greeting("구독자님", 10) in render_html(issue_w44, "구독자님")
+    assert _greeting("구독자님", 10) in render_text(issue_w44, "구독자님")
+    assert "추천을 많이 받은" not in render_html(issue_w44, "구독자님")
+
+
+@pytest.mark.parametrize("n", [3, 10])
+def test_star_greeting_counts_items(issue_w44, n):
+    issue = _n_items(issue_w44, n)
+    assert _greeting("구독자님", n) in render_html(issue, "구독자님")
+    assert _greeting("구독자님", n) in render_text(issue, "구독자님")
+
+
+def test_star_greeting_uses_name_as_given(issue_w44):
+    assert _greeting("홍길동님", 10) in render_html(issue_w44, "홍길동님")
+    assert _greeting("홍길동님", 10) in render_text(issue_w44, "홍길동님")
+
+
+BASIS_STARS = "GitHub star 기준"
+BASIS_MIXED = "GitHub star 기준 (코드 없는 논문은 Hugging Face 추천 수)"
+
+
+@pytest.mark.parametrize(
+    ("n", "title"),
+    [
+        (3, None),
+        (4, "놓치기 아까운 4위 👀"),
+        (7, "놓치기 아까운 4위부터 7위까지 👀"),
+        (10, "놓치기 아까운 4위부터 10위까지 👀"),
+    ],
+)
+def test_rest_title_follows_n(issue_w44, n, title):
+    # D-04, D-21: the rest title names the real last rank; N == 3 has no rest section.
+    issue = _n_items(issue_w44, n)
+    out = render_html(issue, "구독자님")
+    txt = render_text(issue, "구독자님")
+    if title is None:
+        assert "rest" not in _sections(out)
+        assert "놓치기 아까운" not in out and "놓치기 아까운" not in txt
+    else:
+        rest = out[_section_pos(out, "rest") : _section_pos(out, "closing")]
+        assert title in rest
+        assert title in txt
+        assert out.count("놓치기 아까운") == 1 and txt.count("놓치기 아까운") == 1
+    assert "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️" in out
+
+
+def test_basis_note_stars_only_when_every_item_has_stars(issue_w44):
+    items = [it.model_copy(update={"github_stars": 100 + it.rank}) for it in issue_w44.items]
+    issue = issue_w44.model_copy(update={"items": items})
+    out = render_html(issue, "구독자님")
+    txt = render_text(issue, "구독자님")
+    for part in (out, txt):
+        assert part.count(BASIS_STARS) == 2
+        assert BASIS_MIXED not in part
+        assert "Hugging Face 추천 수 기준" not in part
+
+
+def test_basis_note_mentions_upvotes_when_an_item_has_no_stars(issue_w44):
+    items = [it.model_copy(update={"github_stars": 100 + it.rank}) for it in issue_w44.items]
+    items[9] = items[9].model_copy(update={"github_stars": None})
+    issue = issue_w44.model_copy(update={"items": items})
+    for part in (render_html(issue, "구독자님"), render_text(issue, "구독자님")):
+        assert part.count(BASIS_MIXED) == 2
 
 
 # ------------------------------------------------- Task 2 email-safe markup
@@ -432,7 +502,7 @@ def test_card_has_three_lines_and_info_rows(issue_w44):
         # D-22: the idea sits inside the 3-line cell, after the three lines.
         assert f"· {a}<br>· {b}<br>· {c}<br>💡 {idea}</td>" in card
         assert "🧩 모델 정보" in card
-        for label in ("유형", "구조", "크기", "학습 데이터", "공개 범위"):
+        for label, _ in _known_info(it):
             assert f">{label}<" in card, label
         assert "활용 아이디어" not in card
 
@@ -476,14 +546,64 @@ def test_trend_renders_only_when_set(issue_w44):
     assert "이번 주 흐름 한눈에" not in plain
 
 
-def test_unknown_facts_render_as_needs_check(issue_w44):
-    out = render_html(issue_w44, "구독자님")
-    # D-07: unknown model facts must show as 확인 필요 on the card.
-    cards = out.split("data-card=")[1:]
-    for it, card in zip(issue_w44.items, cards, strict=True):
-        mi = it.model_info
-        if "확인 필요" in (mi.architecture_ko, mi.size, mi.training_data, mi.release):
-            assert "확인 필요" in card, it.rank
+def _info_box(card: str) -> str | None:
+    if "data-model-info=" not in card:
+        return None
+    return card.split("data-model-info=")[1].split("</table>")[0]
+
+
+def _known_info(it) -> list[tuple[str, str]]:
+    mi = it.model_info
+    values = (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release)
+    return [(lb, v) for lb, v in zip(INFO_LABELS, values, strict=True) if v != UNKNOWN]
+
+
+def test_info_rows_hidden_when_unknown(issue_w44):
+    # D-10: rank 1 has size, training data and release unknown.
+    it = issue_w44.items[0]
+    mi = it.model_info
+    assert (mi.size, mi.training_data, mi.release) == (UNKNOWN,) * 3
+    assert UNKNOWN not in (mi.kind_ko, mi.architecture_ko)
+    box = _info_box(_cards(render_html(issue_w44, "구독자님"))[0])
+    assert "🧩 모델 정보" in box
+    assert ">유형<" in box and ">구조<" in box
+    for label in ("크기", "학습 데이터", "공개 범위"):
+        assert f">{label}<" not in box, label
+    rows = box.split("<tr>")[2:]
+    assert len(rows) == 2
+    assert "14px" not in rows[0] and rows[1].count("14px") == 2  # last visible row pads
+
+
+def test_info_rows_hidden_drops_box_when_all_unknown(issue_w44):
+    mi = issue_w44.items[6].model_info.model_copy(
+        update={"kind_ko": UNKNOWN, "architecture_ko": UNKNOWN}
+    )
+    issue = _with_item(issue_w44, 6, model_info=mi)
+    cards = _cards(render_html(issue, "구독자님"))
+    assert "data-model-info=" not in cards[6]
+    assert "🧩 모델 정보" not in cards[6]
+    assert all("🧩 모델 정보" in c for i, c in enumerate(cards) if i != 6)
+    txt = render_text(issue, "구독자님")
+    assert txt.count("🧩 모델 정보") == 9
+
+
+@pytest.mark.parametrize("full", [False, True])
+def test_info_rows_hidden_never_show_needs_check(issue_w44, full):
+    issue = _full_issue(issue_w44) if full else issue_w44
+    cards = _cards(render_html(issue, "구독자님"))
+    for it, card in zip(issue.items, cards, strict=True):
+        box = _info_box(card) or ""
+        assert UNKNOWN not in box, it.rank
+        for label, value in _known_info(it):
+            assert f">{label}<" in box and html_lib.escape(value, quote=False) in box
+
+
+def test_info_rows_hidden_in_text_part(issue_w44):
+    txt = render_text(issue_w44, "구독자님")
+    assert UNKNOWN not in txt  # verdict badges are also hidden in W44
+    for it in issue_w44.items:
+        for label, value in _known_info(it):
+            assert f"{label}: {value}" in txt, (it.rank, label)
 
 
 # ---------------------------------- Task 3 size gate, text part and subject
@@ -512,13 +632,12 @@ def test_render_text_has_all_content_and_no_tags(issue_w44):
     assert "구독자님" in txt
     assert not re.search(r"<[a-zA-Z/][^>]*>", txt)
     for it in issue.items:
-        mi = it.model_info
         for s in (it.title_ko, it.title_en, it.summary_ko):
             assert s in txt
         for line in it.summary_lines_ko:
             assert f"· {line}" in txt
-        for s in (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release):
-            assert s in txt
+        for _, value in _known_info(it):
+            assert value in txt
         for url in (it.hf_url, it.arxiv_url, it.github_url, it.project_url):
             if url:
                 assert url in txt
@@ -688,7 +807,7 @@ def test_email_reads_with_images_blocked(issue_w44, full):
     for it in issue.items:
         for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko):
             assert s in text, (it.rank, s)
-        for label in INFO_LABELS:
+        for label, _ in _known_info(it):
             assert f">{label}<" in text
 
 
@@ -752,13 +871,11 @@ def test_text_part_complete_and_asset_free(issue_w44):
     assert "구독자님, 안녕하세요." in txt
     assert issue.headline_ko in txt
     for it in issue.items:
-        mi = it.model_info
         for s in (it.title_ko, it.title_en, it.summary_ko):
             assert s in txt
         for line in it.summary_lines_ko:
             assert f"· {line}" in txt
-        values = (mi.kind_ko, mi.architecture_ko, mi.size, mi.training_data, mi.release)
-        for label, value in zip(INFO_LABELS, values, strict=True):
+        for label, value in _known_info(it):
             assert f"{label}: {value}" in txt
         assert it.hf_url in txt and it.arxiv_url in txt
     assert ASSET_BASE_URL not in txt
