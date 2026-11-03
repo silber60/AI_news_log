@@ -324,6 +324,33 @@ def test_gif_and_jpeg_accepted(items, hf_pages, fmt, ctype, name):
             httpx.Response(200, headers={"content-type": "image/png", "content-length": "0"}),
             "decode",
         ),
+        (_resp(image_bytes((575, 300))), "width"),
+        (partial(image_bytes((1152, 468)), total=1_000_001), "bytes"),
+        (partial(image_bytes((1152, 468)), "image/gif", total=3_990_000), "bytes"),
+        (
+            httpx.Response(
+                200,
+                headers={"content-type": "image/png", "content-length": "1000001"},
+                content=image_bytes((1152, 468)),
+            ),
+            "bytes",
+        ),
+        (
+            httpx.Response(
+                206, headers={"content-type": "image/png"}, content=image_bytes((1152, 468))
+            ),
+            "bytes_unknown",
+        ),
+        (
+            httpx.Response(
+                206,
+                headers={"content-type": "image/png", "content-range": "bytes 0-65535/*"},
+                content=image_bytes((1152, 468)),
+            ),
+            "bytes_unknown",
+        ),
+        (httpx.Response(302, headers={"location": CDN + "elsewhere.png"}), "redirect"),
+        (httpx.Response(301, headers={"location": CDN + "elsewhere.png"}), "redirect"),
     ],
 )
 def test_bad_images_are_rejected_without_raising(items, hf_pages, caplog, response, reason):
@@ -334,11 +361,42 @@ def test_bad_images_are_rejected_without_raising(items, hf_pages, caplog, respon
     assert "cdn-uploads" not in caplog.text
 
 
-def test_square_ratio_lower_bound(items, hf_pages):
-    ok, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1200, 1000))))
-    assert ok.image is not None and ok.image.height == 480
-    bad, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1190, 1000))))
-    assert bad.image is None
+@pytest.mark.parametrize(
+    ("size", "height"),
+    [
+        ((1200, 1000), 480),  # ratio 1.2, inclusive
+        ((1190, 1000), None),
+        ((4000, 1000), 144),  # ratio 4.0, inclusive
+        ((4010, 1000), None),
+        ((576, 288), 288),  # exactly the card width
+        ((575, 288), None),
+    ],
+)
+def test_ratio_and_width_bounds(items, hf_pages, size, height):
+    out, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes(size)))
+    if height is None:
+        assert out.image is None
+    else:
+        assert out.image is not None
+        assert (out.image.width, out.image.height) == (576, height)
+    assert (enrich.RATIO_MIN, enrich.RATIO_MAX) == (1.2, 4.0)
+
+
+@pytest.mark.parametrize(("total", "ok"), [(1_000_000, True), (1_000_001, False)])
+def test_total_byte_cap_is_inclusive(items, hf_pages, total, ok):
+    out, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], partial(image_bytes(), total=total))
+    assert (out.image is not None) is ok
+    assert enrich.IMAGE_MAX_TOTAL_BYTES == 1_000_000
+
+
+def test_redirect_is_not_followed(items, hf_pages, caplog):
+    resp = httpx.Response(302, headers={"location": CDN + "elsewhere.png"})
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _img_run(hf_pages, items[0], [CDN + "x.png"], resp)
+    assert out.image is None
+    assert routes["cdn"].call_count == 1
+    assert str(routes["cdn"].calls.last.request.url) == CDN + "x.png"
+    assert "image=none rank=1 reason=redirect" in caplog.text
 
 
 def test_image_never_reads_more_than_64k(items, hf_pages):
@@ -415,3 +473,123 @@ def test_build_uses_hf_image_first_and_skips_its_readme(hf_pages, archive_tmp):
     assert _images(issue) == {1: (RANK1_IMG, 234), **README_IMAGES}
     assert "/InternLM/xtuner/HEAD/README.md" not in paths
     assert "/hyz317/HairDeck/HEAD/README.md" in paths
+
+
+# ------------------------------------------------- HF -> README fall-through
+
+REPO = "https://github.com/o/r"
+README_PNG = "https://raw.githubusercontent.com/o/r/HEAD/docs/wide.png"
+README_TEXT = "SECRET-README-TEXT ![a](docs/wide.png)"
+WIDE = {"status": 206, "content_type": "image/png", "width": 1200, "height": 600}
+
+
+def _repo_run(hf_pages, item, media, response=None, readme=README_TEXT, images=None):
+    entry = _entry_with_media(hf_pages, item, media)
+    paper = entry.paper.model_copy(update={"githubRepo": REPO})
+    entry = entry.model_copy(update={"paper": paper})
+    images = {README_PNG: {**WIDE, "total_bytes": 200_000}} if images is None else images
+    out, routes = _run(
+        [item],
+        [entry],
+        papers={},
+        models={},
+        image=response,
+        readmes={"o/r": readme},
+        readme_images=images,
+    )
+    return out[0], routes
+
+
+def _github_paths(routes) -> list[str]:
+    return [c.request.url.path for c in routes["github"].calls]
+
+
+def test_heavy_hf_gif_falls_through_to_readme(items, hf_pages, caplog):
+    gif = partial(image_bytes((1000, 500), "GIF"), "image/gif", total=3_990_000)
+    with caplog.at_level("DEBUG", logger="newsletter"):
+        out, routes = _repo_run(hf_pages, items[0], [CDN + "anim.gif"], gif)
+    assert out.image is not None
+    assert (out.image.url, out.image.width, out.image.height) == (README_PNG, 576, 288)
+    assert routes["cdn"].call_count == 1
+    assert _github_paths(routes) == ["/o/r/HEAD/README.md", "/o/r/HEAD/docs/wide.png"]
+    assert routes["github"].calls[1].request.headers["range"] == "bytes=0-65535"
+    text = caplog.text
+    assert "image=skip rank=1 reason=bytes" in text and "image=ok rank=1" in text
+    for needle in ("SECRET-README-TEXT", "raw.githubusercontent", "cdn-uploads", "wide.png"):
+        assert needle not in text
+
+
+def test_readme_is_not_requested_when_hf_image_passes(items, hf_pages):
+    out, routes = _repo_run(hf_pages, items[0], [CDN + "wide.png"])
+    assert out.image is not None and out.image.url == CDN + "wide.png"
+    assert routes["github"].call_count == 0
+
+
+def test_missing_readme_means_no_image(items, hf_pages, caplog):
+    entry = _entry_with_media(hf_pages, items[0], None)
+    entry = entry.model_copy(update={"paper": entry.paper.model_copy(update={"githubRepo": REPO})})
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _run([items[0]], [entry], papers={}, models={}, readmes={})
+    assert out[0].image is None
+    assert routes["github"].call_count == 1
+    assert "readme=none rank=1 reason=http_404" in caplog.text
+    assert "image=none rank=1 reason=no_candidate" in caplog.text
+
+
+def test_readme_server_error_is_non_fatal(items, hf_pages, caplog):
+    entry = _entry_with_media(hf_pages, items[0], None)
+    entry = entry.model_copy(update={"paper": entry.paper.model_copy(update={"githubRepo": REPO})})
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, _ = _run([items[0]], [entry], fail=True)
+    assert out[0].image is None
+    assert "readme=none rank=1 reason=http_500" in caplog.text
+
+
+def test_bad_repo_url_makes_no_readme_request(items, hf_pages, caplog):
+    entry = _entry_with_media(hf_pages, items[0], None)
+    bad = entry.paper.model_copy(update={"githubRepo": "https://github.com/o/r/tree/../x"})
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _run(
+            [items[0]], [entry.model_copy(update={"paper": bad})], papers={}, models={}
+        )
+    assert out[0].image is None
+    assert routes["github"].call_count == 0
+    assert "readme=none rank=1 reason=bad_repo" in caplog.text
+
+
+def test_readme_read_is_capped(items, hf_pages):
+    # The image tag sits past the 256 KB cap, so it is never seen.
+    readme = "x" * enrich.README_MAX_BYTES + " ![a](docs/wide.png)"
+    out, routes = _repo_run(hf_pages, items[0], None, readme=readme)
+    assert out.image is None
+    assert _github_paths(routes) == ["/o/r/HEAD/README.md"]
+
+
+def test_probe_limit_counts_hf_and_readme_together(items, hf_pages, caplog):
+    narrow = {"status": 206, "content_type": "image/png", "width": 400, "height": 200}
+    names = [f"docs/n{i}.png" for i in range(4)]
+    readme = " ".join(f"![a]({n})" for n in names)
+    images = {
+        f"https://raw.githubusercontent.com/o/r/HEAD/{n}": {**narrow, "total_bytes": 9}
+        for n in names
+    }
+    media = [CDN + f"h{i}.png" for i in range(3)]
+    small = _resp(image_bytes((400, 200)))
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _repo_run(hf_pages, items[0], media, small, readme=readme, images=images)
+    assert out.image is None
+    probes = routes["cdn"].call_count + routes["github"].call_count - 1  # minus README
+    assert probes == enrich.MAX_PROBES == 6
+    assert routes["cdn"].call_count == 3
+    assert "image=none rank=1 reason=probe_limit" in caplog.text
+
+
+def test_probe_limit_on_hf_media_skips_the_readme(items, hf_pages, caplog):
+    media = [CDN + f"h{i}.png" for i in range(7)]
+    small = _resp(image_bytes((400, 200)))
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _repo_run(hf_pages, items[0], media, small)
+    assert out.image is None
+    assert routes["cdn"].call_count == 6
+    assert routes["github"].call_count == 0
+    assert "image=none rank=1 reason=probe_limit" in caplog.text

@@ -39,6 +39,8 @@ RETINA_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
 def _emails(text: str) -> list[str]:
     """Email-shaped strings, except retina image names such as x@2x.png."""
     return [m for m in EMAIL_RE.findall(text) if not m.lower().endswith(RETINA_EXTS)]
+
+
 RANK1 = "2610.37381"
 FORBIDDEN_KEYS = {"authors", "avatarUrl", "submittedBy", "user", "fullname"}
 
