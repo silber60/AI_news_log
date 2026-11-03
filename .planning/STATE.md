@@ -54,6 +54,8 @@ Recent decisions affecting current work:
 
 - Phase 4.1 inserted after Phase 4: Public Subscribe & Instant Welcome Issue (owner request 2026-11-03; SUBS-01 moved from v2)
 
+- Phase 4.1 backend decided: Netlify page + Google Apps Script web app + Google Sheet (owner, 2026-11-03)
+
 ### Pending Todos
 
 None yet.
