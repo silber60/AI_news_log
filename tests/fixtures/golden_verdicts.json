@@ -1,0 +1,519 @@
+[
+  {
+    "id": "G1",
+    "paper_id": null,
+    "model_id": "meta-llama/Llama-3.1-8B",
+    "model": {
+      "cardData": {
+        "license": "llama3.1"
+      },
+      "gated": "manual",
+      "tags": [
+        "license:llama3.1"
+      ],
+      "safetensors": {
+        "total": 8030261248,
+        "parameters": {
+          "BF16": 8030261248
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 19.3
+    }
+  },
+  {
+    "id": "G2",
+    "paper_id": null,
+    "model_id": "google/gemma-2-2b",
+    "model": {
+      "cardData": {
+        "license": "gemma"
+      },
+      "gated": "manual",
+      "tags": [
+        "license:gemma"
+      ],
+      "safetensors": {
+        "total": 2614341888,
+        "parameters": {
+          "F32": 2614341888
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 6.3
+    }
+  },
+  {
+    "id": "G3",
+    "paper_id": null,
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
+    "model": {
+      "cardData": {
+        "license": "apache-2.0",
+        "license_link": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/blob/main/LICENSE"
+      },
+      "gated": false,
+      "tags": [
+        "base_model:Qwen/Qwen2.5-7B",
+        "base_model:finetune:Qwen/Qwen2.5-7B",
+        "license:apache-2.0"
+      ],
+      "safetensors": {
+        "total": 7615616512,
+        "parameters": {
+          "BF16": 7615616512
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "가능",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 18.3
+    }
+  },
+  {
+    "id": "G4",
+    "paper_id": null,
+    "model_id": "Qwen/Qwen2.5-72B-Instruct",
+    "model": {
+      "cardData": {
+        "license": "other",
+        "license_name": "qwen",
+        "license_link": "https://huggingface.co/Qwen/Qwen2.5-72B-Instruct/blob/main/LICENSE"
+      },
+      "gated": false,
+      "tags": [
+        "base_model:Qwen/Qwen2.5-72B",
+        "base_model:finetune:Qwen/Qwen2.5-72B",
+        "license:other"
+      ],
+      "safetensors": {
+        "total": 72706203648,
+        "parameters": {
+          "BF16": 72706203648
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "불가",
+      "est_vram_gb": 174.5
+    }
+  },
+  {
+    "id": "G5",
+    "paper_id": null,
+    "model_id": "deepseek-ai/DeepSeek-V3",
+    "model": {
+      "cardData": {},
+      "gated": false,
+      "tags": [],
+      "safetensors": {
+        "total": 684489845504,
+        "parameters": {
+          "BF16": 3918786560,
+          "F8_E4M3": 680571043840,
+          "F32": 15104
+        }
+      }
+    },
+    "github": {
+      "status": "ok",
+      "spdx_id": "MIT",
+      "name": "MIT License",
+      "html_url": "https://github.com/deepseek-ai/DeepSeek-V3/blob/main/LICENSE-CODE"
+    },
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": true,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": "https://github.com/deepseek-ai/DeepSeek-V3"
+    },
+    "expect": {
+      "commercial": "확인 필요",
+      "poc": "바로 가능",
+      "local_run": "불가",
+      "est_vram_gb": 1642.8
+    }
+  },
+  {
+    "id": "G6",
+    "paper_id": null,
+    "model_id": "black-forest-labs/FLUX.1-dev",
+    "model": {
+      "cardData": {
+        "license": "other",
+        "license_name": "flux-1-dev-non-commercial-license",
+        "license_link": "LICENSE.md"
+      },
+      "gated": "auto",
+      "tags": [
+        "license:other"
+      ],
+      "safetensors": {
+        "total": 11901408320,
+        "parameters": {
+          "BF16": 11901408320
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "불가",
+      "poc": "바로 가능",
+      "local_run": "제한적",
+      "est_vram_gb": 28.6
+    }
+  },
+  {
+    "id": "G7",
+    "paper_id": null,
+    "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+    "model": {
+      "cardData": {
+        "license": "openrail++"
+      },
+      "gated": false,
+      "tags": [
+        "license:openrail++"
+      ],
+      "safetensors": {
+        "total": 2567463684,
+        "parameters": {
+          "F32": 2567463684
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 6.2
+    }
+  },
+  {
+    "id": "G8",
+    "paper_id": null,
+    "model_id": "CohereLabs/c4ai-command-r-v01",
+    "model": {
+      "cardData": {
+        "license": "cc-by-nc-4.0"
+      },
+      "gated": "auto",
+      "tags": [
+        "license:cc-by-nc-4.0"
+      ],
+      "safetensors": {
+        "total": 34980831232,
+        "parameters": {
+          "F16": 34980831232
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "불가",
+      "poc": "바로 가능",
+      "local_run": "불가",
+      "est_vram_gb": 84.0
+    }
+  },
+  {
+    "id": "G9",
+    "paper_id": null,
+    "model_id": "mistralai/Mistral-7B-v0.1",
+    "model": {
+      "cardData": {
+        "license": "apache-2.0"
+      },
+      "gated": false,
+      "tags": [
+        "license:apache-2.0"
+      ],
+      "safetensors": {
+        "total": 7241732096,
+        "parameters": {
+          "BF16": 7241732096
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "가능",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 17.4
+    }
+  },
+  {
+    "id": "G10",
+    "paper_id": null,
+    "model_id": "TheBloke/Llama-2-7B-GPTQ",
+    "model": {
+      "cardData": {
+        "license": "llama2"
+      },
+      "gated": false,
+      "tags": [
+        "base_model:meta-llama/Llama-2-7b-hf",
+        "base_model:quantized:meta-llama/Llama-2-7b-hf",
+        "license:llama2"
+      ],
+      "safetensors": {
+        "total": 6739777536,
+        "parameters": {
+          "F32": 2048,
+          "I32": 6476005376,
+          "F16": 263770112
+        }
+      }
+    },
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": false,
+      "has_demo": false,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "확인 필요",
+      "est_vram_gb": null
+    }
+  },
+  {
+    "id": "G11",
+    "paper_id": "2610.35518",
+    "model_id": null,
+    "model": null,
+    "github": {
+      "status": "ok",
+      "spdx_id": "Apache-2.0",
+      "name": "Apache License 2.0",
+      "html_url": "https://github.com/InternLM/xtuner/blob/main/LICENSE"
+    },
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": null,
+      "has_code": true,
+      "has_demo": null,
+      "space_id": null,
+      "github_url": "https://github.com/InternLM/xtuner"
+    },
+    "expect": {
+      "commercial": "가능",
+      "poc": "코드만",
+      "local_run": "확인 필요",
+      "est_vram_gb": null
+    }
+  },
+  {
+    "id": "G12",
+    "paper_id": "2610.36729",
+    "model_id": "tencent/Hy-Nomas",
+    "model": {
+      "cardData": {
+        "license": "apache-2.0",
+        "license_link": "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+      },
+      "gated": false,
+      "tags": [
+        "license:apache-2.0"
+      ],
+      "safetensors": null
+    },
+    "github": {
+      "status": "ok",
+      "spdx_id": "NOASSERTION",
+      "name": "Other",
+      "html_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE"
+    },
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": true,
+      "has_demo": true,
+      "space_id": "tencent/hy-nomas",
+      "github_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas"
+    },
+    "expect": {
+      "commercial": "확인 필요",
+      "poc": "바로 가능",
+      "local_run": "확인 필요",
+      "est_vram_gb": null
+    }
+  },
+  {
+    "id": "G13",
+    "paper_id": "2610.30006",
+    "model_id": "liamdugan/detector-scope",
+    "model": {
+      "cardData": {
+        "license": "gemma"
+      },
+      "gated": false,
+      "tags": [
+        "base_model:google/gemma-2-2b",
+        "base_model:finetune:google/gemma-2-2b",
+        "license:gemma"
+      ],
+      "safetensors": {
+        "total": 302130176,
+        "parameters": {
+          "F32": 302130176
+        }
+      }
+    },
+    "github": {
+      "status": "ok",
+      "spdx_id": "Apache-2.0",
+      "name": "Apache License 2.0",
+      "html_url": "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+    },
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": true,
+      "has_code": true,
+      "has_demo": true,
+      "space_id": "liamdugan/detector-scope-demo",
+      "github_url": "https://github.com/google-deepmind/detectorscope"
+    },
+    "expect": {
+      "commercial": "조건부",
+      "poc": "바로 가능",
+      "local_run": "가능",
+      "est_vram_gb": 0.7
+    }
+  },
+  {
+    "id": "G14",
+    "paper_id": "2610.35684",
+    "model_id": null,
+    "model": null,
+    "github": {
+      "status": "none",
+      "spdx_id": null,
+      "name": null,
+      "html_url": null
+    },
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": null,
+      "has_code": true,
+      "has_demo": null,
+      "space_id": null,
+      "github_url": "https://github.com/justin4ai/OmniShowcase"
+    },
+    "expect": {
+      "commercial": "확인 필요",
+      "poc": "코드만",
+      "local_run": "확인 필요",
+      "est_vram_gb": null
+    }
+  },
+  {
+    "id": "G15",
+    "paper_id": "2610.37381",
+    "model_id": null,
+    "model": null,
+    "github": null,
+    "paper": {
+      "fetch_ok": true,
+      "has_weights": null,
+      "has_code": null,
+      "has_demo": null,
+      "space_id": null,
+      "github_url": null
+    },
+    "expect": {
+      "commercial": "확인 필요",
+      "poc": "논문만",
+      "local_run": "확인 필요",
+      "est_vram_gb": null
+    }
+  }
+]

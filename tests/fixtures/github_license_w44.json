@@ -1,0 +1,139 @@
+{
+  "InternLM/xtuner": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/InternLM/xtuner/blob/main/LICENSE"
+    }
+  },
+  "hyz317/HairDeck": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/hyz317/HairDeck/blob/main/LICENSE"
+    }
+  },
+  "Tencent-Hunyuan/Hy-Nomas": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "other",
+        "name": "Other",
+        "spdx_id": "NOASSERTION"
+      },
+      "html_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE"
+    }
+  },
+  "HiP3Rs/HiP3R": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/HiP3Rs/HiP3R/blob/main/LICENSE"
+    }
+  },
+  "google-deepmind/detectorscope": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+    }
+  },
+  "simple-agent-lab/RSIHub": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/simple-agent-lab/RSIHub/blob/main/LICENSE"
+    }
+  },
+  "tettethu/VibeGame": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/tettethu/VibeGame/blob/main/LICENSE"
+    }
+  },
+  "BinceQu/RoboHarness": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT"
+      },
+      "html_url": "https://github.com/BinceQu/RoboHarness/blob/main/LICENSE"
+    }
+  },
+  "datamllab/OpenEBFM": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT"
+      },
+      "html_url": "https://github.com/datamllab/OpenEBFM/blob/main/LICENSE"
+    }
+  },
+  "MCG-NJU/AutoTavern": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT"
+      },
+      "html_url": "https://github.com/MCG-NJU/AutoTavern/blob/main/LICENSE"
+    }
+  },
+  "justin4ai/OmniShowcase": {
+    "status_code": 404,
+    "body": {}
+  },
+  "JusperLee/Falcon": {
+    "status_code": 200,
+    "body": {
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      },
+      "html_url": "https://github.com/JusperLee/Falcon/blob/main/LICENSE"
+    }
+  },
+  "EnjunDu/awesome-working-agent": {
+    "status_code": 404,
+    "body": {}
+  },
+  "hyeon9698/LOWN": {
+    "status_code": 404,
+    "body": {}
+  },
+  "yihaohu0118/ChronoReplay": {
+    "status_code": 404,
+    "body": {}
+  }
+}
