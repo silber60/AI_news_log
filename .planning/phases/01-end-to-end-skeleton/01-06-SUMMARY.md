@@ -56,7 +56,7 @@ Phase 1.1 D-20: runs happen on the v2 email after Phase 1.1.
 | 41409445829 (#3) | preview | — | green; recorded in 01.1-05-SUMMARY.md (01.1-05 preview run) |
 | (#4/#5) | test | 3533f70..492ff34 era | failed: DeliveryError in deliver and notify-failure (SMTP secrets); 492ff34 added a redacted `detail=` line |
 | 41411211782 (#6) | test | 492ff34 (v2 email, pre-1.2) | green, 3m16s; owner confirmed the test email arrived in TEST_RECIPIENT |
-| pending | send | — | not run yet |
+| (owner, 2026-11-03) | send | post-1.2 main | green; owner confirmed the subscriber received the mail. Owner also confirmed test mode works on the 1.2 email |
 | pending | test + week=2026-W54 (forced failure notice) | — | not run yet |
 
 Log audit (email/name grep on the test run log): not yet done; needs the owner's downloaded log archive.
