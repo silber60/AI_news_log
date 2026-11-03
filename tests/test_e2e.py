@@ -122,7 +122,7 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
 
     html = (week / "email.html").read_text(encoding="utf-8")
     assert "구독자님" in html
-    assert "Apple SD Gothic Neo" in html
+    assert "IBM Plex Sans KR" in html
     assert "구독자님" in (week / "email.txt").read_text(encoding="utf-8")
 
 

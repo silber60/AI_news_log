@@ -316,7 +316,7 @@ def test_every_text_cell_has_korean_font_stack(issue_w44):
     text_cells = [c for c in p.cells if c["text"].strip()]
     assert len(text_cells) > 40
     for c in text_cells:
-        assert "Apple SD Gothic Neo" in c["style"], c["text"][:40]
+        assert "IBM Plex Sans KR" in c["style"], c["text"][:40]
         assert "Malgun Gothic" in c["style"], c["text"][:40]
 
 
@@ -902,3 +902,12 @@ def test_text_part_complete_and_asset_free(issue_w44):
     assert ASSET_BASE_URL not in txt
     assert "otter-" not in txt
     assert "cdn-uploads.huggingface.co" not in txt
+
+
+def test_ibm_plex_font_first_and_web_font_link(issue_w44):
+    from newsletter.stages.render import FONT_STACK, WEB_FONT_URL, render_html
+
+    assert FONT_STACK.startswith("'IBM Plex Sans KR'")
+    html = render_html(issue_w44, "구독자")
+    assert f'<link rel="stylesheet" href="{WEB_FONT_URL}"' in html.replace("&amp;", "&")
+    assert "<style" not in html  # css_inline still drops the style block

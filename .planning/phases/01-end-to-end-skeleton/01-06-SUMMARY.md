@@ -57,7 +57,7 @@ Phase 1.1 D-20: runs happen on the v2 email after Phase 1.1.
 | (#4/#5) | test | 3533f70..492ff34 era | failed: DeliveryError in deliver and notify-failure (SMTP secrets); 492ff34 added a redacted `detail=` line |
 | 41411211782 (#6) | test | 492ff34 (v2 email, pre-1.2) | green, 3m16s; owner confirmed the test email arrived in TEST_RECIPIENT |
 | (owner, 2026-11-03) | send | post-1.2 main | green; owner confirmed the subscriber received the mail. Owner also confirmed test mode works on the 1.2 email |
-| pending | test + week=2026-W54 (forced failure notice) | — | not run yet |
+| (owner, 2026-11-03) | test + week=2026-W54 (forced failure notice) | post-1.2 main | failed as designed: Build printed `stage=week error=InvalidWeekError`, exit 1. Failure-notice email arrival: awaiting owner confirmation |
 
 Log audit (email/name grep on the test run log): not yet done; needs the owner's downloaded log archive.
 

@@ -20,10 +20,13 @@ BRAND = "AI 주간 해달 브리프"
 MAX_EMAIL_BYTES = 90 * 1024
 # Written on every text cell (~23 per card), so each byte counts ~230 times
 # (research Pitfall 6): the Korean-named duplicate of Malgun Gothic is dropped.
-FONT_STACK = (
-    "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', "
-    "'Noto Sans KR', sans-serif"
+FONT_STACK = "'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif"
+# Loaded only by clients that honor <link> web fonts (Apple Mail, iOS Mail); Gmail and
+# Naver strip it and fall back to the system Korean fonts in FONT_STACK.
+WEB_FONT_URL = (
+    "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap"
 )
+_INLINER = css_inline.CSSInliner(load_remote_stylesheets=False, keep_link_tags=True)
 # D-09: versioned, never-overwritten public asset directory (docs/assets/email/v1/).
 ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v1"
 # D-16: 웹에서 보기 / 지난 호 보기 stay hidden until the web archive exists (Phase 4).
@@ -97,6 +100,7 @@ def _context(issue: Issue, greeting: str) -> dict:
         "greeting": greeting,
         "brand": BRAND,
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
+        "web_font_url": WEB_FONT_URL,
         "asset": ASSET_BASE_URL,
         "web_url": WEB_URL,
         "hashtags": _hashtags(issue),
@@ -111,7 +115,7 @@ def _context(issue: Issue, greeting: str) -> dict:
 
 def render_html(issue: Issue, greeting: str) -> str:
     html = _html_env.get_template("email.html.j2").render(**_context(issue, greeting))
-    html = css_inline.inline(html)
+    html = _INLINER.inline(html)
     n = len(html.encode("utf-8"))
     if n >= MAX_EMAIL_BYTES:
         # Message holds only the size; never content or recipient data.
