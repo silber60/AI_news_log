@@ -285,7 +285,8 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
     try:
         f = facts(paper, model)
         out = _apply(item, f, model_id)
-        out = out.model_copy(update={"poc": verdicts.poc(out, f)})
+        hw = verdicts.hardware(model, model_id, f["param_count"])
+        out = out.model_copy(update={"poc": verdicts.poc(out, f), "hardware": hw})
     except _NON_FATAL as e:
         log.info("enrich=partial rank=%d reason=%s", rank, _reason(e))
         return item

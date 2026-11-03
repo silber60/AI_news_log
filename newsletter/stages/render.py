@@ -4,6 +4,7 @@ Layout follows the Figma v2 draft (Phase 1.1, D-01..D-05); see
 .planning/phases/01.1-newsletter-design-v2/01.1-FIGMA-SPEC.md.
 """
 
+import math
 from datetime import timedelta
 from typing import Literal
 
@@ -95,9 +96,21 @@ def _poc_phrase(it: Item) -> str | None:
     return POC_PHRASES.get(p.verdict)
 
 
+def _gpu_phrase(it: Item) -> str | None:
+    hw = it.hardware
+    if hw.est_vram_gb is None or hw.local_run == UNKNOWN:
+        return None
+    n = math.ceil(hw.est_vram_gb)
+    if hw.local_run == "가능":
+        return f"🖥️ 개인 GPU 약 {n}GB"
+    if hw.local_run == "제한적":
+        return f"🖥️ 서버 GPU 약 {n}GB"
+    return f"🖥️ GPU 여러 장 필요 (약 {n}GB)"
+
+
 def verdict_line(it: Item) -> list[str]:
     """D-01: known verdicts only, in display order; 확인 필요 is omitted."""
-    phrases = [_poc_phrase(it)]
+    phrases = [_poc_phrase(it), _gpu_phrase(it)]
     return [p for p in phrases if p]
 
 
