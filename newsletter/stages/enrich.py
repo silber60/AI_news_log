@@ -328,9 +328,43 @@ _BADGE_RE = re.compile(
 _LOGO_RE = re.compile(r"logo|wordmark|lockup|emblem|icon|avatar", re.IGNORECASE)
 
 
+# Markdown that never renders: HTML comments and fenced code blocks.
+_HIDDEN_RE = re.compile(
+    r"<!--.*?(?:-->|\Z)|^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?(?:^ {0,3}\1[ \t]*$|\Z)",
+    re.DOTALL | re.MULTILINE,
+)
+# github.com/{o}/{r}/(blob|raw)/{ref}/{path} -> raw.githubusercontent.com/{o}/{r}/{ref}/{path}
+_GITHUB_FILE_RE = re.compile(
+    r"^https://github\.com/([A-Za-z0-9-]{1,39})/([\w.-]{1,100})/(?:blob|raw)/(.+)$"
+)
+# D-18: hosts that redirect (302 to signed S3 / HF CDN) or expire. Not on
+# IMAGE_HOSTS anyway; named here so a later allowlist change cannot let them in.
+_REDIRECTING_RE = re.compile(
+    r"^https://(?:github\.com/(?:user-attachments/|[^/]+/[^/]+/assets/)"
+    r"|huggingface\.co/.*/resolve/"
+    r"|private-user-images\.githubusercontent\.com/"
+    r"|camo\.githubusercontent\.com/)",
+    re.IGNORECASE,
+)
+
+
 def _resolve(src: str, owner: str, repo: str) -> str | None:
+    """Absolute https URL for an image src, or None when it can never be used."""
+    if not src or any(c.isspace() for c in src) or ".." in src:
+        return None
+    if "?" in src or "#" in src:  # Gmail proxy and signed URLs (Phase 1.1 A2)
+        return None
+    if src.startswith("//"):
+        src = "https:" + src
     if "://" in src:
+        if not src.startswith("https://"):
+            return None
+        m = _GITHUB_FILE_RE.match(src)
+        if m:
+            return f"{RAW_BASE}/{m.group(1)}/{m.group(2)}/{m.group(3)}"
         return src
+    if ":" in src.split("/", 1)[0]:  # data:, mailto: and other schemes
+        return None
     path = src
     while path.startswith("./"):
         path = path[2:]
@@ -341,9 +375,11 @@ def _resolve(src: str, owner: str, repo: str) -> str | None:
 
 
 def _usable(url: str) -> bool:
+    if _REDIRECTING_RE.match(url):
+        return False
     if not url.startswith(IMAGE_HOSTS) or len(url) > IMAGE_URL_MAX:
         return False
-    if any(c.isspace() for c in url):
+    if "?" in url or "#" in url or ".." in url:
         return False
     if not url.lower().endswith(IMAGE_EXTS):
         return False
@@ -353,9 +389,14 @@ def _usable(url: str) -> bool:
 
 
 def readme_candidates(md: str, owner: str, repo: str) -> list[str]:
-    """Direct image URLs from a README in document order, deduplicated (D-08, D-18)."""
+    """Direct image URLs from a README in document order, deduplicated (D-08, D-18).
+
+    Markdown `![alt](src "title")` and `<img src=...>` are read with regexes only;
+    comments and fenced code are dropped first. Every result passes the v3
+    ItemImage rule (IMAGE_HOSTS, at most IMAGE_URL_MAX, no query or fragment).
+    """
     out: list[str] = []
-    for m in _IMG_RE.finditer(md):
+    for m in _IMG_RE.finditer(_HIDDEN_RE.sub("", md)):
         raw = m.group("md") or m.group("dq") or m.group("sq") or m.group("bare") or ""
         url = _resolve(html.unescape(raw.strip()), owner, repo)
         if url and _usable(url) and url not in out:
