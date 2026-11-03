@@ -9,7 +9,7 @@ import respx
 from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import UNKNOWN, Explainer, Highlight, ItemImage
+from newsletter.schema import IMAGE_URL_MAX, UNKNOWN, Explainer, Highlight, ItemImage
 from newsletter.stages import render as render_mod
 from newsletter.stages.render import (
     ASSET_BASE_URL,
@@ -694,10 +694,20 @@ SECTION_TITLES = (
 INFO_LABELS = ("유형", "구조", "크기", "학습 데이터", "공개 범위")
 
 
+def _raw_image_url(rank: int) -> str:
+    """A README image on raw.githubusercontent.com at the schema's 300-char cap."""
+    head = f"https://raw.githubusercontent.com/some-organization/some-long-repo-{rank:02d}/main/"
+    url = head + "f" * (IMAGE_URL_MAX - len(head) - len(".png")) + ".png"
+    assert len(url) == IMAGE_URL_MAX == 300
+    return url
+
+
 def _worst_case(issue):
-    """Plan 01.1-04 worst case: 10 images, every link, max-length fields, all Phase 3 slots.
+    """v1.2 worst case (DSGN-08): 10 card images and no hero, every link, max-length fields,
+    50-char ideas, 99,999 stars, all Phase 3 slots.
 
     Titles stay as in W44 and verdicts stay 확인 필요 (no badge row) as in Phase 1.1.
+    Every 모델 정보 value is known, so all five rows render.
     """
     ids = ", ".join(f"org-name/{'d' * 30}{n}" for n in range(3))  # 3 x 40 chars
     assert all(len(x) == 40 for x in ids.split(", "))
@@ -716,11 +726,9 @@ def _worst_case(issue):
         items.append(
             it.model_copy(
                 update={
-                    "image": ItemImage(
-                        url=f"https://cdn-uploads.huggingface.co/production/uploads/{'a' * 24}/{'b' * 20}{r:02d}.png",
-                        width=576,
-                        height=260,
-                    ),
+                    "image": ItemImage(url=_raw_image_url(r), width=576, height=260),
+                    "use_idea_ko": "활" * 50,
+                    "github_stars": 99999,
                     "github_url": f"https://github.com/some-organization/some-long-repository-name-{r}",
                     "project_url": f"https://some-organization.github.io/some-long-project-page-{r}/",
                     "summary_ko": "요" * 80,
@@ -787,8 +795,9 @@ def test_worst_case_images_and_phase3_otters(issue_w44):
         "otter-chalkboard.png",
     }
     # 10 card images (D-08) and none in the hero (D-07)
-    hf = [i for i in imgs if i["src"].startswith("https://cdn-uploads.huggingface.co/")]
-    assert len(hf) == 10
+    raw = [i for i in imgs if i["src"].startswith("https://raw.githubusercontent.com/")]
+    assert len(raw) == 10
+    assert all(len(i["src"]) == 300 for i in raw)
     out = render_html(_worst_case(issue_w44), "구독자님")
     assert "<img" not in out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
     assert all(c.count("<img") == 1 for c in _cards(out))
@@ -798,19 +807,24 @@ def _strip_imgs(out: str) -> str:
     return html_lib.unescape(re.sub(r"<img\b[^>]*>", "", out))
 
 
-@pytest.mark.parametrize("full", [False, True])
-def test_email_reads_with_images_blocked(issue_w44, full):
-    issue = _full_issue(issue_w44) if full else issue_w44
+@pytest.mark.parametrize("variant", ["w44", "full", "worst"])
+def test_email_reads_with_images_blocked(issue_w44, variant):
+    full = variant != "w44"
+    issue = {"w44": issue_w44, "full": _full_issue(issue_w44), "worst": _worst_case(issue_w44)}[
+        variant
+    ]
     text = _strip_imgs(render_html(issue, "구독자님"))
     titles = SECTION_TITLES if full else SECTION_TITLES[2:3] + SECTION_TITLES[4:]
     for t in titles:
         assert t in text, t
     assert issue.headline_ko in text
     for it in issue.items:
-        for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko):
+        for s in (it.title_ko, it.summary_ko, *it.summary_lines_ko, "💡 " + it.use_idea_ko):
             assert s in text, (it.rank, s)
-        for label, _ in _known_info(it):
-            assert f">{label}<" in text
+        known = {label for label, _ in _known_info(it)}
+        box = _info_box(text.split(f'data-card="{it.rank}"')[1]) or ""
+        for label in INFO_LABELS:
+            assert (f">{label}<" in box) == (label in known), (it.rank, label)
 
 
 def _all_parts(issue) -> list[str]:
@@ -861,8 +875,13 @@ def test_web_links_appear_once_web_url_is_set(issue_w44, monkeypatch):
 
 
 def test_worst_case_under_byte_limit(issue_w44):
-    n = len(render_html(_worst_case(issue_w44), "구독자님").encode("utf-8"))
-    print(f"worst-case email.html bytes={n}")
+    worst = _worst_case(issue_w44)
+    assert all(len(it.use_idea_ko) == 50 and it.github_stars == 99999 for it in worst.items)
+    out = render_html(worst, "구독자님")
+    n = len(out.encode("utf-8"))
+    print(f"worst-case email.html bytes={n} headroom={MAX_EMAIL_BYTES - n}")
+    assert "★ 99,999" in out
+    assert out.count("💡 " + "활" * 50) == 10
     assert n < MAX_EMAIL_BYTES
 
 
