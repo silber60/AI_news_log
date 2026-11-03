@@ -30,6 +30,7 @@ from PIL import Image
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from newsletter.schema import (
+    ARXIV_IMAGE_HOST,
     IMAGE_HOST,
     IMAGE_HOSTS,
     IMAGE_URL_MAX,
@@ -72,6 +73,9 @@ MAX_PROBES = 6  # image requests per item, HF and README candidates together
 # this allowlist from the HF githubRepo URL.
 RAW_BASE = RAW_IMAGE_HOST.rstrip("/")
 README_MAX_BYTES = 262144
+ARXIV_BASE = ARXIV_IMAGE_HOST.rstrip("/")
+ARXIV_HTML_MAX_BYTES = 1_048_576  # the first figures sit near the top of the page
+ARXIV_MAX_FIGURES = 2  # candidates taken from the arXiv page, in document order
 GITHUB_REPO_RE = re.compile(
     r"^https://github\.com/([A-Za-z0-9-]{1,39})/([\w.-]{1,100}?)(?:\.git)?/?$"
 )
@@ -422,6 +426,59 @@ def _read_readme(client: httpx.Client, owner: str, repo: str, rank: int) -> str 
     return bytes(buf[:README_MAX_BYTES]).decode("utf-8", errors="replace")
 
 
+# --------------------------------------------------------------- arXiv figures
+
+# A LaTeXML figure block on arxiv.org/html and the first <img src> inside it.
+_ARXIV_FIGURE_RE = re.compile(
+    r"<figure\b[^>]*\bclass=\"[^\"]*\bltx_figure\b[^\"]*\"[^>]*>(.*?)</figure>",
+    re.DOTALL | re.IGNORECASE,
+)
+_ARXIV_IMG_RE = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"", re.IGNORECASE)
+# Relative srcs look like "2610.31635v1/teaser.png" (versioned paper dir + path).
+_ARXIV_SRC_RE = re.compile(r"^\d{4}\.\d{4,5}v\d{1,3}/[\w./-]+$")
+
+
+def arxiv_candidates(page: str, paper_id: str) -> list[str]:
+    """First figure images of an arXiv HTML page, as absolute arxiv.org/html URLs.
+
+    Only images under this paper's own versioned directory are kept, so a figure
+    can never point at another host or another paper.
+    """
+    out: list[str] = []
+    for fig in _ARXIV_FIGURE_RE.finditer(page):
+        m = _ARXIV_IMG_RE.search(fig.group(1))
+        if not m:
+            continue
+        src = html.unescape(m.group(1).strip()).removeprefix(f"{ARXIV_BASE}/")
+        if not _ARXIV_SRC_RE.fullmatch(src) or not src.startswith(paper_id + "v"):
+            continue
+        url = f"{ARXIV_BASE}/{src}"
+        if ".." in src or not _usable(url) or url in out:
+            continue
+        out.append(url)
+        if len(out) >= ARXIV_MAX_FIGURES:
+            break
+    return out
+
+
+def _read_arxiv(client: httpx.Client, paper_id: str, rank: int) -> str | None:
+    url = f"{ARXIV_BASE}/{paper_id}"
+    try:
+        with client.stream("GET", url, timeout=TIMEOUT, follow_redirects=False) as resp:
+            if resp.status_code != 200:
+                log.info("arxiv=none rank=%d reason=http_%d", rank, resp.status_code)
+                return None
+            buf = bytearray()
+            for chunk in resp.iter_bytes():
+                buf.extend(chunk)
+                if len(buf) >= ARXIV_HTML_MAX_BYTES:
+                    break
+    except httpx.HTTPError as e:
+        log.info("arxiv=none rank=%d reason=%s", rank, type(e).__name__)
+        return None
+    return bytes(buf[:ARXIV_HTML_MAX_BYTES]).decode("utf-8", errors="replace")
+
+
 # ------------------------------------------------------------------- probing
 
 
@@ -521,8 +578,12 @@ def pick_image(
     media_urls: list[str] | None,
     rank: int,
     github_url: str | None = None,
+    paper_id: str | None = None,
 ) -> ItemImage | None:
-    """HF media images first, then README images (fetched only when needed)."""
+    """HF media images first, then README images, then arXiv HTML figures.
+
+    Each later source is fetched only when the earlier ones gave no image.
+    """
     prober = _Prober(client, rank)
     image = prober.first(hf_image_urls(media_urls))
     if image is None and github_url and prober.probes < MAX_PROBES:
@@ -533,6 +594,15 @@ def pick_image(
             md = _read_readme(client, *repo, rank)
             if md is not None:
                 image = prober.first(readme_candidates(md, *repo))
+    if (
+        image is None
+        and paper_id
+        and PAPER_ID_RE.fullmatch(paper_id)
+        and prober.probes < MAX_PROBES
+    ):
+        page = _read_arxiv(client, paper_id, rank)
+        if page is not None:
+            image = prober.first(arxiv_candidates(page, paper_id))
     if image is None:
         log.info("image=none rank=%d reason=%s", rank, prober.reason)
         return None
@@ -554,7 +624,11 @@ def enrich_items(
         for item in items:
             item = _enrich_one(client, item)
             image = pick_image(
-                client, media.get(item.paper_id), item.rank, repos.get(item.paper_id)
+                client,
+                media.get(item.paper_id),
+                item.rank,
+                repos.get(item.paper_id),
+                paper_id=item.paper_id,
             )
             out.append(item.model_copy(update={"image": image}))
         return out

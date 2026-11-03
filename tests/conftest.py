@@ -119,6 +119,36 @@ def mock_github(
     return router.get(url__regex=r"^https://raw\.githubusercontent\.com/").mock(side_effect=side)
 
 
+def mock_arxiv(
+    router: respx.MockRouter,
+    pages: dict | None = None,
+    images: dict | None = None,
+    *,
+    fail: bool = False,
+) -> respx.Route:
+    """Register one route for https://arxiv.org/html/.
+
+    `/html/{paper_id}` serves `pages[paper_id]` (default: none, so 404). Any other
+    path is a figure probe answered from `images[url] = (width, height)` as a 206
+    PNG (unknown: 404). `fail=True` answers 500.
+    """
+    pages = pages or {}
+    images = images or {}
+
+    def side(request: httpx.Request) -> httpx.Response:
+        if fail:
+            return httpx.Response(500)
+        key = request.url.path.removeprefix("/html/")
+        if key in pages:
+            return httpx.Response(200, text=pages[key])
+        size = images.get(str(request.url))
+        if size is None:
+            return httpx.Response(404, text="Not Found")
+        return partial(image_bytes(tuple(size))[:65536])
+
+    return router.get(url__regex=r"^https://arxiv\.org/html/").mock(side_effect=side)
+
+
 def mock_enrich(
     router: respx.MockRouter,
     *,
@@ -129,6 +159,8 @@ def mock_enrich(
     cdn: bool = True,
     readmes: dict | None = None,
     readme_images: dict | None = None,
+    arxiv_pages: dict | None = None,
+    arxiv_images: dict | None = None,
 ) -> dict[str, respx.Route]:
     """Register the enrich routes (HF paper / model APIs, HF upload CDN,
     raw.githubusercontent.com via `mock_github`) backed by the W44 captures.
@@ -171,6 +203,7 @@ def mock_enrich(
         ),
     }
     routes["github"] = mock_github(router, readmes, readme_images, fail=fail)
+    routes["arxiv"] = mock_arxiv(router, arxiv_pages, arxiv_images, fail=fail)
     if cdn:
         routes["cdn"] = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
             side_effect=cdn_side

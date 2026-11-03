@@ -20,7 +20,9 @@ UNKNOWN = "확인 필요"
 IMAGE_HOST = "https://cdn-uploads.huggingface.co/"
 # D-09, D-18: only hosts that serve the image directly, without redirects.
 RAW_IMAGE_HOST = "https://raw.githubusercontent.com/"
-IMAGE_HOSTS = (IMAGE_HOST, RAW_IMAGE_HOST)
+# arXiv HTML figures (owner request after the 1.2 preview: ranks 1-3 had no image).
+ARXIV_IMAGE_HOST = "https://arxiv.org/html/"
+IMAGE_HOSTS = (IMAGE_HOST, RAW_IMAGE_HOST, ARXIV_IMAGE_HOST)
 IMAGE_URL_MAX = 300
 
 # Enum labels quoted from .planning/REQUIREMENTS.md.
@@ -45,7 +47,8 @@ HttpsUrl = Annotated[str, AfterValidator(_require_https)]
 def _require_image_host(v: str) -> str:
     if not v.startswith(IMAGE_HOSTS):
         raise ValueError(
-            "image URL must be on cdn-uploads.huggingface.co or raw.githubusercontent.com"
+            "image URL must be on cdn-uploads.huggingface.co, raw.githubusercontent.com"
+            " or arxiv.org/html"
         )
     if "?" in v or "#" in v:
         raise ValueError("image URL must not carry a query or fragment")
