@@ -74,7 +74,6 @@ def _context(issue: Issue, greeting: str) -> dict:
         "date_line": date_line(issue),
         "top3": issue.items[:3],
         "rest": issue.items[3:],
-        "hero_image": issue.items[0].image,
     }
 
 

@@ -1,4 +1,4 @@
-{# template-version: 4 #}
+{# template-version: 5 #}
 {%- macro card(it) %}
 ----------------------------------------
 {{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}
@@ -7,7 +7,7 @@
 
 {{ it.summary_ko }}
 {% for line in it.summary_lines_ko %}· {{ line }}
-{% endfor %}
+{% endfor %}💡 {{ it.use_idea_ko }}
 🧩 모델 정보
 유형: {{ it.model_info.kind_ko }}
 구조: {{ it.model_info.architecture_ko }}

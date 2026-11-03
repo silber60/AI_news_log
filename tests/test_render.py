@@ -147,11 +147,15 @@ def test_header_date_is_monday_after_week(issue_w44):
     assert "매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요" in out
 
 
-def test_hero_shows_headline_and_rank1_image(issue_w44):
+def test_hero_shows_headline_and_no_image(issue_w44):
+    # D-07: nothing under the headline; the top otter banner stays.
+    assert issue_w44.items[0].image is not None
     out = render_html(issue_w44, "구독자님")
     hero = out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
     assert html_lib.escape(issue_w44.headline_ko, quote=False) in hero
-    assert issue_w44.items[0].image.url in hero
+    assert "<img" not in hero
+    banner = out[_section_pos(out, "banner") : _section_pos(out, "header")]
+    assert "otter-banner.jpg" in banner
 
 
 def test_greeting_line(issue_w44):
@@ -292,6 +296,7 @@ def test_card_content_in_figma_order(issue_w44):
             f">{esc(it.title_en)}<",
             f">{esc(it.summary_ko)}<",
             "· " + esc(it.summary_lines_ko[0]),
+            "💡 " + esc(it.use_idea_ko),
             "🧩 모델 정보",
             "논문 보기 →",
         ],
@@ -299,22 +304,34 @@ def test_card_content_in_figma_order(issue_w44):
     assert "활용 아이디어" not in "".join(cards)
 
 
-def test_card1_drops_image_when_hero_shows_it(issue_w44):
+def test_every_item_image_is_on_its_own_card(issue_w44):
+    # D-08: each card shows its own image at the top, card 1 included (no hero).
     assert issue_w44.items[0].image is not None
-    issue = _with_item(issue_w44, 1, image=issue_w44.items[0].image)
+    img2 = ItemImage(
+        url="https://raw.githubusercontent.com/acme/repo/main/assets/teaser.png",
+        width=576,
+        height=300,
+    )
+    issue = _with_item(issue_w44, 1, image=img2)
     out = render_html(issue, "구독자님")
     cards = _cards(out)
-    assert "<img" not in cards[0]
-    assert "<img" in cards[1]
-    hero = out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
-    assert out.count(issue_w44.items[0].image.url) == 2  # hero + card 2
-    assert issue_w44.items[0].image.url in hero
+    for it, card in zip(issue.items, cards, strict=True):
+        if it.image is None:
+            continue
+        imgs = _imgs(card)
+        assert len(imgs) == 1, it.rank
+        assert imgs[0]["src"] == it.image.url
+        assert imgs[0]["alt"] == f"{it.title_ko} 대표 그림"
+        assert imgs[0]["width"] == str(it.image.width)
+        assert imgs[0]["height"] == str(it.image.height)
+        assert card.index("<img") < card.index(_meta(it)), it.rank
+        assert out.count(it.image.url) == 1, it.rank
 
 
 def test_card_without_image_has_no_img(issue_w44):
     cards = _cards(render_html(issue_w44, "구독자님"))
     for it, card in zip(issue_w44.items, cards, strict=True):
-        if it.rank > 1 and it.image is None:
+        if it.image is None:
             assert "<img" not in card, it.rank
 
 
@@ -378,6 +395,8 @@ def test_text_part_card_format(issue_w44):
     assert "1위 ㅣ 멀티모달 ㅣ ▲ 153" in txt  # no repo: upvotes
     assert "4위 ㅣ 멀티모달 ㅣ ★ 445" in txt
     assert "프로젝트: https://acme.example/p" in txt
+    for it in issue.items:
+        assert f"· {it.summary_lines_ko[2]}\n💡 {it.use_idea_ko}\n" in txt, it.rank
 
 
 def test_text_part_phase3_slots(issue_w44):
@@ -409,7 +428,9 @@ def test_card_has_three_lines_and_info_rows(issue_w44):
     assert len(cards) == 10
     for it, card in zip(issue_w44.items, cards, strict=True):
         a, b, c = (html_lib.escape(s, quote=False) for s in it.summary_lines_ko)
-        assert f"· {a}<br>· {b}<br>· {c}" in card
+        idea = html_lib.escape(it.use_idea_ko, quote=False)
+        # D-22: the idea sits inside the 3-line cell, after the three lines.
+        assert f"· {a}<br>· {b}<br>· {c}<br>💡 {idea}</td>" in card
         assert "🧩 모델 정보" in card
         for label in ("유형", "구조", "크기", "학습 데이터", "공개 범위"):
             assert f">{label}<" in card, label
@@ -644,9 +665,12 @@ def test_worst_case_images_and_phase3_otters(issue_w44):
         "otter-tool.png",
         "otter-chalkboard.png",
     }
-    # hero + cards 2-10 (card 1 skips the hero image, D-18)
+    # 10 card images (D-08) and none in the hero (D-07)
     hf = [i for i in imgs if i["src"].startswith("https://cdn-uploads.huggingface.co/")]
     assert len(hf) == 10
+    out = render_html(_worst_case(issue_w44), "구독자님")
+    assert "<img" not in out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
+    assert all(c.count("<img") == 1 for c in _cards(out))
 
 
 def _strip_imgs(out: str) -> str:
