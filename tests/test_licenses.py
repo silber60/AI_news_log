@@ -147,27 +147,96 @@ def test_no_redirect_follow(monkeypatch):
 
 # ------------------------------------------------------------ table and lookup
 
-PERMISSIVE = (
-    "apache-2.0 mit mit-0 bsd bsd-2-clause bsd-3-clause bsd-3-clause-clear 0bsd isc zlib"
-    " bsl-1.0 unlicense cc0-1.0 cc-by-2.0 cc-by-2.5 cc-by-3.0 cc-by-4.0 postgresql ncsa"
-    " wtfpl afl-3.0 ecl-2.0 ms-pl artistic-2.0 upl-1.0 odc-by pddl cdla-permissive-1.0"
-    " cdla-permissive-2.0"
-).split()
-COPYLEFT = (
-    "mpl-2.0 lgpl lgpl-2.1 lgpl-3.0 lgpl-lr gpl gpl-2.0 gpl-3.0 agpl-3.0 epl-1.0 epl-2.0"
-    " eupl-1.1 eupl-1.2 osl-3.0 cc-by-sa-3.0 cc-by-sa-4.0 cc-by-nd-4.0 cdla-sharing-1.0"
-    " odbl gfdl lppl-1.3c ofl-1.1"
-).split()
-COMMUNITY = (
-    "openrail openrail++ bigscience-openrail-m creativeml-openrail-m"
-    " bigscience-bloom-rail-1.0 bigcode-openrail-m llama2 llama3 llama3.1 llama3.2 llama3.3"
-    " llama4 gemma grok2-community openmdw-1.0 openmdw-1.1 apple-ascl c-uda"
-).split()
-NON_COMMERCIAL = (
-    "cc-by-nc-2.0 cc-by-nc-3.0 cc-by-nc-4.0 cc-by-nc-nd-3.0 cc-by-nc-nd-4.0"
-    " cc-by-nc-sa-2.0 cc-by-nc-sa-3.0 cc-by-nc-sa-4.0 fair-noncommercial-research-license"
-    " deepfloyd-if-license intel-research h-research apple-amlr"
-).split()
+PERMISSIVE = [
+    "apache-2.0",
+    "mit",
+    "mit-0",
+    "bsd",
+    "bsd-2-clause",
+    "bsd-3-clause",
+    "bsd-3-clause-clear",
+    "0bsd",
+    "isc",
+    "zlib",
+    "bsl-1.0",
+    "unlicense",
+    "cc0-1.0",
+    "cc-by-2.0",
+    "cc-by-2.5",
+    "cc-by-3.0",
+    "cc-by-4.0",
+    "postgresql",
+    "ncsa",
+    "wtfpl",
+    "afl-3.0",
+    "ecl-2.0",
+    "ms-pl",
+    "artistic-2.0",
+    "upl-1.0",
+    "odc-by",
+    "pddl",
+    "cdla-permissive-1.0",
+    "cdla-permissive-2.0",
+]
+COPYLEFT = [
+    "mpl-2.0",
+    "lgpl",
+    "lgpl-2.1",
+    "lgpl-3.0",
+    "lgpl-lr",
+    "gpl",
+    "gpl-2.0",
+    "gpl-3.0",
+    "agpl-3.0",
+    "epl-1.0",
+    "epl-2.0",
+    "eupl-1.1",
+    "eupl-1.2",
+    "osl-3.0",
+    "cc-by-sa-3.0",
+    "cc-by-sa-4.0",
+    "cc-by-nd-4.0",
+    "cdla-sharing-1.0",
+    "odbl",
+    "gfdl",
+    "lppl-1.3c",
+    "ofl-1.1",
+]
+COMMUNITY = [
+    "openrail",
+    "openrail++",
+    "bigscience-openrail-m",
+    "creativeml-openrail-m",
+    "bigscience-bloom-rail-1.0",
+    "bigcode-openrail-m",
+    "llama2",
+    "llama3",
+    "llama3.1",
+    "llama3.2",
+    "llama3.3",
+    "llama4",
+    "gemma",
+    "grok2-community",
+    "openmdw-1.0",
+    "openmdw-1.1",
+    "apple-ascl",
+    "c-uda",
+]
+NON_COMMERCIAL = [
+    "cc-by-nc-2.0",
+    "cc-by-nc-3.0",
+    "cc-by-nc-4.0",
+    "cc-by-nc-nd-3.0",
+    "cc-by-nc-nd-4.0",
+    "cc-by-nc-sa-2.0",
+    "cc-by-nc-sa-3.0",
+    "cc-by-nc-sa-4.0",
+    "fair-noncommercial-research-license",
+    "deepfloyd-if-license",
+    "intel-research",
+    "h-research",
+    "apple-amlr",
+]
 TABLE_ROWS = (
     [(k, "가능") for k in PERMISSIVE]
     + [(k, "조건부") for k in COPYLEFT + COMMUNITY]

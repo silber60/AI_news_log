@@ -9,6 +9,7 @@ a URL, a log line or a returned value. Log lines carry reason codes only.
 
 import logging
 import os
+import re
 
 import httpx
 
@@ -35,10 +36,55 @@ RANK: dict[str, int] = {"가능": 0, "조건부": 1, "확인 필요": 2, "불가
 CODE_LABEL = "코드 라이선스"
 WEIGHTS_LABEL = "가중치 라이선스"
 
+
+def _rows(verdict: CommercialVerdict, keys: str) -> dict[str, CommercialVerdict]:
+    return dict.fromkeys(keys.split(), verdict)
+
+
+# Casefolded HF license ids and GitHub SPDX ids (research §1). Copyleft is
+# 조건부: commercial use is allowed with share/notice duties (A1, owner review).
 LICENSE_TABLE: dict[str, CommercialVerdict] = {
-    "apache-2.0": "가능",
-    "mit": "가능",
+    # permissive
+    **_rows(
+        "가능",
+        "apache-2.0 mit mit-0 bsd bsd-2-clause bsd-3-clause bsd-3-clause-clear 0bsd isc zlib"
+        " bsl-1.0 unlicense cc0-1.0 cc-by-2.0 cc-by-2.5 cc-by-3.0 cc-by-4.0 postgresql ncsa"
+        " wtfpl afl-3.0 ecl-2.0 ms-pl artistic-2.0 upl-1.0 odc-by pddl cdla-permissive-1.0"
+        " cdla-permissive-2.0",
+    ),
+    # copyleft
+    **_rows(
+        "조건부",
+        "mpl-2.0 lgpl lgpl-2.1 lgpl-3.0 lgpl-lr gpl gpl-2.0 gpl-3.0 agpl-3.0 epl-1.0 epl-2.0"
+        " eupl-1.1 eupl-1.2 osl-3.0 cc-by-sa-3.0 cc-by-sa-4.0 cc-by-nd-4.0 cdla-sharing-1.0"
+        " odbl gfdl lppl-1.3c ofl-1.1",
+    ),
+    # custom / community (D-03)
+    **_rows(
+        "조건부",
+        "openrail openrail++ bigscience-openrail-m creativeml-openrail-m"
+        " bigscience-bloom-rail-1.0 bigcode-openrail-m llama2 llama3 llama3.1 llama3.2"
+        " llama3.3 llama4 gemma grok2-community openmdw-1.0 openmdw-1.1 apple-ascl c-uda",
+    ),
+    # non-commercial / research-only
+    **_rows(
+        "불가",
+        "cc-by-nc-2.0 cc-by-nc-3.0 cc-by-nc-4.0 cc-by-nc-nd-3.0 cc-by-nc-nd-4.0"
+        " cc-by-nc-sa-2.0 cc-by-nc-sa-3.0 cc-by-nc-sa-4.0 fair-noncommercial-research-license"
+        " deepfloyd-if-license intel-research h-research apple-amlr",
+    ),
 }
+
+# cardData.license_name values when the license id is "other" (A2).
+OTHER_NAMES: dict[str, CommercialVerdict] = _rows(
+    "조건부", "qwen tongyi-qianwen deepseek deepseek-license"
+)
+NC_KEYWORDS = ("non-commercial", "noncommercial", "-nc-", "research")
+
+# Same pattern as enrich.REPO_ID_RE (test-guarded; see TIMEOUT for why it is copied).
+REPO_ID_RE = re.compile(r"^[A-Za-z0-9][\w.-]{0,95}/[\w.-]{1,96}$")
+# A11: fine-tunes of these families inherit a custom base license.
+BASE_FAMILY_RE = re.compile(r"^base_model:(?:[\w-]+:)?(?:meta-llama/|google/gemma)", re.IGNORECASE)
 
 
 def _normalize(value: str) -> str:
@@ -49,10 +95,22 @@ def _normalize(value: str) -> str:
     return key
 
 
+def _lookup_name(name: object) -> CommercialVerdict:
+    if not isinstance(name, str) or not name.strip():
+        return UNKNOWN
+    key = name.strip().casefold()
+    if any(k in key for k in NC_KEYWORDS):
+        return "불가"
+    return OTHER_NAMES.get(key, UNKNOWN)
+
+
 def _lookup_one(value: object, name: object) -> CommercialVerdict:
     if not isinstance(value, str) or not value.strip():
         return UNKNOWN
-    return LICENSE_TABLE.get(_normalize(value), UNKNOWN)
+    key = _normalize(value)
+    if key == "other":
+        return _lookup_name(name)
+    return LICENSE_TABLE.get(key, UNKNOWN)
 
 
 def lookup(license: str | list | None, name: str | None = None) -> CommercialVerdict:
@@ -63,6 +121,68 @@ def lookup(license: str | list | None, name: str | None = None) -> CommercialVer
             return UNKNOWN
         return max(verdicts, key=RANK.__getitem__)
     return _lookup_one(license, name)
+
+
+# --------------------------------------------------------------- weights side
+
+
+def resolve_license_link(link: str | None, model_id: str) -> str:
+    """An https URL on huggingface.co or github.com; else the model page (T-02-06)."""
+    if not isinstance(model_id, str) or not REPO_ID_RE.fullmatch(model_id) or ".." in model_id:
+        return f"{HF_HOST}models"
+    page = f"{HF_HOST}{model_id}"
+    if not isinstance(link, str) or not link or any(c in link for c in "?#\\") or ".." in link:
+        return page
+    if any(c.isspace() for c in link):
+        return page
+    if link.startswith((HF_HOST, GITHUB_HOST)):
+        return link
+    rel = link.removeprefix("./")
+    if not rel or ":" in rel or rel.startswith("/"):
+        return page
+    return f"{page}/blob/main/{rel}"
+
+
+def _license_tag(tags: object) -> str | None:
+    for t in tags if isinstance(tags, list) else []:
+        if isinstance(t, str) and t.startswith("license:") and t.removeprefix("license:").strip():
+            return t.removeprefix("license:").strip()
+    return None
+
+
+def weights_license(model: dict | None, model_id: str) -> tuple[LicenseInfo, CommercialVerdict]:
+    """Weights-side license from HF metadata only (D-09). README text is never read.
+
+    Read order: cardData.license, then license_name when it is "other", then the
+    first license: tag. Gated and base-model guards move 가능 to 조건부 (D-03, A11).
+    """
+    page = resolve_license_link(None, model_id)
+    if not isinstance(model, dict):
+        return LicenseInfo(source_url=page), UNKNOWN
+    card = model.get("cardData") if isinstance(model.get("cardData"), dict) else {}
+    lic = card.get("license")
+    if isinstance(lic, list):
+        lic = [v for v in lic if isinstance(v, str) and v.strip()] or None
+    elif not isinstance(lic, str) or not lic.strip():
+        lic = None
+    if lic is None:
+        lic = _license_tag(model.get("tags"))
+    name = card.get("license_name") if isinstance(card.get("license_name"), str) else None
+    verdict = lookup(lic, name)
+
+    tags = model.get("tags") if isinstance(model.get("tags"), list) else []
+    if verdict == "가능" and model.get("gated") not in (False, None):
+        verdict = "조건부"
+    if verdict == "가능" and any(isinstance(t, str) and BASE_FAMILY_RE.match(t) for t in tags):
+        verdict = "조건부"
+
+    spdx = ", ".join(lic) if isinstance(lic, list) else lic
+    info = LicenseInfo(
+        spdx_id=spdx,
+        name=name,
+        source_url=resolve_license_link(card.get("license_link"), model_id),
+    )
+    return info, verdict
 
 
 # ------------------------------------------------------------------ code side
