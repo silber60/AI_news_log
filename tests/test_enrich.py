@@ -549,7 +549,11 @@ def test_build_survives_total_hf_enrich_outage(hf_pages, archive_tmp):
         assert _facts(it) == (UNKNOWN, UNKNOWN, UNKNOWN)
         assert it.image is None
         assert (it.poc.has_weights, it.poc.has_code, it.poc.has_demo) == (None, None, None)
-    assert (archive_tmp / "archive" / ISSUE_ID / "issue.json").is_file()
+        assert it.commercial.verdict == UNKNOWN
+    week = archive_tmp / "archive" / ISSUE_ID
+    assert (week / "issue.json").is_file()
+    enriched = json.loads((week / "enriched.json").read_text(encoding="utf-8"))
+    assert [r["paper_fetch_ok"] for r in enriched["items"]] == [False] * 10
 
 
 # ------------------------------------------------------------------- images
