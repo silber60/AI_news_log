@@ -16,7 +16,7 @@ import anthropic
 from pydantic import ValidationError
 
 from newsletter.errors import AnalysisInvalid
-from newsletter.schema import HfEntry, Item, ItemAnalysisLLM, ModelInfo
+from newsletter.schema import UNKNOWN, HfEntry, Item, ItemAnalysisLLM, ModelInfo
 from newsletter.stages import select
 from newsletter.store import PROMPTS_DIR
 
@@ -93,6 +93,36 @@ _TEXT_FIELDS = (
 )
 
 
+# D-11 / D-20: every body sentence ends in friendly 해요체 (~요). A positive check
+# also catches noun endings ("29.5% 증가."); "99.3%" never splits because the split
+# needs whitespace after the mark.
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=\S)")
+_TAIL = re.compile(r"[\s\"'”’)\]」』]+$")
+_HAEYO = re.compile(r"요[.!?~]*$")
+HAEYO_FIELDS = ("summary_ko", "does_ko", "new_ko", "result_ko", "use_idea_ko")
+_PROSE_INFO_FIELDS = ("kind_ko", "architecture_ko")
+
+
+def not_haeyo(text: str) -> bool:
+    """True when any sentence does not end in 해요체. A sentence ending in "…" was
+    trimmed by code and is skipped."""
+    for s in _SENT_SPLIT.split(text.strip()):
+        s = _TAIL.sub("", s)
+        if s and not s.endswith("…") and not _HAEYO.search(s):
+            return True
+    return False
+
+
+def bad_info_prose(text: str) -> bool:
+    """D-16: kind_ko / architecture_ko must be a noun phrase (no sentence-final
+    . ! ? and not ending in 다) or pass the 해요체 check. UNKNOWN passes."""
+    s = _TAIL.sub("", text.strip())
+    if not s or s == UNKNOWN:
+        return False
+    noun_phrase = not s.endswith((".", "!", "?", "다"))
+    return not noun_phrase and not_haeyo(s)
+
+
 def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
     return a.model_copy(update={f: _one_line(getattr(a, f)) for f in _TEXT_FIELDS})
 
@@ -121,6 +151,13 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(
             ("arch_len", f"architecture_ko가 {len(a.architecture_ko)}자로 {ARCH_LIMIT}자를 넘음")
         )
+    for field in HAEYO_FIELDS:
+        text = getattr(a, field)
+        if text.strip() and not_haeyo(text):
+            errs.append(("tone", f"{field}가 해요체(~요)로 끝나지 않음"))
+    for field in _PROSE_INFO_FIELDS:
+        if bad_info_prose(getattr(a, field)):
+            errs.append(("tone", f"{field}가 명사구도 해요체(~요)도 아님"))
     return errs
 
 
@@ -134,6 +171,8 @@ _TRIM_LIMITS = {
     "architecture_ko": ARCH_LIMIT,
 }
 _LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len"}
+# D-19: a wrong sentence ending left after the retry is logged, never fatal.
+_NON_FATAL_CODES = _LENGTH_CODES | {"tone"}
 
 
 def _trim_overruns(a: ItemAnalysisLLM) -> tuple[ItemAnalysisLLM, list[str]]:
@@ -285,11 +324,23 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
         problems = check(last)
         if not problems:
             return last
-    if last is not None and problems and {code for code, _ in problems} <= _LENGTH_CODES:
-        # D-19: pure length overruns after the retry are repaired, not fatal.
-        trimmed, fields = _trim_overruns(last)
-        log.info("trimmed=%s rank=%d", ",".join(fields), rank)
-        return trimmed
+    codes = {code for code, _ in problems}
+    if last is not None and problems and codes <= _NON_FATAL_CODES:
+        # D-19: length overruns after the retry are trimmed; a wrong ending is
+        # kept with a warning that names fields only, never model text.
+        result = last
+        if codes & _LENGTH_CODES:
+            result, fields = _trim_overruns(last)
+            log.info("trimmed=%s rank=%d", ",".join(fields), rank)
+        if "tone" in codes:
+            tone_fields = [
+                f
+                for f in HAEYO_FIELDS
+                if getattr(result, f).strip() and not_haeyo(getattr(result, f))
+            ] + [f for f in _PROSE_INFO_FIELDS if bad_info_prose(getattr(result, f))]
+            if tone_fields:  # trimming may already have cut the bad ending off
+                log.warning("tone=unfixed rank=%d fields=%s", rank, ",".join(tone_fields))
+        return result
     reason = "+".join(code for code, _ in problems) or "unknown"
     raise AnalysisInvalid(f"rank={rank} reason={reason}")
 

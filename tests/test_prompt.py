@@ -55,7 +55,21 @@ def test_system_carries_rules_and_ai_types(hf_pages):
     assert "<paper>" in text
     for word in ("혁신적", "획기적", "게임 체인저", "단순히", "—"):
         assert word in text
-    assert text.splitlines()[0] == "<!-- prompt-version: 3 -->"
+    assert text.splitlines()[0] == "<!-- prompt-version: 4 -->"
+
+
+def test_tone_rule_is_haeyo_in_both_prompts():
+    """D-11 / D-20: no instruction left that asks for 하다체 endings."""
+    humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8")
+    paper = (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8")
+    assert "해요체" in humanizer
+    assert "해요체" in paper and "## 말투" in paper
+    for old in ("~한다", '~할 수 있다"처럼', "~이다/~한다", "짧게 끝나는 평서문"):
+        assert old not in humanizer, old
+        assert old not in paper, old
+    # D-12: non-specialist reader, English terms kept
+    assert "AI 연구자가 아닙니다" in paper
+    assert "영어 그대로" in paper
 
 
 def test_system_names_v2_fields_and_drops_ideas(hf_pages):

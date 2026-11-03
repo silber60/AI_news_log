@@ -156,13 +156,13 @@ def _message_body(analysis: dict) -> dict:
 VALID = {
     "title_ko": "Qwen3-VL: long-context 멀티모달 추론 개선",
     "ai_type": "멀티모달",
-    "summary_ko": "긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했다.",
-    "does_ko": "긴 영상과 문서를 함께 읽고 답한다.",
-    "new_ko": "long-context 처리 방식을 바꿔 더 긴 입력을 다룬다.",
-    "result_ko": "공개 benchmark에서 기존 공개 모델보다 높은 점수를 보고했다.",
+    "summary_ko": "긴 영상과 문서를 함께 읽고 답해 주는 멀티모달 모델이에요.",
+    "does_ko": "긴 영상과 문서를 함께 읽고 질문에 답해요.",
+    "new_ko": "long-context 처리 방식을 바꿔 더 긴 입력을 다뤄요.",
+    "result_ko": "공개 benchmark에서 기존 공개 모델보다 높은 점수를 보고했어요.",
     "kind_ko": "Vision-Language 모델",
     "architecture_ko": "확인 필요",
-    "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있다.",
+    "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있어요.",
 }
 
 
@@ -232,7 +232,7 @@ def _parsed(**over):
 
 LONG_SUMMARY = (
     "이 논문은 긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했고, "
-    "여러 벤치마크에서 기존 공개 모델보다 높은 점수를 기록했으며 학습 데이터 구성도 함께 설명했다."
+    "여러 벤치마크에서 기존 공개 모델보다 높은 점수를 기록했으며 학습 데이터 구성도 함께 설명했어요."
 )
 
 
@@ -246,9 +246,9 @@ def test_long_summary_fixture_exceeds_limit():
         ({}, []),
         ({"title_ko": "   "}, ["title_empty"]),
         ({"summary_ko": LONG_SUMMARY}, ["summary_len"]),
-        ({"does_ko": "가" * 71}, ["line_len"]),
-        ({"new_ko": "가" * 71}, ["line_len"]),
-        ({"result_ko": "가" * 71}, ["line_len"]),
+        ({"does_ko": "가" * 70 + "요"}, ["line_len"]),
+        ({"new_ko": "가" * 70 + "요"}, ["line_len"]),
+        ({"result_ko": "가" * 70 + "요"}, ["line_len"]),
         ({"does_ko": " "}, ["line_empty"]),
         ({"result_ko": ""}, ["line_empty"]),
         ({"kind_ko": "가" * 31}, ["kind_len"]),
@@ -261,15 +261,15 @@ def test_check_codes(over, codes):
 
 
 def test_summary_exactly_80_chars_passes():
-    assert analyze.check(_analysis(summary_ko="가" * 80)) == []
-    assert [c for c, _ in analyze.check(_analysis(summary_ko="가" * 81))] == ["summary_len"]
+    assert analyze.check(_analysis(summary_ko="가" * 79 + "요")) == []
+    assert [c for c, _ in analyze.check(_analysis(summary_ko="가" * 80 + "요"))] == ["summary_len"]
 
 
 def test_new_fields_exactly_at_limit_pass():
     at_limit = {
-        "does_ko": "가" * 70,
-        "new_ko": "가" * 70,
-        "result_ko": "가" * 70,
+        "does_ko": "가" * 69 + "요",
+        "new_ko": "가" * 69 + "요",
+        "result_ko": "가" * 69 + "요",
         "kind_ko": "가" * 30,
         "architecture_ko": "가" * 60,
     }
@@ -280,7 +280,7 @@ def test_new_fields_exactly_at_limit_pass():
 
 
 def test_check_messages_name_field_and_count_only():
-    text = "모델 본문 " * 20
+    text = "모델 본문이에요. " * 20
     msgs = [m for _, m in analyze.check(_analysis(new_ko=text))]
     assert len(msgs) == 1
     assert "new_ko" in msgs[0] and str(len(text)) in msgs[0] and "70" in msgs[0]
@@ -288,7 +288,7 @@ def test_check_messages_name_field_and_count_only():
 
 
 def test_line_only_overrun_is_trimmed_after_retry(hf_pages, caplog):
-    long_line = "긴 영상과 문서를 함께 읽고 답하는 모델이다. " * 4
+    long_line = "긴 영상과 문서를 함께 읽고 답하는 모델이에요. " * 4
     over = {"does_ko": long_line, "architecture_ko": "가" * 65}
     fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
     with caplog.at_level("INFO", logger="newsletter"):
@@ -360,19 +360,19 @@ def test_free_text_newlines_are_normalized(hf_pages):
         [
             _parsed(
                 title_ko="Qwen3-VL:\r\nlong-context 개선",
-                summary_ko="첫 줄\n둘째 줄\t끝.",
-                does_ko="긴 영상을\r\n읽는다.",
-                new_ko="입력\t처리를 바꾼다.",
-                result_ko="점수가\n올랐다.",
+                summary_ko="첫 줄\n둘째 줄\t끝이에요.",
+                does_ko="긴 영상을\r\n읽어요.",
+                new_ko="입력\t처리를 바꿔요.",
+                result_ko="점수가\n올랐어요.",
             )
         ]
     )
     result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
     assert result.title_ko == "Qwen3-VL: long-context 개선"
-    assert result.summary_ko == "첫 줄 둘째 줄 끝."
-    assert result.does_ko == "긴 영상을 읽는다."
-    assert result.new_ko == "입력 처리를 바꾼다."
-    assert result.result_ko == "점수가 올랐다."
+    assert result.summary_ko == "첫 줄 둘째 줄 끝이에요."
+    assert result.does_ko == "긴 영상을 읽어요."
+    assert result.new_ko == "입력 처리를 바꿔요."
+    assert result.result_ko == "점수가 올랐어요."
 
 
 @pytest.mark.parametrize(
@@ -380,7 +380,7 @@ def test_free_text_newlines_are_normalized(hf_pages):
     [
         LONG_SUMMARY,
         "가" * 120,
-        "모델을 공개했다. " * 12,
+        "모델을 공개했어요. " * 12,
         "a,b," * 40,
     ],
 )
@@ -416,3 +416,113 @@ def test_api_error_log_carries_type_and_message_without_emails(caplog):
     assert "type=invalid_request_error" in line
     assert "credit balance is too low" in line
     assert "@" not in line
+
+
+# ---------------------------------------------------- 해요체 tone / D-11, D-19
+
+HAEYO_GOOD = [
+    "VLA 모델이에요.",
+    "기존 모델보다 높은 점수를 기록했어요.",
+    "어디에 쓸 수 있을까요?",
+    "말로 지시하면 로봇 팔이 움직여요. 공장 작업에 쓸 수 있어요.",
+    "정확도가 99.3% 올랐어요.",
+    "로봇을 움직이는 모델이에요!",
+    "‘VLA’라고 부르는 모델이에요.”",
+    "점수가 올랐어요 (MMLU 기준이에요.)",
+    "앞부분만 남은 긴 문장이라 잘렸…",
+]
+HAEYO_BAD = [
+    "모델이다.",
+    "새 학습 방법을 제안했다.",
+    "높은 점수를 기록했어.",
+    "29.5% 증가.",
+    "모델이야",
+    "할 수 있다",
+    "첫 문장은 괜찮아요. 둘째 문장은 하다체다.",
+]
+
+
+@pytest.mark.parametrize("text", HAEYO_GOOD)
+def test_not_haeyo_passes_haeyo(text):
+    assert analyze.not_haeyo(text) is False
+
+
+@pytest.mark.parametrize("text", HAEYO_BAD)
+def test_not_haeyo_flags_other_endings(text):
+    assert analyze.not_haeyo(text) is True
+
+
+def test_decimal_does_not_split_a_sentence():
+    assert analyze._SENT_SPLIT.split("99.3% 올랐어요.") == ["99.3% 올랐어요."]
+
+
+@pytest.mark.parametrize("field", analyze.HAEYO_FIELDS)
+def test_check_flags_tone_per_field(field):
+    errs = analyze.check(_analysis(**{field: "결과를 보고했다."}))
+    assert errs == [("tone", f"{field}가 해요체(~요)로 끝나지 않음")]
+    assert "보고했다" not in errs[0][1]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "flagged"),
+    [
+        ("kind_ko", "VLA 모델", False),
+        ("architecture_ko", "확인 필요", False),
+        ("architecture_ko", "Transformer 기반 MoE, vision encoder 결합", False),
+        ("kind_ko", "로봇을 움직이는 모델이다.", True),
+        ("kind_ko", "로봇 모델이다", True),
+        ("kind_ko", "로봇을 움직이는 모델이에요.", False),
+    ],
+)
+def test_model_info_prose_rule(field, value, flagged):
+    codes = [c for c, _ in analyze.check(_analysis(**{field: value}))]
+    assert codes == (["tone"] if flagged else [])
+
+
+HADA = {
+    "summary_ko": "긴 영상과 문서를 함께 읽는 멀티모달 모델을 공개했다.",
+    "result_ko": "공개 benchmark에서 높은 점수를 보고했다.",
+}
+
+
+def test_hada_then_haeyo_uses_second_answer(hf_pages):
+    fake = FakeAnthropic([_parsed(**HADA), _parsed()])
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 2
+    assert result.summary_ko == VALID["summary_ko"]
+    retry = fake.user_texts()[1]
+    assert "summary_ko가 해요체(~요)로 끝나지 않음" in retry
+    assert "result_ko가 해요체(~요)로 끝나지 않음" in retry
+    assert "공개했다" not in retry.split("<previous_output_problems>")[1]
+
+
+def test_hada_twice_is_kept_with_warning(hf_pages, caplog):
+    fake = FakeAnthropic([_parsed(**HADA), _parsed(**HADA)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=7)
+    assert len(fake.calls) == 2
+    assert result.summary_ko == HADA["summary_ko"]
+    warn = [r for r in caplog.records if "tone=unfixed" in r.getMessage()]
+    assert len(warn) == 1 and warn[0].levelname == "WARNING"
+    assert warn[0].getMessage() == "tone=unfixed rank=7 fields=summary_ko,result_ko"
+    for text in HADA.values():
+        assert text not in caplog.text
+
+
+def test_tone_plus_length_overrun_is_trimmed_and_kept(hf_pages, caplog):
+    over = {"summary_ko": LONG_SUMMARY, "does_ko": "긴 영상과 문서를 읽는다."}
+    fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=3)
+    assert len(result.summary_ko) <= 80 and result.summary_ko.endswith("…")
+    assert result.does_ko == over["does_ko"]
+    assert "trimmed=summary_ko rank=3" in caplog.text
+    assert "tone=unfixed rank=3 fields=does_ko" in caplog.text
+
+
+def test_tone_plus_empty_title_fails(hf_pages):
+    bad = {**HADA, "title_ko": " "}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert "tone" in str(exc.value) and "title_empty" in str(exc.value)
