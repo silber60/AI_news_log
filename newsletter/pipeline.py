@@ -55,7 +55,11 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
 
     client = claude_client if claude_client is not None else analyze.make_client()
     items = analyze.analyze_items(top, client)
-    items = enrich.enrich_items(items, top, client=http_client)
+    items, records = enrich.enrich_items_with_records(items, top, client=http_client)
+    # EVID-01: public HF/GitHub evidence behind the verdicts, no Claude text.
+    store.write_json(
+        out / "enriched.json", {"issue_id": issue_id, "count": len(records), "items": records}
+    )
     items = verdicts.finalize(items)
 
     issue = Issue(

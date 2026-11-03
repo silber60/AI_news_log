@@ -262,17 +262,23 @@ def _reason(e: Exception) -> str:
     return type(e).__name__
 
 
-def _code_side(client: httpx.Client, item: Item) -> tuple[LicenseInfo, CommercialVerdict] | None:
-    """D-09: the code side exists when the item has a repo URL."""
+def _code_side(
+    client: httpx.Client, item: Item
+) -> tuple[tuple[LicenseInfo, CommercialVerdict] | None, dict | None]:
+    """D-09: the code side exists when the item has a repo URL.
+
+    Returns the side and the GitHub license record (None when no call was made).
+    """
     if not item.github_url:
-        return None
+        return None, None
     repo = parse_repo(item.github_url)
     if repo is None:
         log.info("license=bad_repo rank=%d", item.rank)
-        return LicenseInfo(), UNKNOWN
+        record = {"status": "bad_repo", "spdx_id": None, "name": None, "html_url": None}
+        return (LicenseInfo(), UNKNOWN), record
     record = licenses.github_license(client, *repo)
     log.info("license=%s rank=%d", record["status"], item.rank)
-    return licenses.code_license(record)
+    return licenses.code_license(record), record
 
 
 def _weights_side(
@@ -295,27 +301,128 @@ def _commercial(
     f: dict[str, Any],
     model: dict | None,
     model_id: str | None,
-) -> CommercialUse:
+) -> tuple[CommercialUse, dict | None]:
     """D-03: stricter of the code and weights licenses. Never raises."""
+    record: dict | None = None
     try:
-        return licenses.commercial_use(_code_side(client, item), _weights_side(f, model, model_id))
+        code, record = _code_side(client, item)
+        return licenses.commercial_use(code, _weights_side(f, model, model_id)), record
     except _NON_FATAL as e:
         log.info("license=error rank=%d reason=%s", item.rank, _reason(e))
-        return item.commercial
+        return item.commercial, record
 
 
-def _enrich_one(client: httpx.Client, item: Item) -> Item:
+# ------------------------------------------------------------ enriched.json
+
+
+def _str_or_none(v: Any) -> str | None:
+    return v if isinstance(v, str) else None
+
+
+def _gated_value(v: Any) -> bool | str | None:
+    return v if isinstance(v, (bool, str)) else None
+
+
+def _empty_record(item: Item) -> dict[str, Any]:
+    """EVID-01 record shape. Public HF/GitHub metadata only, never Claude text."""
+    return {
+        "rank": item.rank,
+        "paper_id": item.paper_id,
+        "model_id": None,
+        "linked_models": [],
+        "spaces": [],
+        "datasets": [],
+        "weights_license": None,
+        "gated": None,
+        "safetensors": None,
+        "base_model_tags": [],
+        "github_license": None,
+        "paper_fetch_ok": False,
+        "evidence": [],
+    }
+
+
+def _evidence_urls(item: Item) -> list[str]:
+    urls: list[str] = []
+    for links in (
+        item.model_info.evidence,
+        item.commercial.evidence,
+        item.poc.evidence,
+        item.hardware.evidence,
+    ):
+        for e in links:
+            if e.url not in urls:
+                urls.append(e.url)
+    return urls
+
+
+def _record(
+    item: Item,
+    paper: dict,
+    f: dict[str, Any] | None,
+    model: dict | None,
+    model_id: str | None,
+    github: dict | None,
+) -> dict[str, Any]:
+    rec = _empty_record(item)
+    rec["paper_fetch_ok"] = True
+    rec["model_id"] = model_id
+    rec["linked_models"] = [
+        {"id": m["id"], "gated": _gated_value(m.get("gated"))}
+        for m in _public_models(paper)
+        if valid_repo_id(m.get("id"))
+    ]
+    rec["spaces"] = _spaces(paper)
+    rec["gated"] = f["gated"] if f is not None else None
+    rec["github_license"] = (
+        {k: _str_or_none(github.get(k)) for k in ("status", "spdx_id", "name", "html_url")}
+        if isinstance(github, dict)
+        else None
+    )
+    if isinstance(model, dict):
+        card = model.get("cardData") if isinstance(model.get("cardData"), dict) else {}
+        lic = card.get("license")
+        if isinstance(lic, list):
+            lic = [v for v in lic if isinstance(v, str)]
+        rec["weights_license"] = {
+            "license": lic if isinstance(lic, (str, list)) else None,
+            "license_name": _str_or_none(card.get("license_name")),
+            "license_link": _str_or_none(card.get("license_link")),
+        }
+        rec["datasets"] = _datasets(model)
+        st = model.get("safetensors")
+        if isinstance(st, dict):
+            params = st.get("parameters")
+            rec["safetensors"] = {
+                "total": param_total(model),
+                "parameters": {
+                    k: v
+                    for k, v in params.items()
+                    if isinstance(k, str) and isinstance(v, int) and not isinstance(v, bool)
+                }
+                if isinstance(params, dict)
+                else None,
+            }
+        tags = model.get("tags") if isinstance(model.get("tags"), list) else []
+        rec["base_model_tags"] = [
+            t for t in tags if isinstance(t, str) and t.startswith("base_model:")
+        ]
+    rec["evidence"] = _evidence_urls(item)
+    return rec
+
+
+def _enrich_one(client: httpx.Client, item: Item) -> tuple[Item, dict[str, Any]]:
     rank = item.rank
     if not PAPER_ID_RE.fullmatch(item.paper_id):
         log.info("enrich=partial rank=%d reason=bad_paper_id", rank)
-        return item
+        return item, _empty_record(item)
     try:
         paper = _get_json(client, f"{HF_BASE}/api/papers/{item.paper_id}")
         if not isinstance(paper, dict):
             raise EnrichError("bad_shape")
     except _NON_FATAL as e:
         log.info("enrich=partial rank=%d reason=%s", rank, _reason(e))
-        return item
+        return item, _empty_record(item)
 
     model_id = primary_model(paper)
     model: dict | None = None
@@ -335,13 +442,25 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
         out = out.model_copy(update={"poc": verdicts.poc(out, f), "hardware": hw})
     except _NON_FATAL as e:
         log.info("enrich=partial rank=%d reason=%s", rank, _reason(e))
-        return item
-    out = out.model_copy(update={"commercial": _commercial(client, item, f, model, model_id)})
+        return item, _safe_record(item, paper, None, model, model_id, None)
+    commercial, github = _commercial(client, item, f, model, model_id)
+    out = out.model_copy(update={"commercial": commercial})
     if reason:
         log.info("enrich=partial rank=%d reason=%s", rank, reason)
     else:
         log.info("enrich=ok rank=%d", rank)
-    return out
+    return out, _safe_record(out, paper, f, model, model_id, github)
+
+
+def _safe_record(item: Item, *args: Any) -> dict[str, Any]:
+    """The archive record never fails the build: a bad shape gives the empty record."""
+    try:
+        return _record(item, *args)
+    except _NON_FATAL as e:
+        log.info("record=partial rank=%d reason=%s", item.rank, _reason(e))
+        rec = _empty_record(item)
+        rec["paper_fetch_ok"] = True
+        return rec
 
 
 def hf_image_urls(media_urls: list[str] | None) -> list[str]:
@@ -663,19 +782,21 @@ def pick_image(
     return image
 
 
-def enrich_items(
+def enrich_items_with_records(
     items: list[Item], entries: list[HfEntry], *, client: httpx.Client | None = None
-) -> list[Item]:
-    """Fill code-owned model facts and the per-item image. Never raises for HF problems."""
+) -> tuple[list[Item], list[dict[str, Any]]]:
+    """Fill code-owned facts, verdicts and the per-item image, plus one EVID-01 record
+    per item for archive/{week}/enriched.json. Never raises for HF/GitHub problems."""
     media = {e.paper.id: e.paper.mediaUrls for e in entries}
     repos = {e.paper.id: e.paper.githubRepo for e in entries}
     own = client is None
     if own:
         client = httpx.Client(timeout=TIMEOUT)  # same default User-Agent as fetch
     try:
-        out = []
+        out: list[Item] = []
+        records: list[dict[str, Any]] = []
         for item in items:
-            item = _enrich_one(client, item)
+            item, record = _enrich_one(client, item)
             image = pick_image(
                 client,
                 media.get(item.paper_id),
@@ -684,7 +805,15 @@ def enrich_items(
                 paper_id=item.paper_id,
             )
             out.append(item.model_copy(update={"image": image}))
-        return out
+            records.append(record)
+        return out, records
     finally:
         if own:
             client.close()
+
+
+def enrich_items(
+    items: list[Item], entries: list[HfEntry], *, client: httpx.Client | None = None
+) -> list[Item]:
+    """Fill code-owned model facts and the per-item image. Never raises for HF problems."""
+    return enrich_items_with_records(items, entries, client=client)[0]
