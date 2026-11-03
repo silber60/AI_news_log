@@ -83,6 +83,9 @@ LINE_LIMIT = 70  # ANLY-07: does_ko / new_ko / result_ko
 KIND_LIMIT = 30  # ANLY-08: kind_ko
 ARCH_LIMIT = 60  # ANLY-08: architecture_ko
 IDEA_LIMIT = 50  # ANLY-10, D-13: use_idea_ko
+CLAUDE_GPT_REASON_LIMIT = 60  # ANLY-02, D-06: claude_gpt_reason_ko
+# A reason that repeats a label restates the verdict instead of explaining it.
+_CG_LABELS = ("직접 사용", "기법 적용 가능", "해당 없음")
 _LINE_FIELDS = ("does_ko", "new_ko", "result_ko")
 _WS_RE = re.compile(r"[\r\n\t]+")
 _BOUNDARY_CHARS = " ,."
@@ -112,7 +115,14 @@ _TEXT_FIELDS = (
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=\S)")
 _TAIL = re.compile(r"[\s\"'”’)\]」』]+$")
 _HAEYO = re.compile(r"요[.!?~]*$")
-HAEYO_FIELDS = ("summary_ko", "does_ko", "new_ko", "result_ko", "use_idea_ko")
+HAEYO_FIELDS = (
+    "summary_ko",
+    "does_ko",
+    "new_ko",
+    "result_ko",
+    "use_idea_ko",
+    "claude_gpt_reason_ko",
+)
 _PROSE_INFO_FIELDS = ("kind_ko", "architecture_ko")
 
 
@@ -143,7 +153,7 @@ def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
 
 
 def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
-    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 / ANLY-10 limits and the 해요체 rule. Messages carry field names
+    """Code-enforced ANLY-02 / ANLY-03 / ANLY-07 / ANLY-08 / ANLY-10 limits and the 해요체 rule. Messages carry field names
     and counts, never model text."""
     errs: list[tuple[str, str]] = []
     if not a.title_ko.strip():
@@ -170,6 +180,18 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(("idea_empty", "use_idea_ko가 비어 있음"))
     elif len(a.use_idea_ko) > IDEA_LIMIT:
         errs.append(("idea_len", f"use_idea_ko가 {len(a.use_idea_ko)}자로 {IDEA_LIMIT}자를 넘음"))
+    reason = a.claude_gpt_reason_ko
+    if not reason.strip():
+        errs.append(("cg_reason_empty", "claude_gpt_reason_ko가 비어 있음"))
+    elif len(reason) > CLAUDE_GPT_REASON_LIMIT:
+        errs.append(
+            (
+                "cg_reason_len",
+                f"claude_gpt_reason_ko가 {len(reason)}자로 {CLAUDE_GPT_REASON_LIMIT}자를 넘음",
+            )
+        )
+    if any(label in reason for label in _CG_LABELS):
+        errs.append(("cg_label_in_reason", "claude_gpt_reason_ko가 판정 이름을 그대로 씀"))
     for field in HAEYO_FIELDS:
         text = getattr(a, field)
         if text.strip() and not_haeyo(text):
@@ -189,10 +211,14 @@ _TRIM_LIMITS = {
     "kind_ko": KIND_LIMIT,
     "architecture_ko": ARCH_LIMIT,
     "use_idea_ko": IDEA_LIMIT,
+    "claude_gpt_reason_ko": CLAUDE_GPT_REASON_LIMIT,
 }
-_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len", "idea_len"}
+_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len", "idea_len", "cg_reason_len"}
+# ANLY-02: a missing or label-repeating reason left after the retry drops the label
+# to 확인 필요 with no reason, so it never reaches the Issue.
+_CG_DOWNGRADE_CODES = {"cg_reason_empty", "cg_label_in_reason"}
 # D-19: a wrong sentence ending left after the retry is logged, never fatal.
-_NON_FATAL_CODES = _LENGTH_CODES | {"tone"}
+_NON_FATAL_CODES = _LENGTH_CODES | _CG_DOWNGRADE_CODES | {"tone"}
 
 
 def _trim_overruns(a: ItemAnalysisLLM) -> tuple[ItemAnalysisLLM, list[str]]:
@@ -347,11 +373,20 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
     codes = {code for code, _ in problems}
     if last is not None and problems and codes <= _NON_FATAL_CODES:
         # D-19: length overruns after the retry are trimmed; a wrong ending is
-        # kept with a warning that names fields only, never model text.
+        # kept with a warning that names fields only, never model text. A bad
+        # Claude/GPT reason drops the label first (ANLY-02).
         result = last
+        if codes & _CG_DOWNGRADE_CODES:
+            result = result.model_copy(update={"claude_gpt": UNKNOWN, "claude_gpt_reason_ko": ""})
+            log.warning(
+                "claude_gpt=downgraded rank=%d codes=%s",
+                rank,
+                ",".join(sorted(codes & _CG_DOWNGRADE_CODES)),
+            )
         if codes & _LENGTH_CODES:
-            result, fields = _trim_overruns(last)
-            log.info("trimmed=%s rank=%d", ",".join(fields), rank)
+            result, fields = _trim_overruns(result)
+            if fields:  # a downgrade may already have emptied the long reason
+                log.info("trimmed=%s rank=%d", ",".join(fields), rank)
         if "tone" in codes:
             tone_fields = [
                 f

@@ -102,7 +102,7 @@ def test_system_names_v3_fields_and_one_idea(hf_pages):
     # D-13: exactly one idea line, never the old two-idea list
     assert "use_ideas" not in text
     assert "### `use_idea_ko`" in text
-    assert "아홉 필드" in text and "여덟 필드" not in text
+    assert "열한 필드" in text and "아홉 필드" not in text and "여덟 필드" not in text
     for two in ("두 개", "2개", "두 가지", "0..2"):
         assert two not in text, two
     # T-01.2-07: facts stay code-owned
