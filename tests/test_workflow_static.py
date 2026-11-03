@@ -146,3 +146,14 @@ def test_ci_runs_lint_and_tests_without_secrets():
     assert "uv run ruff check" in text
     assert "uv run pytest" in text
     assert "push" in text and "pull_request" in text
+
+
+def test_build_step_gets_job_token_not_a_secret():
+    # D-09: the GitHub license API call uses the read-only job token.
+    _, blocks = _split(_text(NEWSLETTER))
+    build = _named(blocks, "Build")
+    assert "GITHUB_TOKEN: ${{ github.token }}" in build
+    assert build.count("secrets.") == 1
+    assert "secrets.GITHUB_TOKEN" not in _text(NEWSLETTER)
+    holders = [b for b in blocks if "GITHUB_TOKEN" in b]
+    assert holders == [build]
