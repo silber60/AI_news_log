@@ -6,7 +6,7 @@ from pathlib import Path
 import httpx
 import pytest
 import respx
-from conftest import FakeAnthropic, image_bytes, mock_enrich, mock_hf_week
+from conftest import FakeAnthropic, image_bytes, mock_enrich, mock_hf_week, partial
 
 from newsletter.schema import UNKNOWN, HfEntry, Item, ModelInfo
 from newsletter.stages import enrich
@@ -265,6 +265,8 @@ def _img_run(hf_pages, item: Item, media, response=None) -> tuple[Item, dict]:
 
 
 def _resp(body: bytes, ctype: str = "image/png", status: int = 206) -> httpx.Response:
+    if status == 206:
+        return partial(body, ctype)
     return httpx.Response(status, headers={"content-type": ctype}, content=body)
 
 
@@ -318,7 +320,10 @@ def test_gif_and_jpeg_accepted(items, hf_pages, fmt, ctype, name):
         (_resp(image_bytes((1152, 468)), "text/html"), "content_type"),
         (_resp(image_bytes((1152, 468)), status=404), "http_404"),
         (_resp(b"\x89PNG\r\n\x1a\n garbage"), "decode"),
-        (_resp(b""), "decode"),
+        (
+            httpx.Response(200, headers={"content-type": "image/png", "content-length": "0"}),
+            "decode",
+        ),
     ],
 )
 def test_bad_images_are_rejected_without_raising(items, hf_pages, caplog, response, reason):
@@ -330,9 +335,9 @@ def test_bad_images_are_rejected_without_raising(items, hf_pages, caplog, respon
 
 
 def test_square_ratio_lower_bound(items, hf_pages):
-    ok, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1300, 1000))))
-    assert ok.image is not None and ok.image.height == 443
-    bad, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1290, 1000))))
+    ok, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1200, 1000))))
+    assert ok.image is not None and ok.image.height == 480
+    bad, _ = _img_run(hf_pages, items[0], [CDN + "x.png"], _resp(image_bytes((1190, 1000))))
     assert bad.image is None
 
 
@@ -343,7 +348,50 @@ def test_image_never_reads_more_than_64k(items, hf_pages):
     assert enrich.IMAGE_MAX_BYTES == 65536
 
 
-def test_build_gives_rank1_the_only_image(hf_pages, archive_tmp):
+RAW = "https://raw.githubusercontent.com/"
+# D-08, D-18: README images the W44 capture supports, by fixture rank (captured
+# 2026-11-03). Rank 5 skips a 7.6 MB demo GIF, rank 7 has only 480 px thumbnails
+# and WebP, rank 10 has only a 2.75 MB banner; ranks 1-4 have badges, logos, SVG
+# or redirecting hosts only.
+README_IMAGES = {
+    5: (RAW + "google-deepmind/detectorscope/HEAD/assets/overview.png", 245),
+    6: (RAW + "simple-agent-lab/RSIHub/HEAD/docs/assets/paper-poster-lora-gen0.png", 360),
+    8: (RAW + "BinceQu/RoboHarness/HEAD/docs/assets/overview.png", 468),
+    9: (RAW + "datamllab/OpenEBFM/HEAD/figs/dclm_pretrain.png", 429),
+}
+
+
+def _images(issue) -> dict[int, tuple[str, int]]:
+    out = {}
+    for it in issue.items:
+        if it.image is not None:
+            assert it.image.width == 576
+            out[it.rank] = (it.image.url, it.image.height)
+    return out
+
+
+def test_build_gives_star_cards_their_readme_images(hf_pages, archive_tmp, caplog):
+    from newsletter.pipeline import run_build
+
+    with (
+        caplog.at_level("DEBUG", logger="newsletter"),
+        respx.mock(assert_all_mocked=True, assert_all_called=True) as router,
+    ):
+        mock_hf_week(router, hf_pages, ISSUE_ID)
+        issue = run_build(ISSUE_ID, claude_client=FakeAnthropic())
+        paths = [c.request.url.path for c in router.calls]
+    assert _images(issue) == README_IMAGES
+    readmes = [p for p in paths if p.endswith("/README.md")]
+    assert len(readmes) == 10
+    text = caplog.text
+    assert "raw.githubusercontent" not in text and "cdn-uploads" not in text
+    assert "image=ok rank=5" in text
+    assert "image=none rank=7 reason=width" in text
+    assert "image=none rank=10 reason=bytes" in text
+    assert "image=none rank=1 reason=no_candidate" in text
+
+
+def test_build_uses_hf_image_first_and_skips_its_readme(hf_pages, archive_tmp):
     from newsletter.pipeline import run_build
 
     # The star rank-1 paper (2610.35518) has no HF image in the W44 capture, so a
@@ -355,14 +403,15 @@ def test_build_gives_rank1_the_only_image(hf_pages, archive_tmp):
     with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
         mock_hf_week(router, pages, ISSUE_ID)
         cdn = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
-            return_value=httpx.Response(
-                206, headers={"content-type": "image/png"}, content=image_bytes()
-            )
+            return_value=partial(image_bytes())
         )
         issue = run_build(ISSUE_ID, claude_client=FakeAnthropic())
+        paths = [c.request.url.path for c in router.calls]
     assert cdn.call_count == 1
     assert issue.items[0].paper_id == "2610.35518"
     first = issue.items[0].image
     assert first is not None
     assert (first.url, first.width, first.height) == (RANK1_IMG, 576, 234)
-    assert all(it.image is None for it in issue.items[1:])
+    assert _images(issue) == {1: (RANK1_IMG, 234), **README_IMAGES}
+    assert "/InternLM/xtuner/HEAD/README.md" not in paths
+    assert "/hyz317/HairDeck/HEAD/README.md" in paths

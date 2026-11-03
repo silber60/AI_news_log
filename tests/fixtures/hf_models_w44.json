@@ -65,5 +65,96 @@
       "license:apache-2.0",
       "region:us"
     ]
+  },
+  "hyz317/HairDeck": {
+    "id": "hyz317/HairDeck",
+    "cardData": {},
+    "gated": false,
+    "tags": [
+      "pytorch",
+      "safetensors",
+      "3d",
+      "anime",
+      "hair",
+      "hair-cards",
+      "vrm",
+      "diffusion",
+      "arxiv:2610.40599",
+      "image-to-3d",
+      "license:apache-2.0",
+      "region:us"
+    ]
+  },
+  "liamdugan/detector-scope-peer-review-gpt4o": {
+    "id": "liamdugan/detector-scope-peer-review-gpt4o",
+    "cardData": {},
+    "gated": false,
+    "tags": [
+      "detectorscope",
+      "safetensors",
+      "ai-text-detection",
+      "sparse-autoencoder",
+      "interpretability",
+      "text-classification",
+      "arxiv:2610.30006",
+      "base_model:google/gemma-2-2b",
+      "base_model:finetune:google/gemma-2-2b",
+      "license:gemma",
+      "region:us"
+    ],
+    "safetensors": {
+      "parameters": {
+        "F32": 302130176
+      },
+      "total": 302130176
+    }
+  },
+  "liamdugan/detector-scope-peer-review-llama": {
+    "id": "liamdugan/detector-scope-peer-review-llama",
+    "cardData": {},
+    "gated": false,
+    "tags": [
+      "detectorscope",
+      "safetensors",
+      "ai-text-detection",
+      "sparse-autoencoder",
+      "interpretability",
+      "text-classification",
+      "arxiv:2610.30006",
+      "base_model:google/gemma-2-2b",
+      "base_model:finetune:google/gemma-2-2b",
+      "license:gemma",
+      "region:us"
+    ],
+    "safetensors": {
+      "parameters": {
+        "F32": 302130176
+      },
+      "total": 302130176
+    }
+  },
+  "liamdugan/detector-scope": {
+    "id": "liamdugan/detector-scope",
+    "cardData": {},
+    "gated": false,
+    "tags": [
+      "detectorscope",
+      "safetensors",
+      "ai-text-detection",
+      "sparse-autoencoder",
+      "interpretability",
+      "text-classification",
+      "arxiv:2610.30006",
+      "base_model:google/gemma-2-2b",
+      "base_model:finetune:google/gemma-2-2b",
+      "license:gemma",
+      "region:us"
+    ],
+    "safetensors": {
+      "parameters": {
+        "F32": 302130176
+      },
+      "total": 302130176
+    }
   }
 }

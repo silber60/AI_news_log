@@ -74,19 +74,28 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         assert it.poc.has_code in (True, None)
         assert it.poc.has_demo in (True, None)
     # Facts come from the HF paper/model captures by code (D-07); unknown stays UNKNOWN.
-    rank1, rank3 = stored.items[0], stored.items[2]
-    assert (rank1.model_info.size, rank1.model_info.training_data, rank1.model_info.release) == (
-        UNKNOWN,
-        UNKNOWN,
-        UNKNOWN,
-    )
-    assert rank3.paper_id == "2610.36729"
-    assert rank3.model_info.training_data == UNKNOWN  # no cardData datasets in the capture
-    assert rank3.model_info.release == "가중치 · GitHub · 데모"
-    assert rank3.model_info.size == UNKNOWN  # no safetensors in the capture
-    for it in stored.items[3:]:
-        mi = it.model_info
-        assert (mi.size, mi.training_data, mi.release) == (UNKNOWN, UNKNOWN, UNKNOWN)
+    facts = [
+        (it.model_info.size, it.model_info.training_data, it.model_info.release)
+        for it in stored.items
+    ]
+    assert facts == [
+        (UNKNOWN, UNKNOWN, "GitHub"),  # 1 xtuner: no linked model or space
+        (UNKNOWN, UNKNOWN, "가중치 · GitHub · 데모"),  # 2 HairDeck: no safetensors
+        (UNKNOWN, UNKNOWN, "가중치 · GitHub · 데모"),  # 3 Hy-Nomas: no cardData datasets
+        (UNKNOWN, UNKNOWN, "GitHub"),
+        ("302M 파라미터 (외 2개 모델)", UNKNOWN, "가중치 · GitHub · 데모"),  # 5 detectorscope
+        (UNKNOWN, UNKNOWN, "GitHub"),
+        (UNKNOWN, UNKNOWN, "GitHub"),
+        (UNKNOWN, UNKNOWN, "GitHub"),  # 8 linkedDatasets on the paper are not training data
+        (UNKNOWN, UNKNOWN, "GitHub"),
+        (UNKNOWN, UNKNOWN, "GitHub"),
+    ]
+    assert stored.items[4].hardware.param_count == 302130176
+    assert [it.hardware.param_count for i, it in enumerate(stored.items) if i != 4] == [None] * 9
+    assert [it.poc.has_weights for it in stored.items] == [None, True, True, None, True] + [
+        None
+    ] * 5
+    assert all(it.poc.has_code for it in stored.items)
     assert stored.schema_version == 3
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
     assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"

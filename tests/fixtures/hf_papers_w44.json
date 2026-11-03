@@ -127,5 +127,124 @@
     "linkedDatasets": [],
     "linkedSpaces": [],
     "githubRepo": "https://github.com/yihaohu0118/ChronoReplay"
+  },
+  "2610.35518": {
+    "id": "2610.35518",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/InternLM/xtuner"
+  },
+  "2610.40599": {
+    "id": "2610.40599",
+    "linkedModels": [
+      {
+        "id": "hyz317/HairDeck",
+        "gated": false,
+        "private": false,
+        "downloads": 926
+      }
+    ],
+    "linkedDatasets": [],
+    "linkedSpaces": [
+      {
+        "id": "hyz317/HairDeck"
+      }
+    ],
+    "githubRepo": "https://github.com/hyz317/HairDeck",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/64c903957b4d0d947ce86bc6/_48fUB0tHL8KYiDdyg12X.mp4"
+    ]
+  },
+  "2610.31635": {
+    "id": "2610.31635",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/HiP3Rs/HiP3R",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6481523b3fb124fc9850afed/YudKZx5QZ6VmT-d2QVlXv.mp4"
+    ]
+  },
+  "2610.30006": {
+    "id": "2610.30006",
+    "linkedModels": [
+      {
+        "id": "liamdugan/detector-scope",
+        "gated": false,
+        "private": false,
+        "downloads": 3006
+      },
+      {
+        "id": "liamdugan/detector-scope-peer-review-gpt4o",
+        "gated": false,
+        "private": false,
+        "downloads": 128
+      },
+      {
+        "id": "liamdugan/detector-scope-peer-review-llama",
+        "gated": false,
+        "private": false,
+        "downloads": 56
+      }
+    ],
+    "linkedDatasets": [],
+    "linkedSpaces": [
+      {
+        "id": "liamdugan/detector-scope-demo"
+      },
+      {
+        "id": "umair1ali2/detector-scope-demo"
+      }
+    ],
+    "githubRepo": "https://github.com/google-deepmind/detectorscope",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6509e1e01b3694179dee256e/NQXLe55w6swINgajDUUP4.gif"
+    ]
+  },
+  "2610.32253": {
+    "id": "2610.32253",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/simple-agent-lab/RSIHub"
+  },
+  "2610.33106": {
+    "id": "2610.33106",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/tettethu/VibeGame",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/6754f9eea4b0a4a71aeed438/OzwrI14ADhCGtWx7Uw--5.mp4"
+    ]
+  },
+  "2610.14018": {
+    "id": "2610.14018",
+    "linkedModels": [],
+    "linkedDatasets": [
+      {
+        "id": "BinceQu/RoboHarness-assets"
+      }
+    ],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/BinceQu/RoboHarness",
+    "mediaUrls": [
+      "https://cdn-uploads.huggingface.co/production/uploads/68a56b4d340f26c20552d998/wPG5QxHbaKVKrtjUZqcPu.mp4"
+    ]
+  },
+  "2610.33005": {
+    "id": "2610.33005",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/datamllab/OpenEBFM"
+  },
+  "2610.33845": {
+    "id": "2610.33845",
+    "linkedModels": [],
+    "linkedDatasets": [],
+    "linkedSpaces": [],
+    "githubRepo": "https://github.com/MCG-NJU/AutoTavern"
   }
 }

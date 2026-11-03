@@ -9,11 +9,16 @@ Enrichment is non-fatal. Any HTTP or parse problem keeps the defaults for that
 item and logs a reason code. Logs carry ranks and codes only, never ids,
 dataset names, URLs or response bodies.
 
-The per-item image (D-11) is the first HF-upload image in `paper.mediaUrls`.
-Code reads only its first 64 KB to get the size, and keeps it only when it is
-wide enough for the 576 px card with a banner-like aspect ratio.
+The per-item image (D-08, D-09, D-18) is the first candidate that passes every
+filter: HF-upload images in `paper.mediaUrls` first, then images from the repo
+README on raw.githubusercontent.com, fetched only when no HF image passed. Code
+reads only the first 64 KB of each candidate to get the size from the header,
+and keeps it only when it is wide enough for the 576 px card, banner-like, at
+most 1 MB in total and served without a redirect. The README is read up to
+256 KB, used only for image URLs, and never sent to Claude or logged.
 """
 
+import html
 import logging
 import re
 import warnings
@@ -24,7 +29,17 @@ import httpx
 from PIL import Image
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from newsletter.schema import IMAGE_HOST, UNKNOWN, EvidenceLink, HfEntry, Item, ItemImage
+from newsletter.schema import (
+    IMAGE_HOST,
+    IMAGE_HOSTS,
+    IMAGE_URL_MAX,
+    RAW_IMAGE_HOST,
+    UNKNOWN,
+    EvidenceLink,
+    HfEntry,
+    Item,
+    ItemImage,
+)
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +64,17 @@ IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif"}
 IMAGE_MAX_BYTES = 65536  # T-01.1-10: header bytes only, never the whole file
 IMAGE_RANGE = "bytes=0-65535"
 IMAGE_WIDTH = 576  # card display width
-RATIO_MIN, RATIO_MAX = 1.3, 3.5
+RATIO_MIN, RATIO_MAX = 1.2, 4.0
+IMAGE_MAX_TOTAL_BYTES = 1_000_000  # D-18: whole file, from content-range / content-length
+MAX_PROBES = 6  # image requests per item, HF and README candidates together
+
+# D-08 / T-01.2-10: README images come from one fixed host, for a repo parsed by
+# this allowlist from the HF githubRepo URL.
+RAW_BASE = RAW_IMAGE_HOST.rstrip("/")
+README_MAX_BYTES = 262144
+GITHUB_REPO_RE = re.compile(
+    r"^https://github\.com/([A-Za-z0-9-]{1,39})/([\w.-]{1,100}?)(?:\.git)?/?$"
+)
 
 
 class _RetryableStatus(Exception):
@@ -262,26 +287,135 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
     return out
 
 
+def hf_image_urls(media_urls: list[str] | None) -> list[str]:
+    """HF-upload image URLs (png/jpg/jpeg/gif, case-insensitive), in order. Videos
+    and other hosts are skipped (T-01.1-09)."""
+    return [
+        url
+        for url in media_urls or []
+        if isinstance(url, str) and url.startswith(IMAGE_HOST) and url.lower().endswith(IMAGE_EXTS)
+    ]
+
+
 def pick_image_url(media_urls: list[str] | None) -> str | None:
-    """First HF-upload image URL (png/jpg/jpeg/gif, case-insensitive). Videos and
-    other hosts are skipped (T-01.1-09)."""
-    for url in media_urls or []:
-        if isinstance(url, str) and url.startswith(IMAGE_HOST) and url.lower().endswith(IMAGE_EXTS):
-            return url
-    return None
+    """First HF-upload image URL, or None."""
+    urls = hf_image_urls(media_urls)
+    return urls[0] if urls else None
+
+
+# ------------------------------------------------------------- README images
+
+
+def parse_repo(github_url: Any) -> tuple[str, str] | None:
+    """(owner, repo) from an https://github.com/{owner}/{repo} URL, else None."""
+    if not isinstance(github_url, str):
+        return None
+    m = GITHUB_REPO_RE.fullmatch(github_url)
+    if not m or ".." in github_url:
+        return None
+    return m.group(1), m.group(2)
+
+
+_IMG_RE = re.compile(
+    r"!\[[^\]]*\]\(\s*<?(?P<md>[^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'))?\s*\)"
+    r"|<img\b[^>]*?\bsrc\s*=\s*(?:\"(?P<dq>[^\"]*)\"|'(?P<sq>[^']*)'|(?P<bare>[^\s>]+))",
+    re.IGNORECASE,
+)
+_BADGE_RE = re.compile(
+    r"shields\.io|badge|/actions/workflows/|pepy\.tech|codecov|badgen|star-history|komarev",
+    re.IGNORECASE,
+)
+_LOGO_RE = re.compile(r"logo|wordmark|lockup|emblem|icon|avatar", re.IGNORECASE)
+
+
+def _resolve(src: str, owner: str, repo: str) -> str | None:
+    if "://" in src:
+        return src
+    path = src
+    while path.startswith("./"):
+        path = path[2:]
+    path = path.lstrip("/")
+    if not path:
+        return None
+    return f"{RAW_BASE}/{owner}/{repo}/HEAD/{path}"
+
+
+def _usable(url: str) -> bool:
+    if not url.startswith(IMAGE_HOSTS) or len(url) > IMAGE_URL_MAX:
+        return False
+    if any(c.isspace() for c in url):
+        return False
+    if not url.lower().endswith(IMAGE_EXTS):
+        return False
+    if _BADGE_RE.search(url):
+        return False
+    return not _LOGO_RE.search(url.rsplit("/", 1)[-1])
+
+
+def readme_candidates(md: str, owner: str, repo: str) -> list[str]:
+    """Direct image URLs from a README in document order, deduplicated (D-08, D-18)."""
+    out: list[str] = []
+    for m in _IMG_RE.finditer(md):
+        raw = m.group("md") or m.group("dq") or m.group("sq") or m.group("bare") or ""
+        url = _resolve(html.unescape(raw.strip()), owner, repo)
+        if url and _usable(url) and url not in out:
+            out.append(url)
+    return out
+
+
+def _read_readme(client: httpx.Client, owner: str, repo: str, rank: int) -> str | None:
+    url = f"{RAW_BASE}/{owner}/{repo}/HEAD/README.md"
+    try:
+        with client.stream("GET", url, timeout=TIMEOUT, follow_redirects=False) as resp:
+            if resp.status_code != 200:
+                log.info("readme=none rank=%d reason=http_%d", rank, resp.status_code)
+                return None
+            buf = bytearray()
+            for chunk in resp.iter_bytes():
+                buf.extend(chunk)
+                if len(buf) >= README_MAX_BYTES:
+                    break
+    except httpx.HTTPError as e:
+        log.info("readme=none rank=%d reason=%s", rank, type(e).__name__)
+        return None
+    return bytes(buf[:README_MAX_BYTES]).decode("utf-8", errors="replace")
+
+
+# ------------------------------------------------------------------- probing
 
 
 class _NoImage(Exception):
     """The candidate is unusable. The message is a short reason code."""
 
 
+_RANGE_TOTAL_RE = re.compile(r"^bytes \d+-\d+/(\d+)$")
+
+
+def _total_bytes(resp: httpx.Response) -> int | None:
+    if resp.status_code == 206:
+        m = _RANGE_TOTAL_RE.match(resp.headers.get("content-range", "").strip())
+        return int(m.group(1)) if m else None
+    length = resp.headers.get("content-length", "").strip()
+    return int(length) if length.isdigit() else None
+
+
 def _read_head(client: httpx.Client, url: str) -> bytes:
-    with client.stream("GET", url, headers={"Range": IMAGE_RANGE}, timeout=TIMEOUT) as resp:
-        if resp.status_code not in (200, 206):
-            raise _NoImage(f"http_{resp.status_code}")
+    with client.stream(
+        "GET", url, headers={"Range": IMAGE_RANGE}, timeout=TIMEOUT, follow_redirects=False
+    ) as resp:
+        code = resp.status_code
+        if 300 <= code < 400:
+            raise _NoImage("redirect")
+        if code not in (200, 206):
+            raise _NoImage(f"http_{code}")
         ctype = resp.headers.get("content-type", "").split(";", 1)[0].strip().lower()
         if ctype not in IMAGE_TYPES:
             raise _NoImage("content_type")
+        total = _total_bytes(resp)
+        if total is None:
+            raise _NoImage("bytes_unknown")
+        if total > IMAGE_MAX_TOTAL_BYTES:
+            raise _NoImage("bytes")
         buf = bytearray()
         for chunk in resp.iter_bytes():
             buf.extend(chunk)
@@ -305,23 +439,61 @@ def _dims(head: bytes) -> tuple[int, int]:
     return w, h
 
 
-def pick_image(client: httpx.Client, media_urls: list[str] | None, rank: int) -> ItemImage | None:
-    url = pick_image_url(media_urls)
-    if url is None:
-        log.info("image=none rank=%d reason=no_candidate", rank)
-        return None
+def _probe(client: httpx.Client, url: str) -> ItemImage:
+    """One candidate through every filter. Raises _NoImage with a reason code."""
     try:
         w, h = _dims(_read_head(client, url))
         if w < IMAGE_WIDTH:
             raise _NoImage("width")
         if not RATIO_MIN <= w / h <= RATIO_MAX:
             raise _NoImage("ratio")
-        image = ItemImage(url=url, width=IMAGE_WIDTH, height=round(IMAGE_WIDTH * h / w))
-    except _NoImage as e:
-        log.info("image=none rank=%d reason=%s", rank, e)
-        return None
+        return ItemImage(url=url, width=IMAGE_WIDTH, height=round(IMAGE_WIDTH * h / w))
     except (httpx.HTTPError, ValueError) as e:
-        log.info("image=none rank=%d reason=%s", rank, type(e).__name__)
+        raise _NoImage(type(e).__name__) from None
+
+
+class _Prober:
+    """Probes candidates in order, at most MAX_PROBES per item."""
+
+    def __init__(self, client: httpx.Client, rank: int):
+        self.client = client
+        self.rank = rank
+        self.probes = 0
+        self.reason = "no_candidate"
+
+    def first(self, urls: list[str]) -> ItemImage | None:
+        for url in urls:
+            if self.probes >= MAX_PROBES:
+                self.reason = "probe_limit"
+                return None
+            self.probes += 1
+            try:
+                return _probe(self.client, url)
+            except _NoImage as e:
+                self.reason = str(e)
+                log.info("image=skip rank=%d reason=%s", self.rank, e)
+        return None
+
+
+def pick_image(
+    client: httpx.Client,
+    media_urls: list[str] | None,
+    rank: int,
+    github_url: str | None = None,
+) -> ItemImage | None:
+    """HF media images first, then README images (fetched only when needed)."""
+    prober = _Prober(client, rank)
+    image = prober.first(hf_image_urls(media_urls))
+    if image is None and github_url and prober.probes < MAX_PROBES:
+        repo = parse_repo(github_url)
+        if repo is None:
+            log.info("readme=none rank=%d reason=bad_repo", rank)
+        else:
+            md = _read_readme(client, *repo, rank)
+            if md is not None:
+                image = prober.first(readme_candidates(md, *repo))
+    if image is None:
+        log.info("image=none rank=%d reason=%s", rank, prober.reason)
         return None
     log.info("image=ok rank=%d", rank)
     return image
@@ -332,6 +504,7 @@ def enrich_items(
 ) -> list[Item]:
     """Fill code-owned model facts and the per-item image. Never raises for HF problems."""
     media = {e.paper.id: e.paper.mediaUrls for e in entries}
+    repos = {e.paper.id: e.paper.githubRepo for e in entries}
     own = client is None
     if own:
         client = httpx.Client(timeout=TIMEOUT)  # same default User-Agent as fetch
@@ -339,7 +512,9 @@ def enrich_items(
         out = []
         for item in items:
             item = _enrich_one(client, item)
-            image = pick_image(client, media.get(item.paper_id), item.rank)
+            image = pick_image(
+                client, media.get(item.paper_id), item.rank, repos.get(item.paper_id)
+            )
             out.append(item.model_copy(update={"image": image}))
         return out
     finally:
