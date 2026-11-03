@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 ## Current Position
 
-Phase: 1 of 5 (End-to-End Skeleton)
-Plan: 0 of 6 in current phase
-Status: Phase 1.2 planned (5 plans, 3 waves; plan-check passed after 2 iterations). Phase 1 01-06 live runs pending (SMTP secrets)
-Last activity: 2026-11-03 - Phase 2 context gathered (Phase 1.2 awaiting final live preview)
+Phase: 2 of 5 (Evidence & Practical Verdicts); Phases 1, 1.1, 1.2 complete
+Plan: 0 of TBD in current phase
+Status: Phase 2 context gathered, ready to plan
+Last activity: 2026-11-03 - Phases 1 and 1.2 closed after live test/send/failure runs
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -80,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 1.2 planned
-Resume file: .planning/phases/01.2-star-selection-friendly-content/01.2-CONTEXT.md
+Stopped at: Phase 2 context gathered
+Resume file: .planning/phases/02-evidence-practical-verdicts/02-CONTEXT.md

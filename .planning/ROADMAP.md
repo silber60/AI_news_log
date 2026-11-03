@@ -6,9 +6,9 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 
 ## Phases
 
-- [ ] **Phase 1: End-to-End Skeleton** - Manual Actions run fetches last week's Top 10, analyzes minimally, renders a basic email, and previews or test-sends it
+- [x] **Phase 1: End-to-End Skeleton** - Manual Actions run fetches last week's Top 10, analyzes minimally, renders a basic email, and previews or test-sends it
 - [x] **Phase 1.1: Newsletter Design v2 & Model Detail Fields** (INSERTED) - The email follows the approved Figma v2 draft (otter mascot, Top 3 → explainer → 4-10 layout, headline-style subject) and each card shows one-line + multi-line summaries and a model info table
-- [ ] **Phase 1.2: GitHub-Star Selection & Friendly Content** (INSERTED) - Items are picked by GitHub stars (3-10, star ≥ 100 decides the count), each article carries its own image, empty model-info rows disappear, and every text reads in friendly 해요체 with a one-line use idea
+- [x] **Phase 1.2: GitHub-Star Selection & Friendly Content** (INSERTED) - Items are picked by GitHub stars (3-10, star ≥ 100 decides the count), each article carries its own image, empty model-info rows disappear, and every text reads in friendly 해요체 with a one-line use idea
 - [ ] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
 - [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
@@ -147,9 +147,9 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. End-to-End Skeleton | 0/6 | Planned | - |
+| 1. End-to-End Skeleton | 6/6 | Complete | 2026-11-03 |
 | 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
-| 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 0/5 | Planned | - |
+| 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |

@@ -2,7 +2,7 @@
 phase: 01-end-to-end-skeleton
 plan: 06
 subsystem: ci-deploy
-status: checkpoint
+status: complete
 tags: [github-actions, workflow_dispatch, ci, secrets-scoping]
 requires: ["01-01", "01-02", "01-03", "01-04", "01-05"]
 provides: [".github/workflows/newsletter.yml", ".github/workflows/ci.yml", "tests/test_workflow_static.py"]
@@ -57,9 +57,11 @@ Phase 1.1 D-20: runs happen on the v2 email after Phase 1.1.
 | (#4/#5) | test | 3533f70..492ff34 era | failed: DeliveryError in deliver and notify-failure (SMTP secrets); 492ff34 added a redacted `detail=` line |
 | 41411211782 (#6) | test | 492ff34 (v2 email, pre-1.2) | green, 3m16s; owner confirmed the test email arrived in TEST_RECIPIENT |
 | (owner, 2026-11-03) | send | post-1.2 main | green; owner confirmed the subscriber received the mail. Owner also confirmed test mode works on the 1.2 email |
-| (owner, 2026-11-03) | test + week=2026-W54 (forced failure notice) | post-1.2 main | failed as designed: Build printed `stage=week error=InvalidWeekError`, exit 1. Failure-notice email arrival: awaiting owner confirmation |
+| (owner, 2026-11-03) | test + week=2026-W54 (forced failure notice) | post-1.2 main | failed as designed: Build printed `stage=week error=InvalidWeekError`, exit 1. Owner confirmed the `[실패] AI 주간 해달 브리프 …` notice arrived at TEST_RECIPIENT |
 
-Log audit (email/name grep on the test run log): not yet done; needs the owner's downloaded log archive.
+Log audit (email/name grep on the test run log): NOT done. The logs need a GitHub login and the owner did not download the archive. The code only logs counts, hashes, error classes and redacted `detail=` lines (tests enforce this). Repeat the audit when Phase 5 adds the run report.
+
+Phase 1 completion rule: test, send and failure-notice runs are recorded with outcomes, plus the 01.1-05 preview run. The audit gap is accepted and noted above.
 
 ## Self-Check: PASSED (Task 1 scope)
 
