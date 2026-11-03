@@ -12,7 +12,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 from markupsafe import Markup
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import Issue
+from newsletter.schema import UNKNOWN, Issue, Item
 from newsletter.store import TEMPLATES_DIR
 
 BRAND = "AI 주간 모델 브리프"
@@ -62,6 +62,35 @@ def date_line(issue: Issue) -> str:
     return f"{d:%Y.%m.%d} {_WEEKDAYS_KO[d.weekday()]}"
 
 
+def _info_rows(it: Item) -> list[tuple[str, str]]:
+    """D-10: 모델 정보 rows with a known value; stored UNKNOWN values stay in the Issue."""
+    mi = it.model_info
+    rows = [
+        ("유형", mi.kind_ko),
+        ("구조", mi.architecture_ko),
+        ("크기", mi.size),
+        ("학습 데이터", mi.training_data),
+        ("공개 범위", mi.release),
+    ]
+    return [(label, value) for label, value in rows if value != UNKNOWN]
+
+
+def rest_title(n: int) -> str | None:
+    """D-04, D-21: the rest section names the real last rank; none when N <= 3."""
+    if n <= 3:
+        return None
+    if n == 4:
+        return "놓치기 아까운 4위 👀"
+    return f"놓치기 아까운 4위부터 {n}위까지 👀"
+
+
+def basis_note(issue: Issue) -> str:
+    """Section subtitle. An item without stars was ranked by upvotes (D-03, D-17)."""
+    if any(it.github_stars is None for it in issue.items):
+        return "GitHub star 기준 (코드 없는 논문은 Hugging Face 추천 수)"
+    return "GitHub star 기준"
+
+
 def _context(issue: Issue, greeting: str) -> dict:
     return {
         "issue": issue,
@@ -74,6 +103,9 @@ def _context(issue: Issue, greeting: str) -> dict:
         "date_line": date_line(issue),
         "top3": issue.items[:3],
         "rest": issue.items[3:],
+        "rest_title": rest_title(len(issue.items)),
+        "basis_note": basis_note(issue),
+        "info_rows": {it.rank: _info_rows(it) for it in issue.items},
     }
 
 

@@ -571,7 +571,9 @@ def test_info_rows_hidden_when_unknown(issue_w44):
         assert f">{label}<" not in box, label
     rows = box.split("<tr>")[2:]
     assert len(rows) == 2
-    assert "14px" not in rows[0] and rows[1].count("14px") == 2  # last visible row pads
+    pads = ("padding: 4px 0 14px 16px", "padding: 4px 16px 14px 0")
+    assert not any(p in rows[0] for p in pads)
+    assert all(p in rows[1] for p in pads)  # last visible row gets the bottom padding
 
 
 def test_info_rows_hidden_drops_box_when_all_unknown(issue_w44):
