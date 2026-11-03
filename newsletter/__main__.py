@@ -79,6 +79,8 @@ def _report(command: str, exc: BaseException) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+    # Pitfall 3: httpx logs request URLs (repo and model ids) at INFO.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     args = _parser().parse_args(argv)
     try:
         _run(args)

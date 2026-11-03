@@ -1,9 +1,16 @@
 """Code-owned 상업적 사용 rules and the GitHub license read (EVID-01/02/05, D-03, D-09)."""
 
+import json
+import logging
+import re
+from pathlib import Path
+
 import httpx
 import pytest
 import respx
+from test_e2e import STAR_TOP10
 
+from newsletter import __main__ as cli
 from newsletter.schema import LicenseInfo
 from newsletter.stages import enrich, licenses
 
@@ -489,3 +496,107 @@ def test_commercial_skips_sides_without_link():
     use = licenses.commercial_use(_side("확인 필요"), _side("가능", PAGE))
     assert use.verdict == "확인 필요"
     assert [e.url for e in use.evidence] == [PAGE]
+
+
+# ------------------------------------------------- captured golden set and W44
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+GOLDEN = json.loads((FIXTURES / "golden_verdicts.json").read_text(encoding="utf-8"))
+W44 = json.loads((FIXTURES / "github_license_w44.json").read_text(encoding="utf-8"))
+
+
+def _serve(repo: str, entry: dict) -> dict:
+    """Run the stored GitHub answer through the real github_license parser."""
+    owner, name = repo.split("/")
+    with respx.mock() as router:
+        router.get(f"https://api.github.com/repos/{owner}/{name}/license").mock(
+            return_value=httpx.Response(entry["status_code"], json=entry["body"])
+        )
+        with httpx.Client() as client:
+            return licenses.github_license(client, owner, name)
+
+
+@pytest.mark.parametrize("case", GOLDEN, ids=[c["id"] for c in GOLDEN])
+def test_golden_commercial(case):
+    code = licenses.code_license(case["github"]) if case["github"] is not None else None
+    weights = (
+        licenses.weights_license(case["model"], case["model_id"])
+        if case["model_id"] is not None
+        else None
+    )
+    use = licenses.commercial_use(code, weights)
+    assert use.verdict == case["expect"]["commercial"]
+    if use.verdict in ("가능", "조건부"):
+        assert use.evidence
+        assert all(
+            e.url.startswith(("https://huggingface.co/", "https://github.com/"))
+            for e in use.evidence
+        )
+
+
+def test_golden_set_shape():
+    assert len(GOLDEN) == 15
+    verdicts = [c["expect"]["commercial"] for c in GOLDEN]
+    assert "확인 필요" in verdicts
+    assert "불가" in verdicts
+    for c in GOLDEN:
+        assert set(c["expect"]) == {"commercial", "poc", "local_run", "est_vram_gb"}
+        assert set(c["paper"]) == {
+            "fetch_ok",
+            "has_weights",
+            "has_code",
+            "has_demo",
+            "space_id",
+            "github_url",
+        }
+
+
+def test_golden_github_records_match_parser():
+    by_repo = {
+        c["paper"]["github_url"].removeprefix("https://github.com/"): c["github"]
+        for c in GOLDEN
+        if c["github"] is not None and c["paper"]["github_url"]
+    }
+    for repo, rec in by_repo.items():
+        if repo in W44:
+            assert _serve(repo, W44[repo]) == rec
+
+
+def test_w44_github_answers_map_through_code_license(monkeypatch):
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    assert len(W44) >= 10
+    got = {repo: licenses.code_license(_serve(repo, entry))[1] for repo, entry in W44.items()}
+    assert got["InternLM/xtuner"] == "가능"
+    assert got["Tencent-Hunyuan/Hy-Nomas"] == "확인 필요"
+    assert got["justin4ai/OmniShowcase"] == "확인 필요"
+    assert set(got.values()) <= {"가능", "확인 필요"}
+
+
+def test_w44_capture_covers_star_top10_and_issue_repos():
+    papers = json.loads((FIXTURES / "hf_papers_w44.json").read_text(encoding="utf-8"))
+    issue = json.loads((FIXTURES / "issue_w44.json").read_text(encoding="utf-8"))
+    star = [papers[pid].get("githubRepo") for pid in STAR_TOP10]
+    repos = {u for u in star if u} | {
+        it["github_url"] for it in issue["items"] if it.get("github_url")
+    }
+    assert {f"https://github.com/{r}" for r in W44} == repos
+    for entry in W44.values():
+        assert entry["status_code"] in (200, 404)
+        assert (entry["body"] == {}) == (entry["status_code"] == 404)
+
+
+@pytest.mark.parametrize("name", ["golden_verdicts.json", "github_license_w44.json"])
+def test_capture_carries_no_private_data(name):
+    text = (FIXTURES / name).read_text(encoding="utf-8")
+    assert "authors" not in text
+    assert "Bearer" not in text
+    assert not re.search(r"gh[pso]_[A-Za-z0-9]", text)
+    assert not re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", text)
+    assert "readme" not in text.casefold()
+
+
+def test_httpx_logger_quiet_after_main(monkeypatch):
+    monkeypatch.setattr(logging.getLogger("httpx"), "level", logging.NOTSET)
+    with pytest.raises(SystemExit):
+        cli.main(["--help"])
+    assert logging.getLogger("httpx").level == logging.WARNING
