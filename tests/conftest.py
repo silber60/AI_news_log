@@ -7,6 +7,7 @@ should not. Test modules can import helpers directly
 use the fixtures below.
 """
 
+import functools
 import io
 import json
 import re
@@ -37,11 +38,12 @@ def mock_hf_week(
     """Register the daily_papers week routes (one per page) and return them.
 
     Every run_build test goes through here, so later plans add their HF routes
-    in one place. The enrich routes (`mock_enrich`) are registered too;
+    in one place. The enrich routes (`mock_enrich`, including the
+    raw.githubusercontent.com route from `mock_github`) are registered too;
     `enrich_fail=True` makes them all answer 500. The HF CDN route is not
-    registered: the W44 star Top 10 has no HF image (only an .mp4), and an unused
-    route would trip `assert_all_called`. Tests that need it call `mock_enrich`'s
-    CDN route themselves.
+    registered: the W44 star Top 10 has no HF image in the page capture (only
+    .mp4 files), and an unused route would trip `assert_all_called`. Tests that
+    need it call `mock_enrich`'s CDN route themselves.
     """
     routes = [
         router.get(
@@ -58,11 +60,63 @@ def _load_fixture(name: str) -> dict:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
 
+@functools.lru_cache(maxsize=64)
 def image_bytes(size: tuple[int, int] = (1152, 468), fmt: str = "PNG") -> bytes:
     """A small in-memory image of the given size and format (built with Pillow)."""
     buf = io.BytesIO()
     Image.new("RGB", size, (240, 120, 40)).save(buf, format=fmt)
     return buf.getvalue()
+
+
+def partial(body: bytes, ctype: str = "image/png", total: int | None = None) -> httpx.Response:
+    """A 206 answer to the enrich 64 KB Range request, with the content-range total."""
+    total = len(body) if total is None else total
+    headers = {"content-type": ctype, "content-range": f"bytes 0-{len(body) - 1}/{total}"}
+    return httpx.Response(206, headers=headers, content=body)
+
+
+_FORMATS = {"image/png": "PNG", "image/jpeg": "JPEG", "image/gif": "GIF"}
+
+
+def mock_github(
+    router: respx.MockRouter,
+    readmes: dict | None = None,
+    images: dict | None = None,
+    *,
+    fail: bool = False,
+) -> respx.Route:
+    """Register one route for https://raw.githubusercontent.com/ backed by
+    readme_w44.json.
+
+    `/{owner}/{repo}/HEAD/README.md` serves the captured image lines for that repo
+    (unknown repo: 404). Any other path is an image probe: a Pillow image of the
+    captured width and height, status 206, the captured content type and
+    `content-range: bytes 0-N/<total_bytes>` (unknown image: 404). `readmes` /
+    `images` override the fixture maps. `fail=True` answers 500.
+    """
+    data = _load_fixture("readme_w44.json")
+    readmes = data["readmes"] if readmes is None else readmes
+    images = data["images"] if images is None else images
+
+    def side(request: httpx.Request) -> httpx.Response:
+        if fail:
+            return httpx.Response(500)
+        parts = request.url.path.strip("/").split("/")
+        if len(parts) == 4 and parts[2:] == ["HEAD", "README.md"]:
+            key = "/".join(parts[:2])
+            if key in readmes:
+                return httpx.Response(200, text=readmes[key])
+            return httpx.Response(404, text="404: Not Found")
+        meta = images.get(str(request.url))
+        if meta is None:
+            return httpx.Response(404, text="404: Not Found")
+        if meta["status"] not in (200, 206):
+            return httpx.Response(meta["status"])
+        ctype = meta["content_type"]
+        body = image_bytes((meta["width"], meta["height"]), _FORMATS.get(ctype, "PNG"))
+        return partial(body[:65536], ctype, meta["total_bytes"])
+
+    return router.get(url__regex=r"^https://raw\.githubusercontent\.com/").mock(side_effect=side)
 
 
 def mock_enrich(
@@ -73,13 +127,16 @@ def mock_enrich(
     models: dict | None = None,
     image: httpx.Response | None = None,
     cdn: bool = True,
+    readmes: dict | None = None,
+    readme_images: dict | None = None,
 ) -> dict[str, respx.Route]:
-    """Register the enrich routes (HF paper / model APIs, HF upload CDN) backed by
-    the W44 captures.
+    """Register the enrich routes (HF paper / model APIs, HF upload CDN,
+    raw.githubusercontent.com via `mock_github`) backed by the W44 captures.
 
     Unknown ids get 404. `fail=True` answers 500 everywhere. `papers` / `models`
-    override the fixture dicts for single-case tests. CDN requests get a 1152x468
-    PNG as a 206 partial response unless `image` gives another response.
+    override the fixture dicts for single-case tests, `readmes` / `readme_images`
+    the README fixture maps. CDN requests get a 1152x468 PNG as a 206 partial
+    response with its content-range total unless `image` gives another response.
     `cdn=False` skips the CDN route.
     """
     papers = _load_fixture("hf_papers_w44.json") if papers is None else papers
@@ -103,7 +160,7 @@ def mock_enrich(
             return httpx.Response(500)
         if image is not None:  # a fresh copy per request
             return httpx.Response(image.status_code, headers=image.headers, content=image.content)
-        return httpx.Response(206, headers={"content-type": "image/png"}, content=image_bytes())
+        return partial(image_bytes())
 
     routes = {
         "papers": router.get(url__regex=r"^https://huggingface\.co/api/papers/").mock(
@@ -113,6 +170,7 @@ def mock_enrich(
             side_effect=model_side
         ),
     }
+    routes["github"] = mock_github(router, readmes, readme_images, fail=fail)
     if cdn:
         routes["cdn"] = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
             side_effect=cdn_side

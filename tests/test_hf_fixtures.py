@@ -1,11 +1,13 @@
 """Shape and privacy guards for the trimmed W44 HF paper/model captures."""
 
 import json
+import re
 from pathlib import Path
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
-TOP10 = {
+# The old upvote Top 10 (unit tests) plus the star Top 10 (D-02, run_build).
+UPVOTE_TOP10 = {
     "2610.37381",
     "2610.35684",
     "2610.32749",
@@ -17,6 +19,28 @@ TOP10 = {
     "2610.36068",
     "2610.34283",
 }
+STAR_TOP10 = {
+    "2610.35518",
+    "2610.40599",
+    "2610.36729",
+    "2610.31635",
+    "2610.30006",
+    "2610.32253",
+    "2610.33106",
+    "2610.14018",
+    "2610.33005",
+    "2610.33845",
+}
+TOP10 = UPVOTE_TOP10 | STAR_TOP10
+EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[a-z]{2,}")
+RETINA_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
+
+
+def _emails(text: str) -> list[str]:
+    """Email-shaped strings, except retina image names such as x@2x.png."""
+    return [m for m in EMAIL_RE.findall(text) if not m.lower().endswith(RETINA_EXTS)]
+
+
 RANK1 = "2610.37381"
 FORBIDDEN_KEYS = {"authors", "avatarUrl", "submittedBy", "user", "fullname"}
 
@@ -35,7 +59,7 @@ def _keys(obj):
             yield from _keys(v)
 
 
-def test_papers_fixture_has_exactly_top10():
+def test_papers_fixture_has_exactly_both_top10s():
     papers = _load("hf_papers_w44.json")
     assert set(papers) == TOP10
     assert all(papers[pid]["id"] == pid for pid in papers)
@@ -68,3 +92,26 @@ def test_rank1_page_entry_has_cdn_media_url():
     media = rank1[0]["paper"]["mediaUrls"]
     assert isinstance(media, list) and media
     assert media[0].startswith("https://cdn-uploads.huggingface.co/")
+
+
+def test_readme_capture_holds_image_lines_only():
+    text = (FIXTURES / "readme_w44.json").read_text(encoding="utf-8")
+    assert _emails(text) == []
+    assert "avatars.githubusercontent" not in text
+    data = json.loads(text)
+    assert set(data["readmes"]) == {
+        p["githubRepo"].removeprefix("https://github.com/")
+        for pid, p in _load("hf_papers_w44.json").items()
+        if pid in STAR_TOP10
+    }
+    for body in data["readmes"].values():
+        for line in body.splitlines():
+            assert line.startswith(("<img ", "![img]("))
+            assert 'alt="img"' in line or line.startswith("![img](")
+    for meta in data["images"].values():
+        assert set(meta) == {"status", "content_type", "width", "height", "total_bytes"}
+
+
+def test_email_guard_allows_retina_names():
+    assert _emails("assets/x@2x.png") == []
+    assert _emails("mail someone@example.com") == ["someone@example.com"]

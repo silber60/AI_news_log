@@ -1,0 +1,115 @@
+{
+  "captured": "2026-11-03",
+  "readmes": {
+    "InternLM/xtuner": "![img](https://img.shields.io/github/stars/InternLM/xtuner?style=social)\n![img](https://static.pepy.tech/badge/xtuner)\n<img src=\"https://github.com/user-attachments/assets/fa42d587-068d-427b-b88c-25a164b3511c\" alt=\"img\">\n",
+    "hyz317/HairDeck": "<img src=\"https://img.shields.io/badge/Project-Page-426b92\" alt=\"img\">\n<img src=\"https://huggingface.co/hyz317/HairDeck/resolve/main/assets/method.png\" alt=\"img\">\n",
+    "Tencent-Hunyuan/Hy-Nomas": "<img src=\"assets/logo-en.png\" alt=\"img\">\n![img](https://img.shields.io/badge/License-Apache%202.0-blue)\n![img](assets/lora-finetuning.svg)\n",
+    "HiP3Rs/HiP3R": "<img src=\"assets/logo.svg\" alt=\"img\">\n<img src=\"https://img.shields.io/badge/Project-Page-blue\" alt=\"img\">\n",
+    "google-deepmind/detectorscope": "<img src=\"https://img.shields.io/pypi/v/detectorscope?logo=pypi&logoColor=white\" alt=\"img\">\n<img src=\"assets/demo.gif\" alt=\"img\">\n<img src=\"assets/overview.png\" alt=\"img\">\n<img src=\"assets/results.png\" alt=\"img\">\n",
+    "simple-agent-lab/RSIHub": "<img src=\"docs/rsihub-lockup.svg\" alt=\"img\">\n<img src=\"https://img.shields.io/badge/arXiv-2610.32253-b31b1b\" alt=\"img\">\n<img src=\"https://github.com/simple-agent-lab/RSIHub/actions/workflows/test.yml/badge.svg\" alt=\"img\">\n<img src=\"docs/assets/paper-poster-lora-gen0.png\" alt=\"img\">\n<img src=\"docs/assets/paper-poster-lora-gen2.png\" alt=\"img\">\n",
+    "tettethu/VibeGame": "<img src=\"assets/teaser.webp\" alt=\"img\">\n<img src=\"https://img.shields.io/badge/Python-%E2%89%A53.12-3776AB?logo=python&logoColor=white\" alt=\"img\">\n<img src=\"assets/demo/page/thumbs/hk.webp\" alt=\"img\">\n<img src=\"assets/demo/page/thumbs/civilization.jpg\" alt=\"img\">\n<img src=\"assets/demo/page/thumbs/werewolf.jpg\" alt=\"img\">\n",
+    "BinceQu/RoboHarness": "<img src=\"docs/assets/roboharness-wordmark.png\" alt=\"img\">\n![img](https://img.shields.io/badge/License-MIT-263c78?style=flat-square)\n![img](docs/assets/overview.png)\n",
+    "datamllab/OpenEBFM": "<img src=\"figs/OpenEBFM_logo.png\" alt=\"img\">\n<img src=\"https://img.shields.io/badge/arXiv-2610.openesm-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white\" alt=\"img\">\n<img src=\"figs/dclm_pretrain.png\" alt=\"img\">\n<img src=\"figs/pretrain_size.png\" alt=\"img\">\n<img src=\"figs/acc_size.png\" alt=\"img\">\n<img src=\"figs/acc_tokens.png\" alt=\"img\">\n<img src=\"figs/chat.jpg\" alt=\"img\">\n",
+    "MCG-NJU/AutoTavern": "<img src=\"https://img.shields.io/badge/License-MIT-cb963e?style=flat-square\" alt=\"img\">\n<img src=\"docs/assets/autotavern-emblem.png\" alt=\"img\">\n<img src=\"docs/assets/autotavern-banner.png\" alt=\"img\">\n"
+  },
+  "images": {
+    "https://raw.githubusercontent.com/google-deepmind/detectorscope/HEAD/assets/demo.gif": {
+      "status": 206,
+      "content_type": "image/gif",
+      "width": 960,
+      "height": 573,
+      "total_bytes": 7608192
+    },
+    "https://raw.githubusercontent.com/google-deepmind/detectorscope/HEAD/assets/overview.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 1191,
+      "height": 507,
+      "total_bytes": 94984
+    },
+    "https://raw.githubusercontent.com/google-deepmind/detectorscope/HEAD/assets/results.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 1924,
+      "height": 452,
+      "total_bytes": 129107
+    },
+    "https://raw.githubusercontent.com/simple-agent-lab/RSIHub/HEAD/docs/assets/paper-poster-lora-gen0.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 1600,
+      "height": 1000,
+      "total_bytes": 257992
+    },
+    "https://raw.githubusercontent.com/simple-agent-lab/RSIHub/HEAD/docs/assets/paper-poster-lora-gen2.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 1600,
+      "height": 2000,
+      "total_bytes": 212903
+    },
+    "https://raw.githubusercontent.com/tettethu/VibeGame/HEAD/assets/demo/page/thumbs/civilization.jpg": {
+      "status": 206,
+      "content_type": "image/jpeg",
+      "width": 480,
+      "height": 270,
+      "total_bytes": 14374
+    },
+    "https://raw.githubusercontent.com/tettethu/VibeGame/HEAD/assets/demo/page/thumbs/werewolf.jpg": {
+      "status": 206,
+      "content_type": "image/jpeg",
+      "width": 480,
+      "height": 270,
+      "total_bytes": 11331
+    },
+    "https://raw.githubusercontent.com/BinceQu/RoboHarness/HEAD/docs/assets/overview.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 1618,
+      "height": 1315,
+      "total_bytes": 689640
+    },
+    "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/dclm_pretrain.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 2112,
+      "height": 1573,
+      "total_bytes": 283150
+    },
+    "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/pretrain_size.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 2112,
+      "height": 1573,
+      "total_bytes": 245018
+    },
+    "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/acc_size.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 2112,
+      "height": 1573,
+      "total_bytes": 266312
+    },
+    "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/acc_tokens.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 2112,
+      "height": 1573,
+      "total_bytes": 199666
+    },
+    "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/chat.jpg": {
+      "status": 206,
+      "content_type": "image/jpeg",
+      "width": 2403,
+      "height": 1201,
+      "total_bytes": 77017
+    },
+    "https://raw.githubusercontent.com/MCG-NJU/AutoTavern/HEAD/docs/assets/autotavern-banner.png": {
+      "status": 206,
+      "content_type": "image/png",
+      "width": 2067,
+      "height": 761,
+      "total_bytes": 2753685
+    }
+  }
+}
