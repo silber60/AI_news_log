@@ -16,15 +16,18 @@ import anthropic
 from pydantic import ValidationError
 
 from newsletter.errors import AnalysisInvalid
-from newsletter.schema import HfEntry, Item, ItemAnalysisLLM, ModelInfo
+from newsletter.schema import UNKNOWN, HfEntry, Item, ItemAnalysisLLM, ModelInfo
 from newsletter.stages import select
 from newsletter.store import PROMPTS_DIR
 
 log = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "claude-sonnet-5-5"
-_URL_RE = re.compile(r"https?://\S+")
+# A URL stops at a bracket so "(https://...)" leaves "()" for _EMPTY_BRACKETS.
+_URL_RE = re.compile(r"https?://[^\s()\[\]（）<>]*")
 _TAG_RE = re.compile(r"</?paper>", re.IGNORECASE)
+# D-14: an empty pair of brackets, half- or full-width, with the space before it.
+_EMPTY_BRACKETS = re.compile(r"\s*[(\[（]\s*[)\]）]")
 
 
 def model_name() -> str:
@@ -39,7 +42,7 @@ def strip_urls(text: str | None) -> str:
     """Remove every http(s) URL and any <paper> tag from untrusted paper text."""
     if not text:
         return ""
-    text = _TAG_RE.sub("", _URL_RE.sub("", text))
+    text = _EMPTY_BRACKETS.sub("", _TAG_RE.sub("", _URL_RE.sub("", text)))
     return re.sub(r"[ \t]{2,}", " ", text).strip()
 
 
@@ -72,6 +75,7 @@ SUMMARY_LIMIT = 80  # ANLY-03, measured in Python len() characters
 LINE_LIMIT = 70  # ANLY-07: does_ko / new_ko / result_ko
 KIND_LIMIT = 30  # ANLY-08: kind_ko
 ARCH_LIMIT = 60  # ANLY-08: architecture_ko
+IDEA_LIMIT = 50  # ANLY-10, D-13: use_idea_ko
 _LINE_FIELDS = ("does_ko", "new_ko", "result_ko")
 _WS_RE = re.compile(r"[\r\n\t]+")
 _BOUNDARY_CHARS = " ,."
@@ -90,15 +94,48 @@ _TEXT_FIELDS = (
     "result_ko",
     "kind_ko",
     "architecture_ko",
+    "use_idea_ko",
 )
 
 
+# D-11 / D-20: every body sentence ends in friendly 해요체 (~요). A positive check
+# also catches noun endings ("29.5% 증가."); "99.3%" never splits because the split
+# needs whitespace after the mark.
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=\S)")
+_TAIL = re.compile(r"[\s\"'”’)\]」』]+$")
+_HAEYO = re.compile(r"요[.!?~]*$")
+HAEYO_FIELDS = ("summary_ko", "does_ko", "new_ko", "result_ko", "use_idea_ko")
+_PROSE_INFO_FIELDS = ("kind_ko", "architecture_ko")
+
+
+def not_haeyo(text: str) -> bool:
+    """True when any sentence does not end in 해요체. A sentence ending in "…" was
+    trimmed by code and is skipped."""
+    for s in _SENT_SPLIT.split(text.strip()):
+        s = _TAIL.sub("", s)
+        if s and not s.endswith("…") and not _HAEYO.search(s):
+            return True
+    return False
+
+
+def bad_info_prose(text: str) -> bool:
+    """D-16: kind_ko / architecture_ko must be a noun phrase (no sentence-final
+    . ! ? and not ending in 다) or pass the 해요체 check. UNKNOWN passes."""
+    s = _TAIL.sub("", text.strip())
+    if not s or s == UNKNOWN:
+        return False
+    noun_phrase = not s.endswith((".", "!", "?", "다"))
+    return not noun_phrase and not_haeyo(s)
+
+
 def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
-    return a.model_copy(update={f: _one_line(getattr(a, f)) for f in _TEXT_FIELDS})
+    return a.model_copy(
+        update={f: _one_line(_EMPTY_BRACKETS.sub("", getattr(a, f))) for f in _TEXT_FIELDS}
+    )
 
 
 def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
-    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 limits. Messages carry field names
+    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 / ANLY-10 limits and the 해요체 rule. Messages carry field names
     and counts, never model text."""
     errs: list[tuple[str, str]] = []
     if not a.title_ko.strip():
@@ -121,6 +158,17 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(
             ("arch_len", f"architecture_ko가 {len(a.architecture_ko)}자로 {ARCH_LIMIT}자를 넘음")
         )
+    if not a.use_idea_ko.strip():
+        errs.append(("idea_empty", "use_idea_ko가 비어 있음"))
+    elif len(a.use_idea_ko) > IDEA_LIMIT:
+        errs.append(("idea_len", f"use_idea_ko가 {len(a.use_idea_ko)}자로 {IDEA_LIMIT}자를 넘음"))
+    for field in HAEYO_FIELDS:
+        text = getattr(a, field)
+        if text.strip() and not_haeyo(text):
+            errs.append(("tone", f"{field}가 해요체(~요)로 끝나지 않음"))
+    for field in _PROSE_INFO_FIELDS:
+        if bad_info_prose(getattr(a, field)):
+            errs.append(("tone", f"{field}가 명사구도 해요체(~요)도 아님"))
     return errs
 
 
@@ -132,8 +180,11 @@ _TRIM_LIMITS = {
     "result_ko": LINE_LIMIT,
     "kind_ko": KIND_LIMIT,
     "architecture_ko": ARCH_LIMIT,
+    "use_idea_ko": IDEA_LIMIT,
 }
-_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len"}
+_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len", "idea_len"}
+# D-19: a wrong sentence ending left after the retry is logged, never fatal.
+_NON_FATAL_CODES = _LENGTH_CODES | {"tone"}
 
 
 def _trim_overruns(a: ItemAnalysisLLM) -> tuple[ItemAnalysisLLM, list[str]]:
@@ -285,11 +336,23 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
         problems = check(last)
         if not problems:
             return last
-    if last is not None and problems and {code for code, _ in problems} <= _LENGTH_CODES:
-        # D-19: pure length overruns after the retry are repaired, not fatal.
-        trimmed, fields = _trim_overruns(last)
-        log.info("trimmed=%s rank=%d", ",".join(fields), rank)
-        return trimmed
+    codes = {code for code, _ in problems}
+    if last is not None and problems and codes <= _NON_FATAL_CODES:
+        # D-19: length overruns after the retry are trimmed; a wrong ending is
+        # kept with a warning that names fields only, never model text.
+        result = last
+        if codes & _LENGTH_CODES:
+            result, fields = _trim_overruns(last)
+            log.info("trimmed=%s rank=%d", ",".join(fields), rank)
+        if "tone" in codes:
+            tone_fields = [
+                f
+                for f in HAEYO_FIELDS
+                if getattr(result, f).strip() and not_haeyo(getattr(result, f))
+            ] + [f for f in _PROSE_INFO_FIELDS if bad_info_prose(getattr(result, f))]
+            if tone_fields:  # trimming may already have cut the bad ending off
+                log.warning("tone=unfixed rank=%d fields=%s", rank, ",".join(tone_fields))
+        return result
     reason = "+".join(code for code, _ in problems) or "unknown"
     raise AnalysisInvalid(f"rank={rank} reason={reason}")
 

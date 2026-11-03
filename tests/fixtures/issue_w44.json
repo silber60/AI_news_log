@@ -22,11 +22,11 @@
       "project_url": null,
       "title_ko": "PDRVLA: A Vision-Language-Action Model w: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "말로 지시하면 로봇 팔이 물체의 움직임까지 헤아려 동작하게 해 주는 VLA 모델이에요.",
       "summary_lines_ko": [
-        "물리 동역학 표현을 넣은 Vision-Language-Action 모델로 로봇 동작을 만든다.",
-        "행동 예측에 물체의 물리 동역학 표현을 함께 학습한다.",
-        "로봇 조작 benchmark에서 기존 VLA보다 높은 성공률을 보고했다."
+        "물리 동역학 표현을 넣은 Vision-Language-Action 모델로 로봇 동작을 만들어요.",
+        "행동을 예측할 때 물체의 물리 동역학 표현도 함께 배워요.",
+        "로봇 조작 benchmark에서 기존 VLA보다 높은 성공률을 보고했어요."
       ],
       "use_idea_ko": "로봇 팔이 물체를 집고 옮기는 작업에 쓸 수 있어요.",
       "model_info": {
@@ -87,11 +87,11 @@
       "project_url": "https://justin4ai.github.io/OmniShowcase/",
       "title_ko": "OmniShowcase: Omnidirectional Subject-Co: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "사진 몇 장만 넣으면 같은 대상을 360도로 돌려 보여 주는 영상을 만들어 줘요.",
       "summary_lines_ko": [
-        "여러 시점 이미지로 같은 대상이 유지되는 360도 영상을 만든다.",
-        "multi-view 입력으로 대상의 일관성을 유지한다.",
-        "대상 일관성 지표에서 기존 영상 생성 방법보다 나은 결과를 보고했다."
+        "여러 시점 이미지로 같은 대상이 유지되는 360도 영상을 만들어요.",
+        "multi-view 입력을 써서 영상 내내 대상이 바뀌지 않게 해요.",
+        "대상 일관성 지표에서 기존 영상 생성 방법보다 나은 결과를 보고했어요."
       ],
       "use_idea_ko": "상품을 여러 각도에서 보여주는 360도 영상에 쓸 수 있어요.",
       "model_info": {
@@ -148,11 +148,11 @@
       "project_url": "https://cslikai.cn/Falcon/",
       "title_ko": "Efficient Streaming Audio-Visual Target : 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "시끄러운 곳에서도 영상 속 말하는 사람의 목소리만 실시간으로 골라 들려줘요.",
       "summary_lines_ko": [
-        "영상과 음성을 함께 써서 특정 화자의 목소리만 실시간으로 분리한다.",
-        "streaming 처리로 지연을 줄이고 실제 소음 환경을 다룬다.",
-        "실제 녹음 데이터에서 분리 품질과 처리 속도를 함께 보고했다."
+        "영상과 음성을 함께 써서 특정 화자의 목소리만 실시간으로 분리해요.",
+        "streaming 처리로 지연을 줄이고 실제 소음 환경도 다뤄요.",
+        "실제 녹음 데이터에서 분리 품질과 처리 속도를 함께 보고했어요."
       ],
       "use_idea_ko": "시끄러운 곳의 화상회의에서 말하는 사람 목소리만 살릴 때 써요.",
       "model_info": {
@@ -209,11 +209,11 @@
       "project_url": "https://hy-nomas.hy.tencent.com/",
       "title_ko": "Hy-Nomas: Towards Free-form Interactive : 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "글이나 조작을 넣으면 그에 맞춰 바뀌는 가상 세계 장면을 만들어 주는 모델이에요.",
       "summary_lines_ko": [
-        "사용자 입력에 따라 바뀌는 interactive world를 생성한다.",
-        "정해진 동작 대신 자유 형식 입력으로 장면을 조작한다.",
-        "장면 일관성과 조작 반응성을 정성 평가로 보고했다."
+        "사용자 입력에 따라 바뀌는 interactive world를 만들어요.",
+        "정해진 동작 대신 자유 형식 입력으로 장면을 조작해요.",
+        "장면 일관성과 조작 반응성을 정성 평가로 보고했어요."
       ],
       "use_idea_ko": "텍스트와 카메라 조작으로 움직이는 게임 장면을 만들 때 써요.",
       "model_info": {
@@ -270,11 +270,11 @@
       "project_url": "https://enjundu.com/blog/working_agents",
       "title_ko": "Work Agents: Systems, Capabilities, and : 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "회사 업무를 대신 처리하는 AI agent 연구를 한곳에 모아 정리한 survey예요.",
       "summary_lines_ko": [
-        "업무용 AI agent의 시스템, 능력, 최적화 방법을 정리한 survey다.",
-        "업무 자동화 관점에서 agent 연구를 분류했다.",
-        "분류 체계와 공개 자료 목록을 함께 제공했다."
+        "업무용 AI agent의 시스템, 능력, 최적화 방법을 정리한 survey예요.",
+        "업무 자동화 관점에서 agent 연구를 분류했어요.",
+        "분류 체계와 공개 자료 목록을 함께 제공했어요."
       ],
       "use_idea_ko": "업무 자동화 agent를 설계하기 전에 참고 자료로 볼 수 있어요.",
       "model_info": {
@@ -331,11 +331,11 @@
       "project_url": "https://hyeon9698.github.io/LOWN/",
       "title_ko": "Look Only When Needed: Certificate-Guide: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "이미지를 읽는 diffusion VLM이 필요할 때만 그림을 다시 보게 해서 계산을 아껴요.",
       "summary_lines_ko": [
-        "필요할 때만 이미지를 다시 보는 방식으로 diffusion VLM 추론을 줄인다.",
-        "certificate로 시각 정보 참조 시점을 정한다.",
-        "정확도를 유지하면서 추론 비용을 줄였다고 보고했다."
+        "필요할 때만 이미지를 다시 보는 방식으로 diffusion VLM 추론을 줄여요.",
+        "certificate로 시각 정보를 언제 다시 볼지 정해요.",
+        "정확도를 유지하면서 추론 비용을 줄였다고 보고했어요."
       ],
       "use_idea_ko": "이미지를 읽는 diffusion VLM의 추론 비용을 줄일 때 쓸 수 있어요.",
       "model_info": {
@@ -392,11 +392,11 @@
       "project_url": null,
       "title_ko": "TAO: Tool-Aware Joint Scheduling for LLM: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "도구를 자주 부르는 LLM agent 서비스가 더 빨리 답하도록 작업 순서를 짜 줘요.",
       "summary_lines_ko": [
-        "LLM agent 서빙에서 도구 호출과 모델 추론을 함께 스케줄링한다.",
-        "도구 실행 시간을 고려해 요청 순서를 정한다.",
-        "agent 서빙 workload에서 지연 시간 감소를 보고했다."
+        "LLM agent 서빙에서 도구 호출과 모델 추론을 함께 스케줄링해요.",
+        "도구 실행 시간을 고려해 요청 순서를 정해요.",
+        "agent 서빙 workload에서 지연 시간이 줄었다고 보고했어요."
       ],
       "use_idea_ko": "도구를 많이 부르는 LLM agent 서비스의 응답 지연을 줄일 때 써요.",
       "model_info": {
@@ -453,11 +453,11 @@
       "project_url": null,
       "title_ko": "StreamVibe: Proactive Video Agents for E: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "영상을 함께 보다가 질문하기 전에 먼저 알맞은 때에 말을 걸어 주는 video agent예요.",
       "summary_lines_ko": [
-        "사용자 의도가 바뀌는 상황에서 먼저 반응하는 video agent를 만든다.",
-        "질문을 기다리지 않고 영상 흐름에 맞춰 먼저 응답한다.",
-        "새 benchmark에서 기존 video agent보다 나은 응답 시점을 보고했다."
+        "사용자 의도가 바뀌는 상황에서 먼저 반응하는 video agent를 만들어요.",
+        "질문을 기다리지 않고 영상 흐름에 맞춰 먼저 응답해요.",
+        "새 benchmark에서 기존 video agent보다 나은 응답 시점을 보고했어요."
       ],
       "use_idea_ko": "라이브 영상을 보며 먼저 말을 거는 비서를 만들 때 쓸 수 있어요.",
       "model_info": {
@@ -514,11 +514,11 @@
       "project_url": "https://rollback-wm.github.io/",
       "title_ko": "Rollback: Experience Backtracking in Wor: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "가상 환경에서 실패한 순간으로 되돌아가 다시 시도하며 행동을 배우는 기법이에요.",
       "summary_lines_ko": [
-        "world model 안에서 경험을 되돌려 정책을 개선한다.",
-        "실패한 지점으로 되돌아가 다른 행동을 시도한다.",
-        "여러 control 과제에서 정책 성능 향상을 보고했다."
+        "world model 안에서 경험을 되돌려 정책을 개선해요.",
+        "실패한 지점으로 되돌아가 다른 행동을 시도해요.",
+        "여러 control 과제에서 정책 성능이 올랐다고 보고했어요."
       ],
       "use_idea_ko": "실제 로봇을 덜 돌려 보고 정책을 개선할 때 쓸 수 있어요.",
       "model_info": {
@@ -575,11 +575,11 @@
       "project_url": "https://yihaohu0118.github.io/ChronoReplay/",
       "title_ko": "ChronoReplay: One Answer Interface Is No: 테스트 제목",
       "ai_type": "멀티모달",
-      "summary_ko": "테스트용 한줄 요약입니다.",
+      "summary_ko": "AI가 영상 속 공간을 얼마나 잘 이해하는지 여러 답변 형식으로 재는 benchmark예요.",
       "summary_lines_ko": [
-        "streaming 영상에서 공간 질문에 답하는 방식을 평가한다.",
-        "답변 형식 하나만으로는 공간 지능을 재기 어렵다고 본다.",
-        "여러 답변 형식을 쓰는 benchmark와 평가 결과를 공개했다."
+        "streaming 영상에서 공간 질문에 답하는 능력을 평가해요.",
+        "답변 형식 하나만으로는 공간 지능을 재기 어렵다고 봐요.",
+        "여러 답변 형식을 쓰는 benchmark와 평가 결과를 공개했어요."
       ],
       "use_idea_ko": "영상 속 공간 질문에 답하는 모델을 학습시킬 때 쓸 수 있어요.",
       "model_info": {

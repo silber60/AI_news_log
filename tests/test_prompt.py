@@ -55,15 +55,51 @@ def test_system_carries_rules_and_ai_types(hf_pages):
     assert "<paper>" in text
     for word in ("혁신적", "획기적", "게임 체인저", "단순히", "—"):
         assert word in text
-    assert text.splitlines()[0] == "<!-- prompt-version: 3 -->"
+    assert text.splitlines()[0] == "<!-- prompt-version: 4 -->"
 
 
-def test_system_names_v2_fields_and_drops_ideas(hf_pages):
+def test_tone_rule_is_haeyo_in_both_prompts():
+    """D-11 / D-20: no instruction left that asks for 하다체 endings."""
+    humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8")
+    paper = (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8")
+    assert "해요체" in humanizer
+    assert "해요체" in paper and "## 말투" in paper
+    for old in ("~한다", '~할 수 있다"처럼', "~이다/~한다", "짧게 끝나는 평서문"):
+        assert old not in humanizer, old
+        assert old not in paper, old
+    # D-12: non-specialist reader, English terms kept
+    assert "AI 연구자가 아닙니다" in paper
+    assert "영어 그대로" in paper
+
+
+def test_system_names_v3_fields_and_one_idea(hf_pages):
     text = _call(hf_pages)["system"][0]["text"]
-    for field in ("does_ko", "new_ko", "result_ko", "kind_ko", "architecture_ko", "확인 필요"):
+    for field in (
+        "does_ko",
+        "new_ko",
+        "result_ko",
+        "kind_ko",
+        "architecture_ko",
+        "use_idea_ko",
+        "확인 필요",
+    ):
         assert field in text, field
+    # D-13: exactly one idea line, never the old two-idea list
     assert "use_ideas" not in text
-    assert "활용 아이디어" not in text
+    assert "### `use_idea_ko`" in text
+    assert "아홉 필드" in text and "여덟 필드" not in text
+    for two in ("두 개", "2개", "두 가지", "0..2"):
+        assert two not in text, two
+    # T-01.2-07: facts stay code-owned
+    section = text.split("### `use_idea_ko`")[1]
+    for word in ("라이선스", "무료", "50자"):
+        assert word in section, word
+
+
+def test_empty_brackets_are_stripped_from_paper_input():
+    assert analyze.strip_urls("Code at (https://github.com/x/y) here.") == "Code at here."
+    assert analyze.strip_urls("demo [http://a.b/c] and （ ） end") == "demo and end"
+    assert analyze.strip_urls("keep (RAG) here") == "keep (RAG) here"
 
 
 def test_user_block_is_fenced_and_url_free(hf_pages):
