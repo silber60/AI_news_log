@@ -72,6 +72,12 @@
 - [ ] **DLVR-05**: A send ledger keyed by (week, SHA-256 email hash) is committed to the repo so a re-run never sends the same issue twice to the same person
 - [ ] **DLVR-06**: Logs and artifacts never contain addresses, names, or credentials (counts/hashes only, no SMTP debug output) — repo is public
 
+### Subscribers (SUBS)
+
+- [ ] **SUBS-01**: Reader can subscribe (and unsubscribe) from a public web page; submissions land on the subscriber list without owner action (moved from v2)
+- [ ] **SUBS-03**: A new subscriber immediately receives the latest published issue with a personalized greeting, instead of waiting for the next Monday
+- [ ] **SUBS-04**: The weekly send reads the live subscriber list (confirmed, not unsubscribed, deduplicated); subscriber addresses never enter the public repo, logs or artifacts
+
 ### Web Archive (WEB)
 
 - [ ] **WEB-01**: Each issue is published as a de-personalized web version on GitHub Pages, and the email links to it ("웹에서 보기")
@@ -94,7 +100,6 @@
 
 ### Subscribers
 
-- **SUBS-01**: Subscribe / unsubscribe web form
 - **SUBS-02**: Per-subscriber topic filtering
 
 ### Feedback
@@ -162,6 +167,9 @@
 | DLVR-07 | Phase 1.1 | Pending |
 | WEB-01 | Phase 4 | Pending |
 | WEB-02 | Phase 4 | Pending |
+| SUBS-01 | Phase 4.1 | Pending |
+| SUBS-03 | Phase 4.1 | Pending |
+| SUBS-04 | Phase 4.1 | Pending |
 | AUTO-01 | Phase 5 | Pending |
 | AUTO-02 | Phase 1 | Pending |
 | AUTO-03 | Phase 5 | Pending |
@@ -169,8 +177,8 @@
 | AUTO-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 50 total
-- Mapped to phases: 50
+- v1 requirements: 53 total
+- Mapped to phases: 53
 - Unmapped: 0 ✓
 
 ---

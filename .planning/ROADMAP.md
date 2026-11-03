@@ -12,6 +12,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 - [ ] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
 - [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
+- [ ] **Phase 4.1: Public Subscribe & Instant Welcome Issue** (INSERTED) - Anyone can subscribe from a web page, lands on the subscriber list, and immediately receives the latest issue
 - [ ] **Phase 5: Scheduled Automation & Hardening** - Mail arrives every Monday 08:00 KST unattended, re-runs never double-send, and the owner gets a run report
 
 ## Phase Details
@@ -117,10 +118,23 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 4.1: Public Subscribe & Instant Welcome Issue (INSERTED)
+**Goal**: A reader who signs up on the subscribe page is on the list right away and gets the most recent issue within minutes, without the owner touching anything.
+**Mode:** mvp
+**Depends on**: Phase 4 (needs the web archive of past issues and the unsubscribe line)
+**Requirements**: SUBS-01, SUBS-03, SUBS-04
+**Direction** (owner-approved, to confirm in discuss-phase): Google Form on the subscribe page → Google Sheet as the subscriber list → Apps Script sends the welcome issue on submit; the weekly Actions run reads the sheet instead of the `SUBSCRIBERS_CSV` secret. Addresses never enter the public repo or its logs.
+**Success Criteria** (what must be TRUE):
+  1. A subscribe page (linked from the email footer and the web archive) collects email, name and consent; a submission appears on the subscriber list without owner action
+  2. Within minutes of confirming, the new subscriber receives the latest published issue with a personalized greeting
+  3. The weekly send reads the live subscriber list, skips unsubscribed or unconfirmed rows, and never sends twice to the same address
+  4. Unsubscribing removes the reader from future sends; no address or name appears in the public repo, Actions logs or artifacts
+**Plans**: TBD
+
 ### Phase 5: Scheduled Automation & Hardening
 **Goal**: The newsletter reaches subscribers every Monday 08:00 KST with nobody touching it, re-runs are safe, and the owner learns about every outcome.
 **Mode:** mvp
-**Depends on**: Phase 4
+**Depends on**: Phase 4.1
 **Requirements**: AUTO-01, AUTO-03, AUTO-04, AUTO-05, DLVR-05
 **Success Criteria** (what must be TRUE):
   1. The workflow fires on Monday 08:00 KST from `cron: "0 8 * * 1"` + `timezone: "Asia/Seoul"` (UTC `0 23 * * 0` fallback), and the first unattended Monday issue lands in the subscriber's inbox
@@ -139,4 +153,5 @@ Plans:
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
+| 4.1. Public Subscribe & Instant Welcome Issue (INSERTED) | 0/TBD | Not started | - |
 | 5. Scheduled Automation & Hardening | 0/TBD | Not started | - |

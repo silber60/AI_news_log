@@ -52,6 +52,8 @@ Recent decisions affecting current work:
 
 - Phase 1.2 inserted after Phase 1.1: GitHub-Star Selection & Friendly Content (owner request after first v2 preview)
 
+- Phase 4.1 inserted after Phase 4: Public Subscribe & Instant Welcome Issue (owner request 2026-11-03; SUBS-01 moved from v2)
+
 ### Pending Todos
 
 None yet.
@@ -70,7 +72,7 @@ None yet.
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Content | CONT-01 summary table, CONT-02 trend history | v2 | 2026-11-02 |
-| Subscribers | SUBS-01 subscribe form, SUBS-02 topic filtering | v2 | 2026-11-02 |
+| Subscribers | SUBS-02 topic filtering (SUBS-01 moved to Phase 4.1) | v2 | 2026-11-02 |
 | Feedback | FDBK-01 reply feedback | v2 | 2026-11-02 |
 
 ## Session Continuity
