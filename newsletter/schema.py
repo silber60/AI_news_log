@@ -267,3 +267,8 @@ class HeadlineLLM(BaseModel):  # DLVR-07 (plan 03 calls Claude with it)
     model_config = ConfigDict(extra="forbid")
     emoji: HeadlineEmoji
     hook_ko: str  # <= 24 chars (checked in code)
+
+
+class TrendLLM(BaseModel):  # ANLY-05, D-07 (plan 02-03): 이번 주 트렌드 총평
+    model_config = ConfigDict(extra="forbid")
+    trend_ko: str  # 2-3 해요체 sentences, <= 300 chars (checked in code)
