@@ -38,6 +38,14 @@ Out of scope: the web version and the reason display (Phase 4), subscribe (Phase
 ### Email size
 - **D-09:** Trim repeated per-cell `font-family` by setting it on wrapper tables and cells. Research estimated about 7.6 KB saved. Because Gmail/Naver inheritance is unverified, the owner will check one test send in Gmail and Naver (web and mobile) before this ships. Add a worst-case size test with the highlight (3 picks) and the full explainer included.
 
+### Decisions after research (2026-11-03)
+- **D-10:** No `Issue` schema change. v3 Highlight, Explainer and SkillGptFitInfo suffice. Only the Claude output models change: two new ItemAnalysisLLM fields plus new HighlightsLLM, ExplainerLLM and PolishLLM.
+- **D-11:** The highlight fit comes from the per-paper analyze call (`skill_gpt_fit` + reason; a bad value is downgraded to `해당 없음`). One pick call chooses 1-3 picks, and code copies the tags.
+- **D-12:** Explainer uses one call that receives the past-topic list. Code checks repeats with a normalized key plus an alias table. A repeat is allowed only for the D-05 fallback (`related_ranks=[1]`).
+- **D-13:** The polish pass runs once at the end of the build and is lint-gated. It rewrites only the fields it was sent. A fact guard checks digits, model names and ranks, and a whole-model diff guard runs on top. Max 2 attempts.
+- **D-14:** Font consolidation puts the stack on every `<table>` and removes it from the cells. The measured worst case is 77,607 B including the explainer image, leaving about 14.5 KB of headroom. Ship it only after the owner's Gmail + Naver test send (checklist in RESEARCH §6).
+- **D-15:** A separate `record-topic` job writes the topic record. It has `contents: write`, `needs: run`, and runs only for a send on main. It reads the run's artifact, is idempotent per issue_id, and commits as `silber60 <81203897+silber60@users.noreply.github.com>` (CLAUDE.md). The token is exposed only in the commit step. test_workflow_static is updated to be job-aware.
+
 ### Claude's Discretion
 - Exact prompts, the lint pattern list contents, the highlight/explainer call design (one call vs. folded into existing calls), the call budget, and the topic-similarity rule for "not covered before".
 
