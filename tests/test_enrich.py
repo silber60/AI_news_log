@@ -93,17 +93,45 @@ def test_w44_rank1_stays_unknown(items, hf_pages):
     assert r1.model_info.evidence == []
 
 
-def test_w44_coverage_and_verdicts_untouched(items, hf_pages):
+W44_POC = [
+    "논문만",  # 1 2610.37381: no repo, no model, no Space
+    "코드만",
+    "바로 가능",  # 3 Falcon: Space first
+    "바로 가능",
+    "코드만",
+    "코드만",
+    "논문만",
+    "논문만",
+    "논문만",
+    "코드만",
+]
+
+
+def test_w44_coverage_and_code_poc(items, hf_pages):
     out, _ = _run(items, _entries(hf_pages, items))
     assert sum(it.model_info.size != UNKNOWN for it in out) == 0
     assert sum(it.model_info.training_data != UNKNOWN for it in out) == 1
     assert sum(it.model_info.release != UNKNOWN for it in out) == 6
+    assert [it.poc.verdict for it in out] == W44_POC
+    assert out[0].paper_id == "2610.37381"
+    assert [e.url for e in out[0].poc.evidence] == [out[0].hf_url]
+    assert [e.label for e in out[2].poc.evidence] == ["HF 데모"]
     for before, after in zip(items, out, strict=True):
         assert after.commercial == before.commercial
-        assert after.poc.verdict == before.poc.verdict == "확인 필요"
         assert after.hardware.local_run == "확인 필요"
         assert after.claude_gpt == before.claude_gpt
         assert after.model_info.kind_ko == before.model_info.kind_ko
+
+
+def test_failed_paper_fetch_keeps_poc_unknown(items):
+    # D-15: 논문만 is a negative claim, so it needs a successful paper fetch.
+    out, _ = _run(items[:1], [], fail=True)
+    assert out[0].poc.verdict == UNKNOWN
+    assert out[0].poc.evidence == []
+    bad = items[0].model_copy(update={"paper_id": "not-a-paper"})
+    out, routes = _run([bad], [])
+    assert routes["papers"].call_count == 0
+    assert out[0].poc.verdict == UNKNOWN
 
 
 def test_absence_is_never_written_as_false(items, hf_pages):
@@ -151,6 +179,22 @@ def test_safetensors_size_and_param_count(items):
     out, _ = _one(items[0], paper, {"org/m": model})
     assert out.model_info.size == "494M 파라미터"
     assert out.hardware.param_count == 494032768
+    # D-10: 494M x 2 bytes x 1.2 = 1.2 GB, cited by the model page.
+    assert (out.hardware.est_vram_gb, out.hardware.local_run) == (1.2, "가능")
+    assert [e.url for e in out.hardware.evidence] == ["https://huggingface.co/org/m"]
+
+
+def test_packed_quantized_safetensors_keep_count_but_no_vram(items):
+    paper = _paper(**_model("org/m"))
+    model = {
+        "id": "org/m",
+        "safetensors": {"parameters": {"I32": 6476005376, "F16": 263772160}, "total": 6739777536},
+        "tags": ["base_model:quantized:meta-llama/Llama-2-7b-hf"],
+    }
+    out, _ = _one(items[0], paper, {"org/m": model})
+    assert out.hardware.param_count == 6739777536
+    assert (out.hardware.est_vram_gb, out.hardware.local_run) == (None, UNKNOWN)
+    assert out.hardware.evidence == []
 
 
 def test_size_billions_and_extra_models(items):

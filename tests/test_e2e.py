@@ -25,6 +25,7 @@ STAR_TOP10 = [
     "2610.33005",
     "2610.33845",
 ]
+STAR_POC = ["코드만", "바로 가능", "바로 가능", "코드만", "바로 가능"] + ["코드만"] * 5
 WEEK_FILES = ("raw.json", "selected.json", "issue.json", "email.html", "email.txt")
 
 
@@ -63,11 +64,12 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert stored.explainer is None
     assert stored.highlights == []
     assert stored.trend_ko is None
+    # EVID-03: PoC decided by code from the HF paper capture.
+    assert [it.poc.verdict for it in stored.items] == STAR_POC
     for it in stored.items:
         assert it.commercial.verdict == "확인 필요"
-        assert it.poc.verdict == "확인 필요"
+        assert it.poc.evidence
         assert it.claude_gpt.verdict == "확인 필요"
-        assert it.hardware.local_run == "확인 필요"
         assert len(it.summary_lines_ko) == 3
         assert all(line.strip() for line in it.summary_lines_ko)
         assert it.poc.has_weights in (True, None)
@@ -91,6 +93,10 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         (UNKNOWN, UNKNOWN, "GitHub"),
     ]
     assert stored.items[4].hardware.param_count == 302130176
+    # EVID-04, D-10: only detector-scope has a usable safetensors total.
+    hw = stored.items[4].hardware
+    assert (hw.est_vram_gb, hw.local_run) == (0.7, "가능")
+    assert [it.hardware.local_run for i, it in enumerate(stored.items) if i != 4] == [UNKNOWN] * 9
     assert [it.hardware.param_count for i, it in enumerate(stored.items) if i != 4] == [None] * 9
     assert [it.poc.has_weights for it in stored.items] == [None, True, True, None, True] + [
         None
@@ -123,6 +129,11 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     html = (week / "email.html").read_text(encoding="utf-8")
     assert "구독자님" in html
     assert "IBM Plex Sans KR" in html
+    cards = html.split("data-card=")[1:]
+    assert "🧪 코드만 공개됐어요" in cards[0]
+    assert "🧪 바로 써볼 수 있어요" in cards[1]
+    assert "🖥️ 개인 GPU 약 1GB" in cards[4]
+    assert sum("🖥️" in c for c in cards) == 1
     assert "구독자님" in (week / "email.txt").read_text(encoding="utf-8")
 
 

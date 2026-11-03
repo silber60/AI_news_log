@@ -1,11 +1,11 @@
-"""Build stage: week -> fetch -> select -> analyze -> enrich -> Issue -> render -> archive."""
+"""Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> Issue -> render -> archive."""
 
 import logging
 from datetime import datetime
 
 from newsletter import store
 from newsletter.schema import Issue
-from newsletter.stages import analyze, enrich, fetch, headline, render, select
+from newsletter.stages import analyze, enrich, fetch, headline, render, select, verdicts
 from newsletter.week import KST, parse_week
 
 log = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
     client = claude_client if claude_client is not None else analyze.make_client()
     items = analyze.analyze_items(top, client)
     items = enrich.enrich_items(items, top, client=http_client)
+    items = verdicts.finalize(items)
 
     issue = Issue(
         issue_id=issue_id,

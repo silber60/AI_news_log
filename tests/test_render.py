@@ -9,15 +9,30 @@ import respx
 from conftest import FakeAnthropic, mock_hf_week
 
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import IMAGE_URL_MAX, UNKNOWN, Explainer, Highlight, ItemImage
+from newsletter.schema import (
+    IMAGE_URL_MAX,
+    UNKNOWN,
+    EvidenceLink,
+    Explainer,
+    Highlight,
+    ItemImage,
+    LicenseInfo,
+)
 from newsletter.stages import render as render_mod
 from newsletter.stages.render import (
     ASSET_BASE_URL,
+    CLAUDE_GPT_PHRASES,
+    COMMERCIAL_CODE_ONLY_PHRASE,
+    COMMERCIAL_PHRASES,
+    EVIDENCE_LINK_MAX,
     MAX_EMAIL_BYTES,
     build_subject,
+    license_link,
     render_html,
     render_text,
+    verdict_line,
 )
+from newsletter.stages.verdicts import POC_GATED_LABEL
 
 ISSUE_ID = "2026-W44"
 
@@ -59,8 +74,8 @@ SECTION_ORDER = [
     "header",
     "hero",
     "greeting",
-    "highlight",
     "trend",
+    "highlight",
     "top3",
     "explainer",
     "rest",
@@ -405,28 +420,34 @@ def test_card_without_image_has_no_img(issue_w44):
             assert "<img" not in card, it.rank
 
 
-def test_badge_row_hidden_while_all_verdicts_unknown(issue_w44):
+def test_no_verdict_line_while_all_verdicts_unknown(issue_w44):
     out = render_html(issue_w44, "구독자님")
-    for word in ("상업적 사용", "PoC", "Claude/GPT"):
+    for word in ("PoC", "Claude/GPT"):
         assert word not in out
+    for card in _cards(out):
+        for word in ("💼", "🧪", "🖥️", "🤖", "상업", "라이선스"):
+            assert word not in card
+    assert "🧪" not in render_text(issue_w44, "구독자님")
 
 
-def test_badge_row_shows_when_only_poc_known(issue_w44):
+def test_verdict_line_shows_only_poc_when_only_poc_known(issue_w44):
     it = issue_w44.items[4]
     issue = _with_item(issue_w44, 4, poc=it.poc.model_copy(update={"verdict": "바로 가능"}))
     cards = _cards(render_html(issue, "구독자님"))
-    assert "상업적 사용 확인 필요" in cards[4]
-    assert "PoC 바로 가능" in cards[4]
-    assert "Claude/GPT 확인 필요" in cards[4]
-    assert _ordered(cards[4], ["🧩 모델 정보", "PoC 바로 가능", "논문 보기 →"])
+    assert ">🧪 바로 써볼 수 있어요<" in cards[4]
+    for word in ("💼", "🖥️", "🤖", "확인 필요", "PoC"):
+        assert word not in cards[4]
+    assert _ordered(cards[4], ["🧩 모델 정보", "🧪 바로 써볼 수 있어요", "논문 보기 →"])
     for i, card in enumerate(cards):
         if i != 4:
-            assert "PoC" not in card
+            assert "🧪" not in card
+    txt = render_text(issue, "구독자님")
+    assert "\n🧪 바로 써볼 수 있어요\n" in txt
 
 
 def test_highlight_pick_content(issue_w44):
     out = render_html(_full_issue(issue_w44), "구독자님")
-    block = out[_section_pos(out, "highlight") : _section_pos(out, "trend")]
+    block = out[_section_pos(out, "highlight") : _section_pos(out, "top3")]
     assert "이번 주 바로 써볼 만한 것 ✨" in block
     assert ">Claude Skill<" in block
     assert html_lib.escape(issue_w44.items[1].title_ko, quote=False) in block
@@ -484,7 +505,7 @@ def test_text_part_phase3_slots(issue_w44):
         "예시 문장",
     ):
         assert s in txt, s
-    assert _ordered(txt, ["바로 써볼 만한", "흐름 한눈에", "Top 3", "AI 기술 쉽게", "4위부터"])
+    assert _ordered(txt, ["흐름 한눈에", "바로 써볼 만한", "Top 3", "AI 기술 쉽게", "4위부터"])
 
 
 def test_affiliation_not_rendered_in_html(issue_w44):
@@ -702,12 +723,49 @@ def _raw_image_url(rank: int) -> str:
     return url
 
 
+def _license_url(rank: int) -> str:
+    head = f"https://huggingface.co/some-organization/some-long-model-name-{rank:02d}/blob/main/"
+    url = head + "L" * (EVIDENCE_LINK_MAX - len(head) - len(".md")) + ".md"
+    assert len(url) == EVIDENCE_LINK_MAX == 200
+    return url
+
+
+def _longest_commercial() -> dict:
+    """Commercial fields that produce the phrase with the most UTF-8 bytes."""
+    lic = LicenseInfo(spdx_id="Apache-2.0")
+    options = {
+        COMMERCIAL_PHRASES["가능"]: {"verdict": "가능", "weights_license": lic},
+        COMMERCIAL_CODE_ONLY_PHRASE: {"verdict": "가능", "code_license": lic},
+        COMMERCIAL_PHRASES["조건부"]: {"verdict": "조건부", "weights_license": lic},
+        COMMERCIAL_PHRASES["불가"]: {"verdict": "불가", "weights_license": lic},
+    }
+    return options[max(options, key=lambda p: len(p.encode("utf-8")))]
+
+
+def _longest_claude_gpt() -> str:
+    return max(CLAUDE_GPT_PHRASES, key=lambda v: len(CLAUDE_GPT_PHRASES[v].encode("utf-8")))
+
+
+def _worst_verdicts(it, rank: int) -> dict:
+    ev = [EvidenceLink(label="라이선스", url=_license_url(rank))]
+    model = EvidenceLink(label=POC_GATED_LABEL, url=f"https://huggingface.co/org/m{rank}")
+    return {
+        "commercial": it.commercial.model_copy(update={**_longest_commercial(), "evidence": ev}),
+        "poc": it.poc.model_copy(update={"verdict": "바로 가능", "evidence": [model]}),
+        "hardware": it.hardware.model_copy(
+            update={"est_vram_gb": 999.0, "local_run": "불가", "evidence": [model]}
+        ),
+        "claude_gpt": it.claude_gpt.model_copy(update={"verdict": _longest_claude_gpt()}),
+    }
+
+
 def _worst_case(issue):
     """v1.2 worst case (DSGN-08): 10 card images and no hero, every link, max-length fields,
     50-char ideas, 99,999 stars, all Phase 3 slots.
 
-    Titles stay as in W44 and verdicts stay 확인 필요 (no badge row) as in Phase 1.1.
-    Every 모델 정보 value is known, so all five rows render.
+    Titles stay as in W44. Every 모델 정보 value is known, so all five rows render.
+    Phase 2: every card carries all four verdicts at their longest phrase and a
+    200-char license link.
     """
     ids = ", ".join(f"org-name/{'d' * 30}{n}" for n in range(3))  # 3 x 40 chars
     assert all(len(x) == 40 for x in ids.split(", "))
@@ -734,6 +792,7 @@ def _worst_case(issue):
                     "summary_ko": "요" * 80,
                     "summary_lines_ko": ["줄" * 70, "새" * 70, "결" * 70],
                     "model_info": mi,
+                    **_worst_verdicts(it, r),
                 }
             )
         )
@@ -882,6 +941,12 @@ def test_worst_case_under_byte_limit(issue_w44):
     print(f"worst-case email.html bytes={n} headroom={MAX_EMAIL_BYTES - n}")
     assert "★ 99,999" in out
     assert out.count("💡 " + "활" * 50) == 10
+    for it, card in zip(worst.items, _cards(out), strict=True):
+        line = " · ".join(verdict_line(it))
+        assert len(verdict_line(it)) == 4, it.rank
+        assert line in card, it.rank
+        assert f'href="{_license_url(it.rank)}"' in card, it.rank
+        assert ">라이선스</a>" in card, it.rank
     assert n < MAX_EMAIL_BYTES
 
 
@@ -911,3 +976,161 @@ def test_ibm_plex_font_first_and_web_font_link(issue_w44):
     html = render_html(issue_w44, "구독자")
     assert f'<link rel="stylesheet" href="{WEB_FONT_URL}"' in html.replace("&amp;", "&")
     assert "<style" not in html  # css_inline still drops the style block
+
+
+# --------------------------------------------- Phase 2 verdict line (D-01, D-02)
+
+LIC = LicenseInfo(spdx_id="Apache-2.0")
+HF_LIC = "https://huggingface.co/org/m/blob/main/LICENSE"
+
+
+def _verdicts(it, *, commercial=None, poc=None, hardware=None, claude_gpt=None):
+    update = {}
+    for name, val in (
+        ("commercial", commercial),
+        ("poc", poc),
+        ("hardware", hardware),
+        ("claude_gpt", claude_gpt),
+    ):
+        if val is not None:
+            update[name] = getattr(it, name).model_copy(update=val)
+    return it.model_copy(update=update)
+
+
+@pytest.mark.parametrize(
+    ("fields", "phrase"),
+    [
+        ({"verdict": "가능", "code_license": LIC}, "💼 코드 상업 이용 가능"),  # D-09
+        ({"verdict": "가능", "weights_license": LIC}, "💼 상업 이용 가능"),
+        ({"verdict": "가능", "weights_license": LIC, "code_license": LIC}, "💼 상업 이용 가능"),
+        ({"verdict": "조건부", "weights_license": LIC}, "💼 조건부 상업 이용"),
+        ({"verdict": "불가", "weights_license": LIC}, "💼 상업 이용 불가"),
+        ({"verdict": "확인 필요"}, None),
+    ],
+)
+def test_verdict_line_commercial_phrases(issue_w44, fields, phrase):
+    line = verdict_line(_verdicts(issue_w44.items[0], commercial=fields))
+    assert line == ([phrase] if phrase else [])
+
+
+@pytest.mark.parametrize(
+    ("verdict", "phrase"),
+    [
+        ("직접 사용", "🤖 Claude/GPT에서 바로 써요"),
+        ("기법 적용 가능", "🤖 Claude/GPT 기법 적용"),
+        ("해당 없음", None),  # D-11: hidden in the email
+        ("확인 필요", None),
+    ],
+)
+def test_verdict_line_claude_gpt_phrases(issue_w44, verdict, phrase):
+    line = verdict_line(_verdicts(issue_w44.items[0], claude_gpt={"verdict": verdict}))
+    assert line == ([phrase] if phrase else [])
+
+
+@pytest.mark.parametrize(
+    ("hw", "phrase"),
+    [
+        ({"local_run": "가능", "est_vram_gb": 0.7}, "🖥️ 개인 GPU 약 1GB"),
+        ({"local_run": "제한적", "est_vram_gb": 28.6}, "🖥️ 서버 GPU 약 29GB"),
+        ({"local_run": "불가", "est_vram_gb": 174.5}, "🖥️ GPU 여러 장 필요 (약 175GB)"),
+        ({"local_run": "확인 필요", "est_vram_gb": None}, None),
+    ],
+)
+def test_verdict_line_gpu_phrases(issue_w44, hw, phrase):
+    line = verdict_line(_verdicts(issue_w44.items[0], hardware=hw))
+    assert line == ([phrase] if phrase else [])
+
+
+def test_verdict_line_gated_poc_phrase(issue_w44):
+    ev = [EvidenceLink(label=POC_GATED_LABEL, url="https://huggingface.co/org/m")]
+    it = _verdicts(issue_w44.items[0], poc={"verdict": "바로 가능", "evidence": ev})
+    assert verdict_line(it) == ["🧪 승인 받고 써볼 수 있어요"]
+
+
+def _all_known(it, url=HF_LIC):
+    return _verdicts(
+        it,
+        commercial={
+            "verdict": "조건부",
+            "weights_license": LIC,
+            "evidence": [EvidenceLink(label="라이선스", url=url)],
+        },
+        poc={"verdict": "코드만"},
+        hardware={"local_run": "가능", "est_vram_gb": 6.3},
+        claude_gpt={"verdict": "기법 적용 가능"},
+    )
+
+
+def test_verdict_line_order_and_join(issue_w44):
+    issue = _with_item(issue_w44, 1, **dict(_all_known(issue_w44.items[1])))
+    line = (
+        "💼 조건부 상업 이용 · 🧪 코드만 공개됐어요 · 🖥️ 개인 GPU 약 7GB · 🤖 Claude/GPT 기법 적용"
+    )
+    assert verdict_line(issue.items[1]) == line.split(" · ")
+    card = _cards(render_html(issue, "구독자님"))[1]
+    assert line in card
+    assert _ordered(card, ["🧩 모델 정보", line, "논문 보기 →"])
+    txt = render_text(issue, "구독자님")
+    assert f"\n{line}\n라이선스: {HF_LIC}\n" in txt
+
+
+def test_license_link_one_per_card_when_commercial_shown(issue_w44):
+    it = _all_known(issue_w44.items[1])
+    assert license_link(it) == HF_LIC
+    issue = _with_item(issue_w44, 1, **dict(it))
+    cards = _cards(render_html(issue, "구독자님"))
+    assert cards[1].count(">라이선스</a>") == 1
+    assert re.search(
+        rf'· <a href="{re.escape(HF_LIC)}" style="[^"]*color: #A3A3A3;?[^"]*">라이선스</a>',
+        cards[1],
+    )
+    assert all("라이선스" not in c for i, c in enumerate(cards) if i != 1)
+
+
+def test_license_link_absent_without_commercial_phrase(issue_w44):
+    it = _all_known(issue_w44.items[1])
+    hidden = it.model_copy(
+        update={"commercial": it.commercial.model_copy(update={"verdict": "확인 필요"})}
+    )
+    assert license_link(hidden) is None
+    issue = _with_item(issue_w44, 1, **dict(hidden))
+    assert all("라이선스" not in c for c in _cards(render_html(issue, "구독자님")))
+    assert "라이선스:" not in render_text(issue, "구독자님")
+
+
+def test_license_link_skips_long_or_foreign_urls(issue_w44):
+    long_url = "https://huggingface.co/" + "x" * (EVIDENCE_LINK_MAX - 22)
+    assert len(long_url) == EVIDENCE_LINK_MAX + 1
+    it = _all_known(issue_w44.items[1], url=long_url)
+    assert license_link(it) is None
+    assert verdict_line(it)[0] == "💼 조건부 상업 이용"  # the phrase still shows
+    ok = "https://github.com/" + "y" * (EVIDENCE_LINK_MAX - 19)
+    assert license_link(_all_known(issue_w44.items[1], url=ok)) == ok
+    assert license_link(_all_known(issue_w44.items[1], url="https://example.com/L")) is None
+
+
+DISCLAIMER = (
+    "상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. "
+    "실제 사용 전 원문을 확인해 주세요."
+)
+
+
+def test_footer_disclaimer_in_both_parts(issue_w44):
+    out = render_html(issue_w44, "구독자님")
+    assert out.count(DISCLAIMER) == 1
+    assert out.index(DISCLAIMER) > _section_pos(out, "footer")
+    assert _ordered(out[_section_pos(out, "footer") :], ["출처: Hugging Face Papers", DISCLAIMER])
+    txt = render_text(issue_w44, "구독자님")
+    assert txt.count(DISCLAIMER) == 1
+    assert _ordered(txt, ["출처: Hugging Face Papers", DISCLAIMER])
+    for phrase in AUTHORSHIP_PHRASES:
+        assert phrase not in DISCLAIMER
+
+
+def test_trend_order_sits_right_under_greeting(issue_w44):
+    # D-13: greeting, trend, highlight in both parts.
+    full = _full_issue(issue_w44)
+    out = render_html(full, "구독자님")
+    assert _sections(out)[3:6] == ["greeting", "trend", "highlight"]
+    txt = render_text(full, "구독자님")
+    assert _ordered(txt, ["안녕하세요.", "이번 주 흐름 한눈에 📈", "이번 주 바로 써볼 만한 것 ✨"])
