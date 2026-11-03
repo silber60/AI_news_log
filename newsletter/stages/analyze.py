@@ -87,6 +87,10 @@ IDEA_LIMIT = 50  # ANLY-10, D-13: use_idea_ko
 CLAUDE_GPT_REASON_LIMIT = 60  # ANLY-02, D-06: claude_gpt_reason_ko
 # A reason that repeats a label restates the verdict instead of explaining it.
 _CG_LABELS = ("직접 사용", "기법 적용 가능", "해당 없음")
+SKILL_GPT_REASON_LIMIT = 60  # HILT-01, D-11: skill_gpt_reason_ko
+# "둘 다" is ordinary Korean, so only the three distinctive labels are checked.
+_SG_LABELS = ("Claude Skill", "GPTs", "해당 없음")
+_SG_NO_FIT = "해당 없음"
 _LINE_FIELDS = ("does_ko", "new_ko", "result_ko")
 _WS_RE = re.compile(r"[\r\n\t]+")
 _BOUNDARY_CHARS = " ,."
@@ -124,6 +128,7 @@ HAEYO_FIELDS = (
     "result_ko",
     "use_idea_ko",
     "claude_gpt_reason_ko",
+    "skill_gpt_reason_ko",
 )
 _PROSE_INFO_FIELDS = ("kind_ko", "architecture_ko")
 
@@ -194,6 +199,20 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         )
     if any(label in reason for label in _CG_LABELS):
         errs.append(("cg_label_in_reason", "claude_gpt_reason_ko가 판정 이름을 그대로 씀"))
+    sg_reason = a.skill_gpt_reason_ko
+    if not sg_reason.strip():
+        # A 해당 없음 item may leave the reason empty; it is stored as None.
+        if a.skill_gpt_fit != _SG_NO_FIT:
+            errs.append(("sg_reason_empty", "skill_gpt_reason_ko가 비어 있음"))
+    elif len(sg_reason) > SKILL_GPT_REASON_LIMIT:
+        errs.append(
+            (
+                "sg_reason_len",
+                f"skill_gpt_reason_ko가 {len(sg_reason)}자로 {SKILL_GPT_REASON_LIMIT}자를 넘음",
+            )
+        )
+    if any(label in sg_reason for label in _SG_LABELS):
+        errs.append(("sg_label_in_reason", "skill_gpt_reason_ko가 분류 이름을 그대로 씀"))
     for field in HAEYO_FIELDS:
         text = getattr(a, field)
         if text.strip() and not_haeyo(text):
@@ -214,13 +233,24 @@ _TRIM_LIMITS = {
     "architecture_ko": ARCH_LIMIT,
     "use_idea_ko": IDEA_LIMIT,
     "claude_gpt_reason_ko": CLAUDE_GPT_REASON_LIMIT,
+    "skill_gpt_reason_ko": SKILL_GPT_REASON_LIMIT,
 }
-_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len", "idea_len", "cg_reason_len"}
+_LENGTH_CODES = {
+    "summary_len",
+    "line_len",
+    "kind_len",
+    "arch_len",
+    "idea_len",
+    "cg_reason_len",
+    "sg_reason_len",
+}
 # ANLY-02: a missing or label-repeating reason left after the retry drops the label
 # to 확인 필요 with no reason, so it never reaches the Issue.
 _CG_DOWNGRADE_CODES = {"cg_reason_empty", "cg_label_in_reason"}
+# HILT-01, D-11: the same for the Skill/GPTs fit, which drops to 해당 없음.
+_SG_DOWNGRADE_CODES = {"sg_reason_empty", "sg_label_in_reason"}
 # D-19: a wrong sentence ending left after the retry is logged, never fatal.
-_NON_FATAL_CODES = _LENGTH_CODES | _CG_DOWNGRADE_CODES | {"tone"}
+_NON_FATAL_CODES = _LENGTH_CODES | _CG_DOWNGRADE_CODES | _SG_DOWNGRADE_CODES | {"tone"}
 
 
 def _trim_overruns(a: ItemAnalysisLLM) -> tuple[ItemAnalysisLLM, list[str]]:
@@ -376,7 +406,8 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
     if last is not None and problems and codes <= _NON_FATAL_CODES:
         # D-19: length overruns after the retry are trimmed; a wrong ending is
         # kept with a warning that names fields only, never model text. A bad
-        # Claude/GPT reason drops the label first (ANLY-02).
+        # Claude/GPT reason drops the label first (ANLY-02); so does a bad
+        # Skill/GPTs reason (HILT-01).
         result = last
         if codes & _CG_DOWNGRADE_CODES:
             result = result.model_copy(update={"claude_gpt": UNKNOWN, "claude_gpt_reason_ko": ""})
@@ -384,6 +415,15 @@ def analyze_one(client, entry: HfEntry, *, rank: int = 0) -> ItemAnalysisLLM:
                 "claude_gpt=downgraded rank=%d codes=%s",
                 rank,
                 ",".join(sorted(codes & _CG_DOWNGRADE_CODES)),
+            )
+        if codes & _SG_DOWNGRADE_CODES:
+            result = result.model_copy(
+                update={"skill_gpt_fit": _SG_NO_FIT, "skill_gpt_reason_ko": ""}
+            )
+            log.warning(
+                "skill_gpt=downgraded rank=%d codes=%s",
+                rank,
+                ",".join(sorted(codes & _SG_DOWNGRADE_CODES)),
             )
         if codes & _LENGTH_CODES:
             result, fields = _trim_overruns(result)
