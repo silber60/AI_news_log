@@ -111,7 +111,16 @@ Plans:
   3. Above the Top 10, an "이번 주 바로 써볼 만한 것" section shows 1-3 items, each with 왜 좋은지 and 어떻게 만들지 in 1-2 lines and a Claude Skill / GPTs / 둘 다 tag
   4. Highlights only point at this week's Top 10; in a week with no fit the section shows "이번 주는 해당 항목 없음"
   5. Each issue has a 기술 해설 코너 filling the `Issue.explainer` slot reserved in Phase 1: one technique from this week's Top 10, explained in plain Korean, preferring a topic absent from the committed past-topics record (fallback: the #1 paper's core technique)
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Tracer: skill_gpt_fit + reason in analyze (prompt v6, non-fatal downgrade), one highlight pick call with code guards, always-on section with "이번 주는 해당 항목 없음", call count 14 (wave 1)
+- [ ] 03-02-PLAN.md — Humanizer: full Korean port of humanizer_ko.md, unit-tested banned-pattern lint over every Claude field, cleanup + dash fallback (wave 1)
+- [ ] 03-03-PLAN.md — Past-topics record: data/explainer_topics.json, topics.load_past/record, `record-topic` CLI, owner decision, then the send-on-main record-topic job with contents: write and job-aware static tests (wave 1)
+- [ ] 03-04-PLAN.md — Explainer: one call over this week's items + past topics, caps and grounding checks, alias-aware repeat rule with #1 fallback, image copied from a related item, call count 15 (wave 2)
+- [ ] 03-05-PLAN.md — Size: explainer image row, worst case with 3 picks + full explainer + image, per-table font stack (one revertable commit, about 14 KB saved) (wave 2)
+- [ ] 03-06-PLAN.md — Polish: lint-gated single polish pass at the end of the build with fact, stage and whole-dump diff guards, leftovers warn only, call counts 15 / 16 (wave 3)
+- [ ] 03-07-PLAN.md — Owner push, one live preview with lint and log audit, mode=test send to Gmail + Naver for the font checklist, owner review (no mode=send) (wave 4)
 
 ### Phase 4: Figma Design, Email Template & Web Archive
 **Goal**: The newsletter looks like the designed brand in Naver Mail and Gmail, and every issue can also be read and browsed on the web.
@@ -160,7 +169,7 @@ Plans:
 | 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 2. Evidence & Practical Verdicts | 6/6 | Complete | 2026-11-03 |
-| 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
+| 3. Humanizer, Highlight & Explainer | 0/7 | Planned | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
 | 4.1. Public Subscribe & Instant Welcome Issue (INSERTED) | 0/TBD | Not started | - |
 | 5. Scheduled Automation & Hardening | 0/TBD | Not started | - |

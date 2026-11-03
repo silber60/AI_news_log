@@ -581,11 +581,11 @@ def _unchanged_outside(before: dict, after: dict, allowed: set[str]) -> bool:
 | A8 | The quirks-mode table reset does not include font-family, and Gmail drops `<body>` styles | §6 | Only relevant to variants A/C; B does not depend on it |
 | A9 | A failed highlight call showing "이번 주는 해당 항목 없음" is acceptable | §3 | Owner may prefer hiding the section. Doing that needs a flag, which means a schema change |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Commit identity for the bot commit.** The recommendation is silber60 noreply, per CLAUDE.md. The owner may prefer `github-actions[bot]`. This is a one-line change.
-2. **Is main branch-protected?** If it requires PRs, the push fails. Check the repo settings before the first send. I found no observation.
-3. **Current-prompt lint rate.** Run the lint test on the next preview artifact (A1).
+1. **Commit identity for the bot commit.** (RESOLVED: D-15, silber60 noreply) The recommendation is silber60 noreply, per CLAUDE.md. The owner may prefer `github-actions[bot]`. This is a one-line change.
+2. **Is main branch-protected?** (RESOLVED: owner confirms at the 03-03 T2 and 03-07 T3 checkpoints) If it requires PRs, the push fails. Check the repo settings before the first send. I found no observation.
+3. **Current-prompt lint rate.** (RESOLVED: measured in 03-07 T2 on the live preview) Run the lint test on the next preview artifact (A1).
 
 ## Environment Availability
 
