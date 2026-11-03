@@ -422,10 +422,10 @@ def test_card_without_image_has_no_img(issue_w44):
 
 def test_no_verdict_line_while_all_verdicts_unknown(issue_w44):
     out = render_html(issue_w44, "구독자님")
-    for word in ("상업적 사용", "PoC", "Claude/GPT"):
+    for word in ("PoC", "Claude/GPT"):
         assert word not in out
     for card in _cards(out):
-        for word in ("💼", "🧪", "🖥️", "🤖"):
+        for word in ("💼", "🧪", "🖥️", "🤖", "상업", "라이선스"):
             assert word not in card
     assert "🧪" not in render_text(issue_w44, "구독자님")
 
@@ -1081,7 +1081,8 @@ def test_license_link_one_per_card_when_commercial_shown(issue_w44):
     cards = _cards(render_html(issue, "구독자님"))
     assert cards[1].count(">라이선스</a>") == 1
     assert re.search(
-        rf'· <a href="{re.escape(HF_LIC)}" style="color: #A3A3A3;?">라이선스</a>', cards[1]
+        rf'· <a href="{re.escape(HF_LIC)}" style="[^"]*color: #A3A3A3;?[^"]*">라이선스</a>',
+        cards[1],
     )
     assert all("라이선스" not in c for i, c in enumerate(cards) if i != 1)
 
@@ -1093,7 +1094,7 @@ def test_license_link_absent_without_commercial_phrase(issue_w44):
     )
     assert license_link(hidden) is None
     issue = _with_item(issue_w44, 1, **dict(hidden))
-    assert "라이선스" not in render_html(issue, "구독자님")
+    assert all("라이선스" not in c for c in _cards(render_html(issue, "구독자님")))
     assert "라이선스:" not in render_text(issue, "구독자님")
 
 

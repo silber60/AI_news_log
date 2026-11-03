@@ -14,7 +14,7 @@ from markupsafe import Markup
 
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, Issue, Item
-from newsletter.stages.verdicts import POC_GATED_LABEL
+from newsletter.stages.verdicts import EVIDENCE_HOSTS, POC_GATED_LABEL
 from newsletter.store import TEMPLATES_DIR
 
 BRAND = "AI 주간 해달 브리프"
@@ -81,6 +81,20 @@ def _info_rows(it: Item) -> list[tuple[str, str]]:
 
 
 # D-01, D-05: fixed code phrases for the one-line verdict row; never Claude text.
+COMMERCIAL_PHRASES = {
+    "가능": "💼 상업 이용 가능",
+    "조건부": "💼 조건부 상업 이용",
+    "불가": "💼 상업 이용 불가",
+}
+# D-09: only the code license is known, so the weights may differ.
+COMMERCIAL_CODE_ONLY_PHRASE = "💼 코드 상업 이용 가능"
+# D-11: 해당 없음 is hidden in the email.
+CLAUDE_GPT_PHRASES = {
+    "직접 사용": "🤖 Claude/GPT에서 바로 써요",
+    "기법 적용 가능": "🤖 Claude/GPT 기법 적용",
+}
+# D-02: at most one license link per card, and only a short one.
+EVIDENCE_LINK_MAX = 200
 POC_PHRASES = {
     "바로 가능": "🧪 바로 써볼 수 있어요",
     "코드만": "🧪 코드만 공개됐어요",
@@ -94,6 +108,13 @@ def _poc_phrase(it: Item) -> str | None:
     if p.verdict == "바로 가능" and p.evidence and p.evidence[0].label == POC_GATED_LABEL:
         return POC_GATED_PHRASE
     return POC_PHRASES.get(p.verdict)
+
+
+def _commercial_phrase(it: Item) -> str | None:
+    c = it.commercial
+    if c.verdict == "가능" and c.weights_license is None and c.code_license is not None:
+        return COMMERCIAL_CODE_ONLY_PHRASE
+    return COMMERCIAL_PHRASES.get(c.verdict)
 
 
 def _gpu_phrase(it: Item) -> str | None:
@@ -110,8 +131,23 @@ def _gpu_phrase(it: Item) -> str | None:
 
 def verdict_line(it: Item) -> list[str]:
     """D-01: known verdicts only, in display order; 확인 필요 is omitted."""
-    phrases = [_poc_phrase(it), _gpu_phrase(it)]
+    phrases = [
+        _commercial_phrase(it),
+        _poc_phrase(it),
+        _gpu_phrase(it),
+        CLAUDE_GPT_PHRASES.get(it.claude_gpt.verdict),
+    ]
     return [p for p in phrases if p]
+
+
+def license_link(it: Item) -> str | None:
+    """D-02: the evidence URL of the side that set the 상업 verdict, when it is shown."""
+    if _commercial_phrase(it) is None or not it.commercial.evidence:
+        return None
+    url = it.commercial.evidence[0].url
+    if len(url) > EVIDENCE_LINK_MAX or not url.startswith(EVIDENCE_HOSTS):
+        return None
+    return url
 
 
 def rest_title(n: int) -> str | None:
@@ -147,6 +183,7 @@ def _context(issue: Issue, greeting: str) -> dict:
         "basis_note": basis_note(issue),
         "info_rows": {it.rank: _info_rows(it) for it in issue.items},
         "verdict_lines": {it.rank: verdict_line(it) for it in issue.items},
+        "license_links": {it.rank: license_link(it) for it in issue.items},
     }
 
 
