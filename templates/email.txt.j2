@@ -33,14 +33,15 @@ arXiv: {{ it.arxiv_url }}
 
 {{ issue.trend_ko }}
 {% endif %}
-{%- if issue.highlights %}
 ========================================
 이번 주 바로 써볼 만한 것 ✨
 {% for h in issue.highlights %}
 [{{ h.tag }}] {{ issue.items[h.rank - 1].title_ko }}
 왜 좋은지: {{ h.why_ko }}
 어떻게 만들지: {{ h.how_ko }}
-{% endfor %}{% endif %}
+{% else %}
+이번 주는 해당 항목 없음
+{% endfor %}
 ========================================
 이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️
 {{ basis_note }}

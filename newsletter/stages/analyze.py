@@ -23,6 +23,7 @@ from newsletter.schema import (
     Item,
     ItemAnalysisLLM,
     ModelInfo,
+    SkillGptFitInfo,
 )
 from newsletter.stages import select
 from newsletter.store import PROMPTS_DIR
@@ -106,6 +107,7 @@ _TEXT_FIELDS = (
     "architecture_ko",
     "use_idea_ko",
     "claude_gpt_reason_ko",
+    "skill_gpt_reason_ko",
 )
 
 
@@ -437,6 +439,10 @@ def to_item(rank: int, entry: HfEntry, analysis: ItemAnalysisLLM) -> Item:
             # D-06: Claude proposes the label; verdicts.finalize guards 직접 사용 (D-11).
             claude_gpt=ClaudeGptUse(
                 verdict=analysis.claude_gpt, reason_ko=analysis.claude_gpt_reason_ko or None
+            ),
+            # HILT-01, D-11: Claude's Skill/GPTs fit; a bad reason was downgraded above.
+            skill_gpt=SkillGptFitInfo(
+                fit=analysis.skill_gpt_fit, reason_ko=analysis.skill_gpt_reason_ko or None
             ),
         )
     except ValidationError as e:

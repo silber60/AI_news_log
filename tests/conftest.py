@@ -22,6 +22,8 @@ from PIL import Image
 
 from newsletter.schema import (
     HeadlineLLM,
+    HighlightPickLLM,
+    HighlightsLLM,
     Issue,
     ItemAnalysisLLM,
     TrendLLM,
@@ -285,6 +287,7 @@ def _user_text(kw: dict) -> str:
 
 
 DEFAULT_CLAUDE_GPT_REASON = "대화에서 단계를 나눠 묻는 방식으로 따라 해 볼 수 있어요."
+DEFAULT_SKILL_GPT_REASON = "요약 규칙을 Skill로 정리해 두면 같은 형식으로 받을 수 있어요."
 
 
 def default_analysis(kw: dict) -> ItemAnalysisLLM:
@@ -303,6 +306,8 @@ def default_analysis(kw: dict) -> ItemAnalysisLLM:
         use_idea_ko="테스트 업무에 쓸 수 있어요.",
         claude_gpt="기법 적용 가능",
         claude_gpt_reason_ko=DEFAULT_CLAUDE_GPT_REASON,
+        skill_gpt_fit="Claude Skill",
+        skill_gpt_reason_ko=DEFAULT_SKILL_GPT_REASON,
     )
 
 
@@ -334,6 +339,22 @@ def default_notes(kw: dict) -> VerdictNotesLLM:
     )
 
 
+DEFAULT_HIGHLIGHT_WHY = "같은 형식의 정리를 매주 손으로 다시 하지 않아도 돼요."
+DEFAULT_HIGHLIGHT_HOW = "요약 규칙과 예시를 Skill 지시문에 넣어 두면 돼요."
+
+
+def default_highlights(kw: dict) -> HighlightsLLM:
+    """Picks for the first three `rank: N` lines in the user content, with one
+    해요체 sentence each (under 70 chars, no digits, no label words)."""
+    ranks = [int(r) for r in re.findall(r"^rank: (\d+)$", _user_text(kw), re.MULTILINE)]
+    return HighlightsLLM(
+        picks=[
+            HighlightPickLLM(rank=r, why_ko=DEFAULT_HIGHLIGHT_WHY, how_ko=DEFAULT_HIGHLIGHT_HOW)
+            for r in ranks[:3]
+        ]
+    )
+
+
 def default_response(kw: dict) -> SimpleNamespace:
     """Valid default for any request type, chosen by the request's output_format."""
     if kw.get("output_format") is HeadlineLLM:
@@ -342,6 +363,8 @@ def default_response(kw: dict) -> SimpleNamespace:
         return make_parsed(default_trend(kw))
     if kw.get("output_format") is VerdictNotesLLM:
         return make_parsed(default_notes(kw))
+    if kw.get("output_format") is HighlightsLLM:
+        return make_parsed(default_highlights(kw))
     return make_parsed(default_analysis(kw))
 
 
@@ -363,7 +386,8 @@ class FakeAnthropic:
       - a callable `f(kw) -> response`, called with the request kwargs.
     When the script is exhausted, calls return a valid default chosen by
     `output_format`: a headline (HeadlineLLM), a trend (TrendLLM), one note per
-    input rank (VerdictNotesLLM), or else an analysis.
+    input rank (VerdictNotesLLM), picks for the first three input ranks
+    (HighlightsLLM), or else an analysis.
     Every call is recorded in `calls` as `{"ns": "messages"|"beta", "kw": kw}`.
     """
 

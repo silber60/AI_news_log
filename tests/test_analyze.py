@@ -61,7 +61,7 @@ def test_refusal_is_retried_once_and_week_builds(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert len(fake.calls) == 14  # 11 analysis calls + notes + trend + headline
+    assert len(fake.calls) == 15  # 11 analysis calls + notes + trend + highlight + headline
     assert all(c["ns"] == "beta" for c in fake.calls)
     texts = fake.user_texts()
     assert "previous_output_problems" not in texts[2]
@@ -101,8 +101,8 @@ def test_bad_request_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend and headline; the downgrade covers all three.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 13
+    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
     for c in fake.calls[1:]:
         assert "fallbacks" not in c["kw"] and "betas" not in c["kw"]
     assert "previous_output_problems" not in fake.user_texts()[1]
@@ -113,8 +113,8 @@ def test_sdk_type_error_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend and headline; the downgrade covers all three.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 13
+    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
 
 
 def test_downgrade_is_per_client(hf_pages):
@@ -166,6 +166,8 @@ VALID = {
     "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있어요.",
     "claude_gpt": "기법 적용 가능",
     "claude_gpt_reason_ko": "긴 자료를 나눠 읽고 묻는 흐름을 대화에서 따라 할 수 있어요.",
+    "skill_gpt_fit": "GPTs",
+    "skill_gpt_reason_ko": "긴 자료를 읽는 순서를 지시문으로 정리해 둘 수 있어요.",
 }
 
 

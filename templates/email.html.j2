@@ -1,7 +1,8 @@
 {# template-version: 6 #}
 {#- Figma v2 email (Phase 1.1, D-01..D-05). Tables + inline CSS only, 640px.
-    One <tr data-section="..."> per section, in Figma order. Phase 2/3 sections
-    (trend, highlight, explainer) render only when their data exists (D-04).
+    One <tr data-section="..."> per section, in Figma order. The trend and explainer
+    sections render only when their data exists (D-04). The highlight section always
+    renders and shows a fallback line when there is no pick (D-01, HILT-03).
     The <style> block is moved inline by css_inline and then dropped.
     The font stack is also written on every text cell for clients that strip styles. -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
@@ -111,10 +112,14 @@ a { color: #FF6B00; text-decoration: none; }
 </td></tr>
 {%- endif %}
 
-{%- if issue.highlights %}
 <tr data-section="highlight"><td style="padding: 20px 32px 20px 32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color: #FFF6F0; border-radius: 12px; padding: 22px;">
 {{ title_row("이번 주 바로 써볼 만한 것 ✨", None, "otter-tool.png", 150, "공구를 든 해달", "#FF6B00") }}
+{%- if not issue.highlights %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">이번 주는 해당 항목 없음</td></tr>
+</table>
+{%- endif %}
 {%- for h in issue.highlights %}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding: 14px 0 0 0;">
@@ -128,7 +133,6 @@ a { color: #FF6B00; text-decoration: none; }
 {%- endfor %}
 </td></tr></table>
 </td></tr>
-{%- endif %}
 
 <tr data-section="top3"><td style="padding: 28px 32px 12px 32px;">
 {{ title_row("이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️", basis_note, "otter-magnifier.png", 150, "돋보기를 든 해달") }}

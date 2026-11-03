@@ -1,5 +1,5 @@
 """Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> notes -> trend
--> headline -> Issue -> render -> archive."""
+-> highlight -> headline -> Issue -> render -> archive."""
 
 import logging
 from datetime import datetime
@@ -11,6 +11,7 @@ from newsletter.stages import (
     enrich,
     fetch,
     headline,
+    highlight,
     notes,
     render,
     select,
@@ -76,6 +77,8 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
     # gets the fixed code reason, never a Claude one. Both calls are non-fatal.
     items = notes.write_notes(items, client)
     trend_ko = trend.write_trend(items, client)  # ANLY-05, D-07: None on failure
+    # HILT-02/03, D-02: 0-3 picks from the Skill/GPTs candidates; [] on failure.
+    highlights = highlight.write_highlights(items, client)
 
     issue = Issue(
         issue_id=issue_id,
@@ -86,6 +89,7 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         fetch_method=fetched.method,
         items=items,
         trend_ko=trend_ko,
+        highlights=highlights,
         headline_ko=headline.write_headline(items, client),
     )
     store.write_json(out / "issue.json", issue)
