@@ -1,6 +1,7 @@
 """Claude stage: retry-once, fallback downgrade, field checks (ANLY-01/03/06, D-15, D-19)."""
 
 import json
+from pathlib import Path
 
 import anthropic
 import httpx2
@@ -596,3 +597,30 @@ def test_empty_brackets_stripped_in_every_text_field(hf_pages):
     for f in analyze._TEXT_FIELDS:
         assert "()" not in getattr(result, f), f
         assert getattr(result, f) == VALID[f]
+
+
+# ------------------------------------------- committed W44 issue / D-11, D-12
+
+FIXTURE = Path(__file__).parent / "fixtures" / "issue_w44.json"
+
+
+def test_issue_w44_haeyo_regression():
+    """The reference issue every render test uses reads in 해요체 and keeps the limits."""
+    items = json.loads(FIXTURE.read_text(encoding="utf-8"))["items"]
+    assert items
+    for it in items:
+        rank = it["rank"]
+        assert not analyze.not_haeyo(it["summary_ko"]), rank
+        assert len(it["summary_ko"]) <= analyze.SUMMARY_LIMIT, rank
+        assert len(it["summary_lines_ko"]) == 3, rank
+        for line in it["summary_lines_ko"]:
+            assert not analyze.not_haeyo(line), (rank, line)
+            assert len(line) <= analyze.LINE_LIMIT, rank
+        assert it["use_idea_ko"].strip(), rank
+        assert not analyze.not_haeyo(it["use_idea_ko"]), rank
+        assert len(it["use_idea_ko"]) <= analyze.IDEA_LIMIT, rank
+        info = it["model_info"]
+        assert not analyze.bad_info_prose(info["kind_ko"]), rank
+        assert not analyze.bad_info_prose(info["architecture_ko"]), rank
+        assert len(info["kind_ko"]) <= analyze.KIND_LIMIT, rank
+        assert len(info["architecture_ko"]) <= analyze.ARCH_LIMIT, rank
