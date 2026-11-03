@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of 6 in current phase
-Status: Phase 1.1 complete. Phase 1.2 (GitHub-Star Selection & Friendly Content) inserted, context captured, ready to plan. Phase 1 01-06 live runs pending (SMTP secrets)
-Last activity: 2026-11-03 - Phase 1.1 closed; Phase 1.2 inserted
+Status: Phase 1.2 planned (5 plans, 3 waves; plan-check passed after 2 iterations). Phase 1 01-06 live runs pending (SMTP secrets)
+Last activity: 2026-11-03 - Phase 1.2 planned
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -76,5 +76,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 1.2 context gathered
+Stopped at: Phase 1.2 planned
 Resume file: .planning/phases/01.2-star-selection-friendly-content/01.2-CONTEXT.md

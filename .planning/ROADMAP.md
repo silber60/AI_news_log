@@ -69,7 +69,14 @@ Plans:
   3. Each article shows its own image at its position when one exists (HF media first, else the first image of its GitHub README), loaded from a public https URL with alt text, and the email stays under 90 KB
   4. 모델 정보 rows whose value would be `확인 필요` are omitted (the box disappears when all are unknown)
   5. All Claude text is friendly 해요체 like "…골랐어요!", explains what the model is for a non-specialist while keeping technical terms in English, and each article has a one-line 활용 아이디어
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01.2-01-PLAN.md — Issue v3 contract (owner checkpoint, github_stars + use_idea_ko) + tracer: HF githubStars ranking with the D-03 count rule into selected.json and the ★ card meta; broken tests rewritten (wave 1)
+- [ ] 01.2-02-PLAN.md — Render: no hero image, per-card image, 💡 idea in the summary cell, hidden 확인 필요 rows, N-aware greeting and titles, 90 KB worst case (wave 2)
+- [ ] 01.2-03-PLAN.md — Tone and idea: 해요체 prompt rules (humanizer fix), code sentence-ending check with one retry (non-fatal), use_idea_ko rules, empty-bracket strip, hook exempt, fixture in 해요체 (wave 2)
+- [ ] 01.2-04-PLAN.md — README images: raw.githubusercontent.com README fetch, candidate rules, no-redirect probe with 1 MB / ratio policy, mock_github, star Top 10 fixtures (wave 2)
+- [ ] 01.2-05-PLAN.md — Owner push + one live preview run, image check and log audit (no test/send; those stay in 01-06) (wave 3)
 
 ### Phase 2: Evidence & Practical Verdicts
 **Goal**: Readers can tell at a glance whether each model is usable in practice, with verdicts decided by code from real HF/GitHub evidence and explained by Claude.
@@ -128,7 +135,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. End-to-End Skeleton | 0/6 | Planned | - |
 | 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
-| 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 0/TBD | Not started | - |
+| 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 0/5 | Planned | - |
 | 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
