@@ -489,11 +489,11 @@ def github_license(client, owner, repo) -> dict:
 | A10 | httpx does not log headers | Pitfall 3 | Token leak; mitigate by silencing httpx INFO |
 | A11 | base_model family guard (`meta-llama`, `google/gemma`) | §1 | Over-conservative on a mislabeled fine-tune only |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Trend above or below highlight in Phase 3?** D-07 says under the greeting, while the Figma order puts it after highlight. Recommendation: move it above highlight now (D-07 is the newer locked decision).
-2. **Show `해당 없음` in the line?** It is a known verdict, so D-01 implies showing it. It adds about 40 B per card. Recommendation: show it.
-3. **Footer license disclaimer?** Owner choice, about 150 B.
+1. **Trend above or below highlight in Phase 3?** (RESOLVED: D-13, above) D-07 says under the greeting, while the Figma order puts it after highlight. Recommendation: move it above highlight now (D-07 is the newer locked decision).
+2. **Show `해당 없음` in the line?** (RESOLVED: D-11, hidden by owner) It is a known verdict, so D-01 implies showing it. It adds about 40 B per card. Recommendation: show it.
+3. **Footer license disclaimer?** (RESOLVED: D-12, included) Owner choice, about 150 B.
 
 ## Environment Availability
 

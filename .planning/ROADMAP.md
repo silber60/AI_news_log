@@ -90,7 +90,15 @@ Plans:
   3. Each item shows Claude/GPT 사용 가능 여부 (`직접 사용 / 기법 적용 가능 / 해당 없음 / 확인 필요`) with a one-sentence reason, and verdict reasons written by Claude from code-supplied evidence
   4. No positive verdict appears without an evidence URL, and the verdict rules pass a golden-set test of about 10 papers with known licenses
   5. The issue opens with a 2-3 sentence 이번 주 트렌드 총평 that mentions only this week's 10 items
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Tracer: code PoC verdict end to end (enrich → verdicts.py → finalize → card line), VRAM/GPU rule with guards, enforce_evidence property test, full one-line format + license link, D-12 footer disclaimer, trend under greeting, 90 KB worst case (wave 1)
+- [ ] 02-02-PLAN.md — licenses.py: GitHub /license call with GITHUB_TOKEN from github.token, SPDX table, weights side + gated, stricter-of rule, link host allowlist, golden + W44 GitHub captures, httpx logs at WARNING (wave 1)
+- [ ] 02-03-PLAN.md — Claude explanations: trend.py (name/rank/number checks, fallback None) and notes.py (batched reasons, grounding + polarity checks, fixed reason for 확인 필요), prompts, FakeAnthropic defaults (wave 1)
+- [ ] 02-04-PLAN.md — Wire 상업적 사용 into enrich (code + weights licenses), conftest GitHub API route, hf_models_w44 recapture, enriched.json, 15-case golden test (wave 2)
+- [ ] 02-05-PLAN.md — Claude/GPT label + reason in the analyze call with code guard, prompt v5, notes + trend wired into run_build, call counts 13/14 (wave 3)
+- [ ] 02-06-PLAN.md — Owner push + live preview run, coverage and log audit, owner review, optional test send (no mode=send) (wave 4)
 
 ### Phase 3: Humanizer, Highlight & Explainer
 **Goal**: Every Claude-written sentence reads like a person wrote it, readers see up to 3 items worth turning into a Claude Skill or GPTs right away, and each issue explains one AI technique in plain language.
@@ -115,6 +123,7 @@ Plans:
   2. The email built from that design renders correctly in Naver Mail and Gmail (web and mobile app, light and dark), confirmed by real test sends
   3. The footer shows sender info and an unsubscribe line, and each message carries a `List-Unsubscribe: <mailto:>` header
   4. Clicking "웹에서 보기" opens a de-personalized copy of the issue on GitHub Pages, and an archive index lists past issues
+  5. The web issue shows what the email leaves out (Phase 2 D-02): each verdict's `reason_ko`, the Claude/GPT reason, and the code and weights licenses listed separately, with their evidence links
 **Plans**: TBD
 **UI hint**: yes
 
@@ -150,7 +159,7 @@ Plans:
 | 1. End-to-End Skeleton | 6/6 | Complete | 2026-11-03 |
 | 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 5/5 | Complete | 2026-11-03 |
-| 2. Evidence & Practical Verdicts | 0/TBD | Not started | - |
+| 2. Evidence & Practical Verdicts | 0/6 | Planned | - |
 | 3. Humanizer, Highlight & Explainer | 0/TBD | Not started | - |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
 | 4.1. Public Subscribe & Instant Welcome Issue (INSERTED) | 0/TBD | Not started | - |

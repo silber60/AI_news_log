@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 Phase: 2 of 5 (Evidence & Practical Verdicts); Phases 1, 1.1, 1.2 complete
 Plan: 0 of TBD in current phase
-Status: Phase 2 context gathered, ready to plan
-Last activity: 2026-11-03 - Phases 1 and 1.2 closed after live test/send/failure runs
+Status: Phase 2 planned (6 plans, 4 waves; plan-check passed after 2 iterations)
+Last activity: 2026-11-03 - Phase 2 planned
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -80,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-11-02
-Stopped at: Phase 2 context gathered
+Stopped at: Phase 2 planned
 Resume file: .planning/phases/02-evidence-practical-verdicts/02-CONTEXT.md
