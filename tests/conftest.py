@@ -46,7 +46,9 @@ def mock_hf_week(
 
     Every run_build test goes through here, so later plans add their HF routes
     in one place. The enrich routes (`mock_enrich`, including the
-    raw.githubusercontent.com route from `mock_github`) are registered too;
+    raw.githubusercontent.com route from `mock_github` and the api.github.com
+    license route from `mock_github_api`, which every W44 star build calls) are
+    registered too;
     `enrich_fail=True` makes them all answer 500. The HF CDN route is not
     registered: the W44 star Top 10 has no HF image in the page capture (only
     .mp4 files), and an unused route would trip `assert_all_called`. Tests that
@@ -156,6 +158,30 @@ def mock_arxiv(
     return router.get(url__regex=r"^https://arxiv\.org/html/").mock(side_effect=side)
 
 
+def mock_github_api(
+    router: respx.MockRouter, licenses: dict | None = None, *, fail: bool = False
+) -> respx.Route:
+    """Register one route for https://api.github.com/repos/{owner}/{repo}/license
+    backed by github_license_w44.json.
+
+    Each entry is `{"status_code": int, "body": dict}`. An unknown repo gets 404.
+    `licenses` overrides the fixture map, and `fail=True` answers 500.
+    """
+    data = _load_fixture("github_license_w44.json") if licenses is None else licenses
+
+    def side(request: httpx.Request) -> httpx.Response:
+        if fail:
+            return httpx.Response(500)
+        parts = request.url.path.strip("/").split("/")
+        if len(parts) == 4 and parts[0] == "repos" and parts[3] == "license":
+            entry = data.get("/".join(parts[1:3]))
+            if entry is not None:
+                return httpx.Response(entry["status_code"], json=entry["body"])
+        return httpx.Response(404, json={"message": "Not Found"})
+
+    return router.get(url__regex=r"^https://api\.github\.com/repos/").mock(side_effect=side)
+
+
 def mock_enrich(
     router: respx.MockRouter,
     *,
@@ -168,13 +194,15 @@ def mock_enrich(
     readme_images: dict | None = None,
     arxiv_pages: dict | None = None,
     arxiv_images: dict | None = None,
+    github_licenses: dict | None = None,
 ) -> dict[str, respx.Route]:
     """Register the enrich routes (HF paper / model APIs, HF upload CDN,
-    raw.githubusercontent.com via `mock_github`) backed by the W44 captures.
+    raw.githubusercontent.com via `mock_github`, the GitHub license API via
+    `mock_github_api` as routes["github_api"]) backed by the W44 captures.
 
     Unknown ids get 404. `fail=True` answers 500 everywhere. `papers` / `models`
     override the fixture dicts for single-case tests, `readmes` / `readme_images`
-    the README fixture maps. CDN requests get a 1152x468 PNG as a 206 partial
+    the README fixture maps, `github_licenses` the GitHub license map. CDN requests get a 1152x468 PNG as a 206 partial
     response with its content-range total unless `image` gives another response.
     `cdn=False` skips the CDN route.
     """
@@ -210,6 +238,7 @@ def mock_enrich(
         ),
     }
     routes["github"] = mock_github(router, readmes, readme_images, fail=fail)
+    routes["github_api"] = mock_github_api(router, github_licenses, fail=fail)
     routes["arxiv"] = mock_arxiv(router, arxiv_pages, arxiv_images, fail=fail)
     if cdn:
         routes["cdn"] = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
@@ -397,6 +426,12 @@ class FakeSMTP:
 
 
 # ------------------------------------------------------------------- fixtures
+
+
+@pytest.fixture(autouse=True)
+def no_github_token(monkeypatch):
+    """T-02-16: a token in the local shell must never reach a test request."""
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
 
 
 @pytest.fixture

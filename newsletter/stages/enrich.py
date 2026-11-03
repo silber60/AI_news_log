@@ -3,7 +3,8 @@
 Claude never writes 크기 / 학습 데이터 / 공개 범위. This stage reads them from HF
 and leaves `UNKNOWN` ("확인 필요") when HF does not say. Absence is never written
 as a negative fact: `poc.has_*` is only ever set to True and
-`hardware.param_count` only to a positive int. Verdicts are not touched (Phase 2).
+`hardware.param_count` only to a positive int. PoC, GPU and 상업적 사용 verdicts
+come from verdicts.py and licenses.py on the paper-fetch success path only.
 
 Enrichment is non-fatal. Any HTTP or parse problem keeps the defaults for that
 item and logs a reason code. Logs carry ranks and codes only, never ids,
@@ -36,12 +37,15 @@ from newsletter.schema import (
     IMAGE_URL_MAX,
     RAW_IMAGE_HOST,
     UNKNOWN,
+    CommercialUse,
+    CommercialVerdict,
     EvidenceLink,
     HfEntry,
     Item,
     ItemImage,
+    LicenseInfo,
 )
-from newsletter.stages import verdicts
+from newsletter.stages import licenses, verdicts
 
 log = logging.getLogger(__name__)
 
@@ -258,6 +262,48 @@ def _reason(e: Exception) -> str:
     return type(e).__name__
 
 
+def _code_side(client: httpx.Client, item: Item) -> tuple[LicenseInfo, CommercialVerdict] | None:
+    """D-09: the code side exists when the item has a repo URL."""
+    if not item.github_url:
+        return None
+    repo = parse_repo(item.github_url)
+    if repo is None:
+        log.info("license=bad_repo rank=%d", item.rank)
+        return LicenseInfo(), UNKNOWN
+    record = licenses.github_license(client, *repo)
+    log.info("license=%s rank=%d", record["status"], item.rank)
+    return licenses.code_license(record)
+
+
+def _weights_side(
+    f: dict[str, Any], model: dict | None, model_id: str | None
+) -> tuple[LicenseInfo, CommercialVerdict] | None:
+    """D-09: the weights side exists when the paper links public weights.
+
+    A model JSON that could not be read gives 확인 필요, never a guess.
+    """
+    if not f["has_weights"]:
+        return None
+    if model is None or model_id is None:
+        return LicenseInfo(), UNKNOWN
+    return licenses.weights_license(model, model_id)
+
+
+def _commercial(
+    client: httpx.Client,
+    item: Item,
+    f: dict[str, Any],
+    model: dict | None,
+    model_id: str | None,
+) -> CommercialUse:
+    """D-03: stricter of the code and weights licenses. Never raises."""
+    try:
+        return licenses.commercial_use(_code_side(client, item), _weights_side(f, model, model_id))
+    except _NON_FATAL as e:
+        log.info("license=error rank=%d reason=%s", item.rank, _reason(e))
+        return item.commercial
+
+
 def _enrich_one(client: httpx.Client, item: Item) -> Item:
     rank = item.rank
     if not PAPER_ID_RE.fullmatch(item.paper_id):
@@ -290,6 +336,7 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
     except _NON_FATAL as e:
         log.info("enrich=partial rank=%d reason=%s", rank, _reason(e))
         return item
+    out = out.model_copy(update={"commercial": _commercial(client, item, f, model, model_id)})
     if reason:
         log.info("enrich=partial rank=%d reason=%s", rank, reason)
     else:

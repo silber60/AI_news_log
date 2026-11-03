@@ -8,7 +8,7 @@ import pytest
 import respx
 from conftest import FakeAnthropic, image_bytes, mock_enrich, mock_hf_week, partial
 
-from newsletter.schema import UNKNOWN, HfEntry, Item, ModelInfo
+from newsletter.schema import UNKNOWN, HfEntry, Item, LicenseInfo, ModelInfo
 from newsletter.stages import enrich
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -48,8 +48,8 @@ def _run(items, entries, **mock_kw) -> tuple[list[Item], dict]:
     return out, routes
 
 
-def _one(item: Item, paper: dict, models: dict | None = None) -> tuple[Item, dict]:
-    out, routes = _run([item], [], papers={item.paper_id: paper}, models=models or {})
+def _one(item: Item, paper: dict, models: dict | None = None, **mock_kw) -> tuple[Item, dict]:
+    out, routes = _run([item], [], papers={item.paper_id: paper}, models=models or {}, **mock_kw)
     return out[0], routes
 
 
@@ -107,6 +107,21 @@ W44_POC = [
 ]
 
 
+# D-03, D-09 on the upvote Top 10, from github_license_w44.json and hf_models_w44.json.
+W44_COMMERCIAL = [
+    "확인 필요",  # 1 no repo, no model: neither side exists
+    "확인 필요",  # 2 justin4ai/OmniShowcase: GitHub 404 (no license file)
+    "가능",  # 3 JusperLee/Falcon: Apache-2.0 code + apache-2.0 weights
+    "확인 필요",  # 4 Hy-Nomas: code NOASSERTION
+    "확인 필요",  # 5 awesome-working-agent: 404
+    "확인 필요",  # 6 LOWN: 404
+    "확인 필요",  # 7 no repo, no model
+    "확인 필요",
+    "확인 필요",
+    "확인 필요",  # 10 ChronoReplay: 404
+]
+
+
 def test_w44_coverage_and_code_poc(items, hf_pages):
     out, _ = _run(items, _entries(hf_pages, items))
     assert sum(it.model_info.size != UNKNOWN for it in out) == 0
@@ -116,8 +131,14 @@ def test_w44_coverage_and_code_poc(items, hf_pages):
     assert out[0].paper_id == "2610.37381"
     assert [e.url for e in out[0].poc.evidence] == [out[0].hf_url]
     assert [e.label for e in out[2].poc.evidence] == ["HF 데모"]
+    assert [it.commercial.verdict for it in out] == W44_COMMERCIAL
+    r3 = out[2].commercial
+    assert (r3.code_license.spdx_id, r3.weights_license.spdx_id) == ("Apache-2.0", "apache-2.0")
+    assert [e.label for e in r3.evidence] == ["가중치 라이선스", "코드 라이선스"]
+    assert out[0].commercial == items[0].commercial  # no side at all
+    assert out[1].commercial.code_license == LicenseInfo()
+    assert out[1].commercial.weights_license is None
     for before, after in zip(items, out, strict=True):
-        assert after.commercial == before.commercial
         assert after.hardware.local_run == "확인 필요"
         assert after.claude_gpt == before.claude_gpt
         assert after.model_info.kind_ko == before.model_info.kind_ko
@@ -263,6 +284,120 @@ def test_logs_carry_no_ids_or_dataset_names(items, hf_pages, caplog):
     text = caplog.text
     assert "enrich=ok rank=3" in text
     for needle in ("JusperLee", "Falcon", "RealSSA", "tencent", "Hy-Nomas", "2610."):
+        assert needle not in text
+
+
+# ------------------------------------------------------------ GitHub license
+
+REPO = "https://github.com/o/r"
+APACHE = {
+    "status_code": 200,
+    "body": {
+        "license": {"key": "apache-2.0", "name": "Apache License 2.0", "spdx_id": "Apache-2.0"},
+        "html_url": "https://github.com/o/r/blob/main/LICENSE",
+    },
+}
+NOASSERTION = {
+    "status_code": 200,
+    "body": {
+        "license": {"key": "other", "name": "Other", "spdx_id": "NOASSERTION"},
+        "html_url": "https://github.com/o/r/blob/main/LICENSE",
+    },
+}
+
+
+def _code_item(items) -> Item:
+    return items[0].model_copy(update={"github_url": REPO})
+
+
+@pytest.mark.parametrize(
+    ("entry", "verdict", "status"),
+    [
+        (APACHE, "가능", "ok"),
+        (NOASSERTION, UNKNOWN, "ok"),
+        ({"status_code": 404, "body": {}}, UNKNOWN, "none"),
+        ({"status_code": 403, "body": {"message": "rate limit"}}, UNKNOWN, "http_403"),
+        ({"status_code": 500, "body": {}}, UNKNOWN, "http_500"),
+        ({"status_code": 301, "body": {}}, UNKNOWN, "http_301"),
+    ],
+)
+def test_github_license_outcomes_are_non_fatal(items, caplog, entry, verdict, status):
+    paper = _paper(githubRepo=REPO)
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _one(_code_item(items), paper, github_licenses={"o/r": entry})
+    assert routes["github_api"].call_count == 1
+    assert out.commercial.verdict == verdict
+    assert out.commercial.weights_license is None
+    assert out.poc.verdict == "코드만"  # the rest of enrich still ran
+    assert f"license={status} rank=1" in caplog.text
+    if verdict == "가능":
+        assert [e.url for e in out.commercial.evidence] == [
+            "https://github.com/o/r/blob/main/LICENSE"
+        ]
+        assert out.commercial.code_license.spdx_id == "Apache-2.0"
+    elif entry is NOASSERTION:
+        # The file exists, so it stays as evidence for a human to read.
+        assert out.commercial.code_license.spdx_id is None
+        assert [e.label for e in out.commercial.evidence] == ["코드 라이선스"]
+    else:
+        assert out.commercial.evidence == []
+
+
+def test_github_transport_error_is_non_fatal(items, caplog):
+    paper = _paper(githubRepo=REPO)
+    with respx.mock(assert_all_mocked=True, assert_all_called=False) as router:
+        # Registered first, so it wins over mock_enrich's github_api route.
+        api = router.get(url__regex=r"^https://api\.github\.com/").mock(
+            side_effect=httpx.ConnectError("boom")
+        )
+        mock_enrich(router, papers={items[0].paper_id: paper}, models={})
+        with caplog.at_level("INFO", logger="newsletter"):
+            out = enrich.enrich_items([_code_item(items)], [])[0]
+    assert api.call_count == 1
+    assert out.commercial.verdict == UNKNOWN
+    assert out.poc.verdict == "코드만"
+    assert "license=error_ConnectError rank=1" in caplog.text
+
+
+def test_bad_repo_url_gives_unknown_code_side_without_request(items, caplog):
+    item = items[0].model_copy(update={"github_url": "https://github.com/o/r/tree/x"})
+    with caplog.at_level("INFO", logger="newsletter"):
+        out, routes = _one(item, _paper(githubRepo=item.github_url))
+    assert routes["github_api"].call_count == 0
+    assert out.commercial.verdict == UNKNOWN
+    assert out.commercial.code_license == LicenseInfo()
+    assert "license=bad_repo rank=1" in caplog.text
+
+
+def test_weights_side_from_model_and_failed_model_fetch(items):
+    paper = _paper(**_model("org/m"), githubRepo=REPO)
+    model = {"id": "org/m", "cardData": {"license": "cc-by-nc-4.0"}, "tags": []}
+    out, _ = _one(_code_item(items), paper, {"org/m": model}, github_licenses={"o/r": APACHE})
+    # 불가 on the weights dominates the Apache code side.
+    assert out.commercial.verdict == "불가"
+    assert out.commercial.weights_license.spdx_id == "cc-by-nc-4.0"
+    assert out.commercial.evidence[0].url == "https://huggingface.co/org/m"
+    out, _ = _one(_code_item(items), paper, {}, github_licenses={"o/r": APACHE})
+    # The weights exist but the model JSON could not be read: 확인 필요.
+    assert out.commercial.verdict == UNKNOWN
+    assert out.commercial.weights_license == LicenseInfo()
+    assert out.commercial.code_license.spdx_id == "Apache-2.0"
+
+
+def test_failed_paper_fetch_keeps_commercial_default(items):
+    item = _code_item(items)
+    out, routes = _run([item], [], fail=True)
+    assert routes["github_api"].call_count == 0
+    assert out[0].commercial == item.commercial
+
+
+def test_license_logs_carry_no_repo_ids(items, hf_pages, caplog):
+    # httpx's own request line is quieted in __main__ (02-02); only ours is checked.
+    with caplog.at_level("DEBUG", logger="newsletter"):
+        _run(items, _entries(hf_pages, items))
+    text = caplog.text
+    assert "license=" in text
+    for needle in ("OmniShowcase", "justin4ai", "Hy-Nomas", "JusperLee", "api.github.com"):
         assert needle not in text
 
 

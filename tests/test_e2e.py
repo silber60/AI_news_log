@@ -25,6 +25,8 @@ STAR_TOP10 = [
     "2610.33005",
     "2610.33845",
 ]
+# D-03, D-09: stricter of the GitHub code license and the HF weights license.
+STAR_COMMERCIAL = ["가능", "가능", "확인 필요", "가능", "조건부"] + ["가능"] * 5
 STAR_POC = ["코드만", "바로 가능", "바로 가능", "코드만", "바로 가능"] + ["코드만"] * 5
 WEEK_FILES = ("raw.json", "selected.json", "issue.json", "email.html", "email.txt")
 
@@ -66,8 +68,13 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert stored.trend_ko is None
     # EVID-03: PoC decided by code from the HF paper capture.
     assert [it.poc.verdict for it in stored.items] == STAR_POC
+    assert [it.commercial.verdict for it in stored.items] == STAR_COMMERCIAL
+    # Both sides are stored separately (EVID-02).
+    c1, c3, c5 = (stored.items[i].commercial for i in (0, 2, 4))
+    assert (c1.code_license.spdx_id, c1.weights_license) == ("Apache-2.0", None)
+    assert c3.code_license.spdx_id is None and c3.weights_license.spdx_id == "apache-2.0"
+    assert (c5.code_license.spdx_id, c5.weights_license.spdx_id) == ("Apache-2.0", "gemma")
     for it in stored.items:
-        assert it.commercial.verdict == "확인 필요"
         assert it.poc.evidence
         assert it.claude_gpt.verdict == "확인 필요"
         assert len(it.summary_lines_ko) == 3
@@ -131,6 +138,11 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert "IBM Plex Sans KR" in html
     cards = html.split("data-card=")[1:]
     assert "🧪 코드만 공개됐어요" in cards[0]
+    assert "💼 코드 상업 이용 가능" in cards[0]
+    assert 'href="https://github.com/InternLM/xtuner/blob/main/LICENSE"' in cards[0]
+    assert "💼 상업 이용 가능" in cards[1]
+    assert "💼" not in cards[2]
+    assert "💼 조건부 상업 이용" in cards[4]
     assert "🧪 바로 써볼 수 있어요" in cards[1]
     assert "🖥️ 개인 GPU 약 1GB" in cards[4]
     assert sum("🖥️" in c for c in cards) == 1
