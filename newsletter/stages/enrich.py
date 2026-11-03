@@ -41,6 +41,7 @@ from newsletter.schema import (
     Item,
     ItemImage,
 )
+from newsletter.stages import verdicts
 
 log = logging.getLogger(__name__)
 
@@ -191,8 +192,8 @@ def facts(paper: dict, model: dict | None) -> dict[str, Any]:
     has_demo = bool(spaces)
 
     parts = []
+    gated = has_weights and any(m.get("gated") not in (False, None) for m in models)
     if has_weights:
-        gated = any(m.get("gated") not in (False, None) for m in models)
         parts.append("가중치(승인 필요)" if gated else "가중치")
     if has_code:
         parts.append("GitHub")
@@ -221,6 +222,8 @@ def facts(paper: dict, model: dict | None) -> dict[str, Any]:
         "has_code": has_code,
         "has_demo": has_demo,
         "spaces": spaces,
+        "gated": gated,
+        "model_id": primary_model(paper),
     }
 
 
@@ -280,7 +283,9 @@ def _enrich_one(client: httpx.Client, item: Item) -> Item:
         except _NON_FATAL as e:
             reason = _reason(e)
     try:
-        out = _apply(item, facts(paper, model), model_id)
+        f = facts(paper, model)
+        out = _apply(item, f, model_id)
+        out = out.model_copy(update={"poc": verdicts.poc(out, f)})
     except _NON_FATAL as e:
         log.info("enrich=partial rank=%d reason=%s", rank, _reason(e))
         return item

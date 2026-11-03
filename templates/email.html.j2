@@ -1,4 +1,4 @@
-{# template-version: 5 #}
+{# template-version: 6 #}
 {#- Figma v2 email (Phase 1.1, D-01..D-05). Tables + inline CSS only, 640px.
     One <tr data-section="..."> per section, in Figma order. Phase 3 sections
     (highlight, trend, explainer) render only when their data exists (D-04).
@@ -31,7 +31,7 @@
 </td></tr></table>
 {%- endmacro -%}
 
-{#- Figma card (node 7:2): image, meta, titles, summary, 3 lines + 💡 idea, 모델 정보, badges, links.
+{#- Figma card (node 7:2): image, meta, titles, summary, 3 lines + 💡 idea, 모델 정보, verdict line (D-01), links.
     v1.2 (D-07, D-08): no hero image; every card shows its own image, card 1 included. #}
 {%- macro card(it) -%}
 <tr><td style="padding: 0 0 24px 0;">
@@ -55,8 +55,9 @@
 </table>
 </td></tr>
 {%- endif %}
-{%- if it.commercial.verdict != "확인 필요" or it.poc.verdict != "확인 필요" or it.claude_gpt.verdict != "확인 필요" %}
-<tr><td style="{{ ff }} padding: 14px 0 4px 0; font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill("상업적 사용 " ~ it.commercial.verdict, "#F0F0F0", "#666666") }} {{ pill("PoC " ~ it.poc.verdict, "#E8F5E9", "#2E7D32") }} {{ pill("Claude/GPT " ~ it.claude_gpt.verdict, "#EDF6FF", "#303A83") }}</td></tr>
+{%- set vl = verdict_lines[it.rank] %}
+{%- if vl %}
+<tr><td style="{{ ff }} padding: 12px 0 0 0; font-size: 13px; line-height: 170%; color: #555555;">{{ vl|join(" · ") }}</td></tr>
 {%- endif %}
 <tr><td style="{{ ff }} padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
 </table>

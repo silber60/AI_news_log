@@ -13,6 +13,7 @@ from markupsafe import Markup
 
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, Issue, Item
+from newsletter.stages.verdicts import POC_GATED_LABEL
 from newsletter.store import TEMPLATES_DIR
 
 BRAND = "AI 주간 해달 브리프"
@@ -78,6 +79,28 @@ def _info_rows(it: Item) -> list[tuple[str, str]]:
     return [(label, value) for label, value in rows if value != UNKNOWN]
 
 
+# D-01, D-05: fixed code phrases for the one-line verdict row; never Claude text.
+POC_PHRASES = {
+    "바로 가능": "🧪 바로 써볼 수 있어요",
+    "코드만": "🧪 코드만 공개됐어요",
+    "논문만": "🧪 아직 논문만 있어요",
+}
+POC_GATED_PHRASE = "🧪 승인 받고 써볼 수 있어요"
+
+
+def _poc_phrase(it: Item) -> str | None:
+    p = it.poc
+    if p.verdict == "바로 가능" and p.evidence and p.evidence[0].label == POC_GATED_LABEL:
+        return POC_GATED_PHRASE
+    return POC_PHRASES.get(p.verdict)
+
+
+def verdict_line(it: Item) -> list[str]:
+    """D-01: known verdicts only, in display order; 확인 필요 is omitted."""
+    phrases = [_poc_phrase(it)]
+    return [p for p in phrases if p]
+
+
 def rest_title(n: int) -> str | None:
     """D-04, D-21: the rest section names the real last rank; none when N <= 3."""
     if n <= 3:
@@ -110,6 +133,7 @@ def _context(issue: Issue, greeting: str) -> dict:
         "rest_title": rest_title(len(issue.items)),
         "basis_note": basis_note(issue),
         "info_rows": {it.rank: _info_rows(it) for it in issue.items},
+        "verdict_lines": {it.rank: verdict_line(it) for it in issue.items},
     }
 
 

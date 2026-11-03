@@ -405,23 +405,29 @@ def test_card_without_image_has_no_img(issue_w44):
             assert "<img" not in card, it.rank
 
 
-def test_badge_row_hidden_while_all_verdicts_unknown(issue_w44):
+def test_no_verdict_line_while_all_verdicts_unknown(issue_w44):
     out = render_html(issue_w44, "구독자님")
     for word in ("상업적 사용", "PoC", "Claude/GPT"):
         assert word not in out
+    for card in _cards(out):
+        for word in ("💼", "🧪", "🖥️", "🤖"):
+            assert word not in card
+    assert "🧪" not in render_text(issue_w44, "구독자님")
 
 
-def test_badge_row_shows_when_only_poc_known(issue_w44):
+def test_verdict_line_shows_only_poc_when_only_poc_known(issue_w44):
     it = issue_w44.items[4]
     issue = _with_item(issue_w44, 4, poc=it.poc.model_copy(update={"verdict": "바로 가능"}))
     cards = _cards(render_html(issue, "구독자님"))
-    assert "상업적 사용 확인 필요" in cards[4]
-    assert "PoC 바로 가능" in cards[4]
-    assert "Claude/GPT 확인 필요" in cards[4]
-    assert _ordered(cards[4], ["🧩 모델 정보", "PoC 바로 가능", "논문 보기 →"])
+    assert ">🧪 바로 써볼 수 있어요<" in cards[4]
+    for word in ("💼", "🖥️", "🤖", "확인 필요", "PoC"):
+        assert word not in cards[4]
+    assert _ordered(cards[4], ["🧩 모델 정보", "🧪 바로 써볼 수 있어요", "논문 보기 →"])
     for i, card in enumerate(cards):
         if i != 4:
-            assert "PoC" not in card
+            assert "🧪" not in card
+    txt = render_text(issue, "구독자님")
+    assert "\n🧪 바로 써볼 수 있어요\n" in txt
 
 
 def test_highlight_pick_content(issue_w44):
