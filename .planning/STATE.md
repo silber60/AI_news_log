@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 Phase: 1 of 5 (End-to-End Skeleton)
 Plan: 0 of 6 in current phase
 Status: Phase 1.2 planned (5 plans, 3 waves; plan-check passed after 2 iterations). Phase 1 01-06 live runs pending (SMTP secrets)
-Last activity: 2026-11-03 - Phase 1.2 planned
+Last activity: 2026-11-03 - Phase 2 context gathered (Phase 1.2 awaiting final live preview)
 
 Progress: [░░░░░░░░░░] 0%
 
