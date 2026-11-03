@@ -72,12 +72,34 @@ def test_tone_rule_is_haeyo_in_both_prompts():
     assert "영어 그대로" in paper
 
 
-def test_system_names_v2_fields_and_drops_ideas(hf_pages):
+def test_system_names_v3_fields_and_one_idea(hf_pages):
     text = _call(hf_pages)["system"][0]["text"]
-    for field in ("does_ko", "new_ko", "result_ko", "kind_ko", "architecture_ko", "확인 필요"):
+    for field in (
+        "does_ko",
+        "new_ko",
+        "result_ko",
+        "kind_ko",
+        "architecture_ko",
+        "use_idea_ko",
+        "확인 필요",
+    ):
         assert field in text, field
+    # D-13: exactly one idea line, never the old two-idea list
     assert "use_ideas" not in text
-    assert "활용 아이디어" not in text
+    assert "### `use_idea_ko`" in text
+    assert "아홉 필드" in text and "여덟 필드" not in text
+    for two in ("두 개", "2개", "두 가지", "0..2"):
+        assert two not in text, two
+    # T-01.2-07: facts stay code-owned
+    section = text.split("### `use_idea_ko`")[1]
+    for word in ("라이선스", "무료", "50자"):
+        assert word in section, word
+
+
+def test_empty_brackets_are_stripped_from_paper_input():
+    assert analyze.strip_urls("Code at (https://github.com/x/y) here.") == "Code at here."
+    assert analyze.strip_urls("demo [http://a.b/c] and （ ） end") == "demo and end"
+    assert analyze.strip_urls("keep (RAG) here") == "keep (RAG) here"
 
 
 def test_user_block_is_fenced_and_url_free(hf_pages):

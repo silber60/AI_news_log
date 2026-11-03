@@ -526,3 +526,73 @@ def test_tone_plus_empty_title_fails(hf_pages):
     with pytest.raises(AnalysisInvalid) as exc:
         analyze.analyze_one(fake, _entry(hf_pages), rank=2)
     assert "tone" in str(exc.value) and "title_empty" in str(exc.value)
+
+
+# ------------------------------------------- use_idea_ko / D-13, brackets / D-14
+
+LONG_IDEA = "공장 로봇에게 말로 작업을 시키고 결과를 확인하는 데 쓸 수 있어요. " * 2
+
+
+def test_idea_limit_and_codes():
+    assert analyze.IDEA_LIMIT == 50
+    assert analyze.check(_analysis(use_idea_ko="가" * 49 + "요")) == []
+    assert [c for c, _ in analyze.check(_analysis(use_idea_ko="가" * 50 + "요"))] == ["idea_len"]
+    assert [c for c, _ in analyze.check(_analysis(use_idea_ko="  "))] == ["idea_empty"]
+
+
+def test_idea_overrun_is_retried_then_trimmed(hf_pages, caplog):
+    fake = FakeAnthropic([_parsed(use_idea_ko=LONG_IDEA), _parsed(use_idea_ko=LONG_IDEA)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert len(fake.calls) == 2
+    assert "use_idea_ko" in fake.user_texts()[1]
+    assert len(result.use_idea_ko) <= 50 and result.use_idea_ko.endswith("…")
+    assert "trimmed=use_idea_ko rank=2" in caplog.text
+    assert "tone=unfixed" not in caplog.text
+
+
+def test_idea_overrun_then_fixed_uses_second(hf_pages):
+    fake = FakeAnthropic([_parsed(use_idea_ko=LONG_IDEA), _parsed()])
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 2
+    assert result.use_idea_ko == VALID["use_idea_ko"]
+
+
+def test_empty_idea_twice_fails(hf_pages):
+    fake = FakeAnthropic([_parsed(use_idea_ko=""), _parsed(use_idea_ko=" ")])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=4)
+    assert "idea_empty" in str(exc.value)
+
+
+def test_idea_is_copied_to_item(hf_pages):
+    entry = _entry(hf_pages)
+    item = analyze.to_item(1, entry, _analysis())
+    assert item.use_idea_ko == VALID["use_idea_ko"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "clean"),
+    [
+        ("Transformer 기반 행동 조건화 ()", "Transformer 기반 행동 조건화"),
+        ("로봇 모델 ( ) 이에요.", "로봇 모델 이에요."),
+        ("행동 조건화 （）", "행동 조건화"),
+        ("VLA [ ] 모델", "VLA 모델"),
+        ("MoE (8 experts) 구조", "MoE (8 experts) 구조"),
+    ],
+)
+def test_empty_brackets_are_stripped(raw, clean):
+    a = analyze.normalize(_analysis(architecture_ko=raw, title_ko=raw, use_idea_ko=raw))
+    assert a.architecture_ko == clean
+    assert a.title_ko == clean
+    assert a.use_idea_ko == clean
+
+
+def test_empty_brackets_stripped_in_every_text_field(hf_pages):
+    over = {f: getattr(_analysis(), f) + " ()" for f in analyze._TEXT_FIELDS}
+    fake = FakeAnthropic([_parsed(**over)])
+    result = analyze.analyze_one(fake, _entry(hf_pages), rank=1)
+    assert len(fake.calls) == 1
+    for f in analyze._TEXT_FIELDS:
+        assert "()" not in getattr(result, f), f
+        assert getattr(result, f) == VALID[f]

@@ -81,7 +81,31 @@ def test_input_urls_and_fence_tags_are_stripped(items):
 
 def test_prompt_version_line():
     first = (PROMPTS_DIR / "headline.md").read_text(encoding="utf-8").splitlines()[0]
-    assert first == "<!-- prompt-version: 1 -->"
+    assert first == "<!-- prompt-version: 2 -->"
+
+
+def test_hook_keeps_headline_style_rule():
+    """D-16: the hook is a headline, not a 해요체 sentence."""
+    own = (PROMPTS_DIR / "headline.md").read_text(encoding="utf-8")
+    hook_section = own.split("## `hook_ko`")[1].split("## `emoji`")[0]
+    assert "해요체" in hook_section
+
+
+def test_three_item_issue_headline_counts_three(items):
+    """D-05: '{emoji} {hook} 이번 주 AI 모델 {N}' with N = len(items)."""
+    three = items[:3]
+    assert headline.write_headline(three, FakeAnthropic([hl(GOOD)])) == (
+        f"🎬 {GOOD} 이번 주 AI 모델 3"
+    )
+    assert headline.fallback_headline(three).endswith(" 이번 주 AI 모델 3")
+
+
+def test_hada_hook_is_exempt_from_tone_check(items):
+    hook = "말을 알아듣고 로봇이 움직인다?"
+    assert headline.check_hook(hook, "") == []
+    fake = FakeAnthropic([hl(hook, emoji="🤖")])
+    assert headline.write_headline(items, fake) == f"🤖 {hook} 이번 주 AI 모델 10"
+    assert len(fake.calls) == 1
 
 
 # -------------------------------------------------------------------- checks
