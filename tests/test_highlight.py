@@ -11,7 +11,7 @@ from conftest import (
 )
 
 from newsletter.schema import HighlightPickLLM, HighlightsLLM, Issue, SkillGptFitInfo
-from newsletter.stages import analyze, highlight
+from newsletter.stages import analyze, headline, highlight
 from newsletter.store import PROMPTS_DIR
 
 
@@ -89,15 +89,17 @@ def test_no_candidate_makes_no_call(issue_w44):
 
 
 def test_rank_outside_candidates_and_duplicates_are_dropped(issue_w44):
-    fake = FakeAnthropic([_picks(4, 2, 2, 11, 5)])
+    fake = FakeAnthropic([_picks(4, 2, 2, 11, 5)] * 2)  # the same answer after the retry
     out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
     assert [h.rank for h in out] == [2, 5]
     assert [h.tag for h in out] == ["GPTs", "Claude Skill"]
 
 
 def test_four_picks_are_cut_to_three_in_claude_order(issue_w44):
-    fake = FakeAnthropic([_picks(5, 3, 1, 2)])
+    fake = FakeAnthropic([_picks(5, 3, 1, 2)] * 2)  # the same answer after the retry
     out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
     assert [h.rank for h in out] == [5, 3, 1]
 
 
@@ -117,3 +119,168 @@ def test_system_prompt_is_highlight_plus_humanizer():
     head = (PROMPTS_DIR / "highlight.md").read_text(encoding="utf-8").strip()
     humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8").strip()
     assert system == head + "\n\n" + humanizer
+
+
+# ------------------------------------------------- text checks (D-03, HILT-02)
+
+GOOD = "Claude Skill로 정리해 두면 같은 형식으로 받을 수 있어요."
+
+
+@pytest.mark.parametrize("field", ["why_ko", "how_ko"])
+@pytest.mark.parametrize(
+    "text",
+    [
+        GOOD,
+        "회의록을 같은 틀로 받아요. GPTs에 예시 파일을 넣어 두면 돼요.",
+        "가" * 69 + "요",
+    ],
+)
+def test_check_text_passes_short_haeyo(field, text):
+    assert highlight.check_text(field, text) == []
+
+
+@pytest.mark.parametrize(
+    ("text", "code"),
+    [
+        ("", "hl_empty"),
+        ("   ", "hl_empty"),
+        ("가" * 70 + "요", "hl_len"),
+        ("정리해요. 넣어요. 써요.", "hl_sentences"),
+        ("규칙을 지시문에 넣으면 된다.", "hl_tone"),
+        ("1. 규칙을 지시문에 넣어 두면 돼요.", "hl_steps"),
+        ("먼저 2) 예시를 넣어 두면 돼요.", "hl_steps"),
+        ("① 규칙을 지시문에 넣어 두면 돼요.", "hl_steps"),
+        ("첫째 규칙을 지시문에 넣어 두면 돼요.", "hl_steps"),
+        ("예시는 https://example.com 에 있어요.", "hl_url"),
+        ("혁신적인 방식으로 정리할 수 있어요.", "hl_hype"),
+        ("이 뉴스레터처럼 정리해 둘 수 있어요.", "hl_authorship"),
+        ("자동 생성 규칙을 넣어 두면 돼요.", "hl_authorship"),
+        ("AI가 쓴 요약을 그대로 받아요.", "hl_authorship"),
+    ],
+)
+def test_check_text_codes(text, code):
+    codes = [c for c, _ in highlight.check_text("how_ko", text)]
+    assert code in codes, codes
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "이메일 초안 규칙을 Skill로 정리해 둘 수 있어요.",
+        "이번 호출 결과를 GPTs 지식 파일로 넣어 두면 돼요.",
+        "자동으로 같은 형식을 받을 수 있어요.",
+    ],
+)
+def test_written_by_re_allows_product_names_and_plain_words(text):
+    assert headline.WRITTEN_BY_RE.search(text) is None
+    assert highlight.check_text("how_ko", text) == []
+
+
+def test_check_text_messages_carry_no_model_text():
+    msgs = [m for _, m in highlight.check_text("why_ko", "비밀문장 1. 혁신적이다")]
+    assert msgs and all("why_ko" in m and "비밀문장" not in m for m in msgs)
+
+
+# ------------------------------------------------- pick checks and the retry
+
+
+def _bad_pick(rank: int) -> HighlightPickLLM:
+    return HighlightPickLLM(rank=rank, why_ko="1. 정리한다", how_ko=DEFAULT_HIGHLIGHT_HOW)
+
+
+def _resp(*picks: HighlightPickLLM):
+    return make_parsed(HighlightsLLM(picks=list(picks)))
+
+
+def test_review_pick_level_codes():
+    picks = [_pick(1), _pick(4), _pick(1), _pick(2), _pick(3)]
+    kept, problems = highlight.review(picks, {1, 2, 3, 5})
+    codes = [c for c, _ in problems]
+    assert "hl_rank" in codes and "hl_duplicate" in codes and "hl_count" in codes
+    assert [p.rank for p in kept] == [1, 2, 3]
+
+
+def test_failing_pick_retries_once_with_problem_messages_only(issue_w44):
+    fake = FakeAnthropic([_resp(_pick(1), _bad_pick(2)), _resp(_pick(1), _pick(2))])
+    out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
+    retry = fake.user_texts()[1]
+    assert "<previous_output_problems>" in retry
+    problems = retry.split("<previous_output_problems>")[1]
+    assert "정리한다" not in problems and DEFAULT_HIGHLIGHT_HOW not in problems
+    assert "2번째 pick" in problems
+    assert [h.rank for h in out] == [1, 2]
+
+
+def test_after_second_attempt_failing_picks_are_dropped(issue_w44):
+    fake = FakeAnthropic([_resp(_bad_pick(1), _pick(2)), _resp(_pick(3), _bad_pick(5))])
+    out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
+    assert [h.rank for h in out] == [3]
+    assert out[0].tag == "둘 다"
+
+
+@pytest.mark.parametrize(
+    "second",
+    [
+        make_parsed(None, stop_reason="refusal"),
+        make_parsed(None, stop_reason="max_tokens"),
+        make_parsed(None),
+        ValueError("schema"),
+    ],
+)
+def test_unusable_second_attempt_keeps_first_passing_picks(issue_w44, second):
+    fake = FakeAnthropic([_resp(_pick(5), _bad_pick(1)), second])
+    out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
+    assert [h.rank for h in out] == [5]
+
+
+@pytest.mark.parametrize(
+    "first",
+    [
+        make_parsed(None, stop_reason="refusal"),
+        make_parsed(None, stop_reason="max_tokens"),
+        ValueError("schema"),
+    ],
+)
+def test_refusal_max_tokens_and_schema_use_the_retry(issue_w44, first):
+    fake = FakeAnthropic([first, _resp(_pick(2))])
+    out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
+    assert "<previous_output_problems>" in fake.user_texts()[1]
+    assert [h.rank for h in out] == [2]
+
+
+def test_two_failed_attempts_give_empty(issue_w44):
+    fake = FakeAnthropic([_resp(_bad_pick(1)), _resp(_bad_pick(2))])
+    assert highlight.write_highlights(_items(issue_w44), fake) == []
+
+
+def test_zero_picks_makes_no_retry(issue_w44):
+    fake = FakeAnthropic([_picks()])
+    assert highlight.write_highlights(_items(issue_w44), fake) == []
+    assert len(fake.calls) == 1
+
+
+def test_logs_carry_counts_and_codes_only(issue_w44, caplog):
+    items = _items(issue_w44)
+    fake = FakeAnthropic([_resp(_pick(1), _bad_pick(2)), _resp(_pick(1), _bad_pick(3))])
+    with caplog.at_level("INFO", logger="newsletter"):
+        highlight.write_highlights(items, fake)
+    msgs = [r.getMessage() for r in caplog.records if r.name.endswith("highlight")]
+    assert "highlight attempt=1 reason=" in msgs[0]
+    assert msgs[-1] == "highlight=claude picks=1 attempt=2"
+    text = "\n".join(msgs)
+    for secret in (DEFAULT_HIGHLIGHT_WHY, DEFAULT_HIGHLIGHT_HOW, "정리한다", REASON):
+        assert secret not in text
+    for it in items:
+        assert it.title_ko not in text
+
+
+def test_prompt_holds_the_d03_example_and_data_fence():
+    text = (PROMPTS_DIR / "highlight.md").read_text(encoding="utf-8")
+    assert "요약 규칙을 Skill로 정리해 두면 매번 같은 형식으로 받을 수 있어요" in text
+    assert "<items>" in text and "데이터" in text
+    assert "<previous_output_problems>" in text
+    assert "70자" in text and "0-3개" in text
