@@ -7,7 +7,8 @@ import pytest
 from conftest import FIXTURES
 
 from newsletter.schema import Explainer, Highlight, Issue
-from newsletter.stages import humanize, notes
+from newsletter.stages import analyze, headline, humanize, notes, trend
+from newsletter.store import PROMPTS_DIR
 
 
 def _with(issue: Issue, path: str, text: str) -> Issue:
@@ -252,3 +253,50 @@ def test_cleanup(raw, clean):
 def test_dash_fallback(raw, fixed):
     assert humanize.dash_fallback(raw) == fixed
     assert "dash" not in humanize.lint(humanize.dash_fallback(raw))
+
+
+# ---- Task 3: every Claude prompt carries the full Korean port (HUMN-01) ----
+
+
+def _humanizer() -> str:
+    return (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8")
+
+
+def test_humanizer_port_has_version_marker():
+    first = _humanizer().splitlines()[0]
+    assert first.startswith("<!-- humanizer-version: 2")
+    assert "core subset" not in _humanizer()
+
+
+def test_humanizer_port_names_rule_anchors():
+    text = _humanizer()
+    for anchor in (
+        "단순히",
+        "넘어",
+        "혁신적",
+        "획기적",
+        "게임 체인저",
+        "전문가들은",
+        "되어지",
+        "이정표",
+        "도움이 되셨으면",
+        "해요체",
+        "—",
+    ):
+        assert anchor in text, anchor
+    assert sum(1 for line in text.splitlines() if line.startswith("## ")) >= 6
+
+
+def test_humanizer_port_is_plain_markdown_without_bold():
+    assert "**" not in _humanizer()
+
+
+def test_every_system_prompt_carries_the_port():
+    port = _humanizer().strip()
+    for prompt in (
+        analyze.system_prompt(),
+        headline.headline_system_prompt(),
+        trend.trend_system_prompt(),
+        notes.notes_system_prompt(),
+    ):
+        assert port in prompt
