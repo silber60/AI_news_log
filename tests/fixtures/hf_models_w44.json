@@ -5,7 +5,8 @@
       "datasets": [
         "JusperLee/RealSSA-Real",
         "JusperLee/RealSSA-Sim"
-      ]
+      ],
+      "license": "apache-2.0"
     },
     "gated": false,
     "tags": [
@@ -28,7 +29,8 @@
       "datasets": [
         "JusperLee/RealSSA-Real",
         "JusperLee/RealSSA-Sim"
-      ]
+      ],
+      "license": "apache-2.0"
     },
     "gated": false,
     "tags": [
@@ -47,7 +49,10 @@
   },
   "tencent/Hy-Nomas": {
     "id": "tencent/Hy-Nomas",
-    "cardData": {},
+    "cardData": {
+      "license": "apache-2.0",
+      "license_link": "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+    },
     "gated": false,
     "tags": [
       "diffusion-single-file",
@@ -68,7 +73,9 @@
   },
   "hyz317/HairDeck": {
     "id": "hyz317/HairDeck",
-    "cardData": {},
+    "cardData": {
+      "license": "apache-2.0"
+    },
     "gated": false,
     "tags": [
       "pytorch",
@@ -87,7 +94,9 @@
   },
   "liamdugan/detector-scope-peer-review-gpt4o": {
     "id": "liamdugan/detector-scope-peer-review-gpt4o",
-    "cardData": {},
+    "cardData": {
+      "license": "gemma"
+    },
     "gated": false,
     "tags": [
       "detectorscope",
@@ -111,7 +120,9 @@
   },
   "liamdugan/detector-scope-peer-review-llama": {
     "id": "liamdugan/detector-scope-peer-review-llama",
-    "cardData": {},
+    "cardData": {
+      "license": "gemma"
+    },
     "gated": false,
     "tags": [
       "detectorscope",
@@ -135,7 +146,9 @@
   },
   "liamdugan/detector-scope": {
     "id": "liamdugan/detector-scope",
-    "cardData": {},
+    "cardData": {
+      "license": "gemma"
+    },
     "gated": false,
     "tags": [
       "detectorscope",

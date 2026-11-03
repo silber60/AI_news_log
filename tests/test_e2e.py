@@ -28,7 +28,14 @@ STAR_TOP10 = [
 # D-03, D-09: stricter of the GitHub code license and the HF weights license.
 STAR_COMMERCIAL = ["가능", "가능", "확인 필요", "가능", "조건부"] + ["가능"] * 5
 STAR_POC = ["코드만", "바로 가능", "바로 가능", "코드만", "바로 가능"] + ["코드만"] * 5
-WEEK_FILES = ("raw.json", "selected.json", "issue.json", "email.html", "email.txt")
+WEEK_FILES = (
+    "raw.json",
+    "selected.json",
+    "enriched.json",
+    "issue.json",
+    "email.html",
+    "email.txt",
+)
 
 
 def _build(hf_pages, fake: FakeAnthropic) -> Issue:
@@ -132,6 +139,17 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert [s["paper_id"] for s in selected["items"]] == expected
     assert [s["basis"] for s in selected["items"]] == ["stars"] * 10
     assert selected["items"][0]["github_stars"] == 5221
+
+    # EVID-01: the raw license evidence behind each verdict is archived.
+    enriched_text = (week / "enriched.json").read_text(encoding="utf-8")
+    assert '"authors"' not in enriched_text and "_ko" not in enriched_text
+    enriched = json.loads(enriched_text)
+    assert (enriched["issue_id"], enriched["count"]) == (ISSUE_ID, 10)
+    assert [r["paper_id"] for r in enriched["items"]] == expected
+    r3 = enriched["items"][2]
+    assert r3["github_license"]["status"] == "ok"
+    assert r3["github_license"]["spdx_id"] in (None, "NOASSERTION")
+    assert r3["weights_license"]["license"] == "apache-2.0"
 
     html = (week / "email.html").read_text(encoding="utf-8")
     assert "구독자님" in html

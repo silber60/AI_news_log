@@ -115,3 +115,32 @@ def test_readme_capture_holds_image_lines_only():
 def test_email_guard_allows_retina_names():
     assert _emails("assets/x@2x.png") == []
     assert _emails("mail someone@example.com") == ["someone@example.com"]
+
+
+# Research §1 live probe: where each W44 model states its license (D-15 recapture).
+CARD_LICENSES = {
+    "JusperLee/Falcon": "apache-2.0",
+    "JusperLee/Falcon-Big": "apache-2.0",
+    "tencent/Hy-Nomas": "apache-2.0",
+    "hyz317/HairDeck": "apache-2.0",
+    "liamdugan/detector-scope": "gemma",
+    "liamdugan/detector-scope-peer-review-gpt4o": "gemma",
+    "liamdugan/detector-scope-peer-review-llama": "gemma",
+}
+CARD_KEYS = {"datasets", "license", "license_name", "license_link"}
+MODEL_KEYS = {"id", "cardData", "gated", "tags", "safetensors"}
+
+
+def test_model_capture_carries_license_fields():
+    models = _load("hf_models_w44.json")
+    for mid, lic in CARD_LICENSES.items():
+        assert models[mid]["cardData"]["license"] == lic, mid
+        assert f"license:{lic}" in models[mid]["tags"], mid
+    assert models["tencent/Hy-Nomas"]["cardData"]["license_link"] == (
+        "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+    )
+    for mid in ("liamdugan/detector-scope", "liamdugan/detector-scope-peer-review-llama"):
+        assert models[mid]["safetensors"] == {"parameters": {"F32": 302130176}, "total": 302130176}
+    for m in models.values():
+        assert set(m) <= MODEL_KEYS
+        assert set(m["cardData"]) <= CARD_KEYS

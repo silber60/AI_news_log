@@ -1,6 +1,7 @@
 """Code-decided model facts from the HF paper/model APIs (ANLY-08, D-07)."""
 
 import json
+import re
 from pathlib import Path
 
 import httpx
@@ -399,6 +400,135 @@ def test_license_logs_carry_no_repo_ids(items, hf_pages, caplog):
     assert "license=" in text
     for needle in ("OmniShowcase", "justin4ai", "Hy-Nomas", "JusperLee", "api.github.com"):
         assert needle not in text
+
+
+# ------------------------------------------------------------ enriched.json
+
+TOKEN_RE = re.compile(r"gh[pousr]_[A-Za-z0-9]{10,}|github_pat_|Bearer ", re.IGNORECASE)
+RECORD_KEYS = {
+    "rank",
+    "paper_id",
+    "model_id",
+    "linked_models",
+    "spaces",
+    "datasets",
+    "weights_license",
+    "gated",
+    "safetensors",
+    "base_model_tags",
+    "github_license",
+    "paper_fetch_ok",
+    "evidence",
+}
+
+
+def _records(items, entries, **mock_kw) -> tuple[list[Item], list[dict]]:
+    with respx.mock(assert_all_mocked=True, assert_all_called=False) as router:
+        mock_enrich(router, **mock_kw)
+        return enrich.enrich_items_with_records(items, entries)
+
+
+def test_records_one_per_rank_with_public_metadata(items, hf_pages):
+    out, records = _records(items, _entries(hf_pages, items))
+    assert [r["rank"] for r in records] == list(range(1, 11))
+    assert all(set(r) == RECORD_KEYS for r in records)
+    assert [r["paper_id"] for r in records] == [it.paper_id for it in items]
+    assert all(r["paper_fetch_ok"] for r in records)
+
+    r3 = records[2]  # JusperLee/Falcon
+    assert r3["model_id"] == "JusperLee/Falcon"
+    assert r3["linked_models"] == [
+        {"id": "JusperLee/Falcon", "gated": False},
+        {"id": "JusperLee/Falcon-Big", "gated": False},
+    ]
+    assert r3["spaces"] == ["JusperLee/Falcon-Studio"]
+    assert r3["datasets"] == ["JusperLee/RealSSA-Real", "JusperLee/RealSSA-Sim"]
+    assert r3["weights_license"] == {
+        "license": "apache-2.0",
+        "license_name": None,
+        "license_link": None,
+    }
+    assert r3["gated"] is False
+    assert r3["safetensors"] is None
+    assert r3["github_license"] == {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/JusperLee/Falcon/blob/main/LICENSE",
+    }
+    assert "https://huggingface.co/JusperLee/Falcon" in r3["evidence"]
+    assert "https://github.com/JusperLee/Falcon/blob/main/LICENSE" in r3["evidence"]
+
+    r4 = records[3]  # Hy-Nomas: NOASSERTION code, apache-2.0 weights with a link
+    assert r4["github_license"]["status"] == "ok"
+    assert r4["github_license"]["spdx_id"] == "NOASSERTION"
+    assert r4["weights_license"]["license"] == "apache-2.0"
+    assert r4["weights_license"]["license_link"] == (
+        "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+    )
+
+    r2 = records[1]  # OmniShowcase: no model, GitHub 404
+    assert r2["github_license"]["status"] == "none"
+    assert (r2["model_id"], r2["weights_license"], r2["safetensors"]) == (None, None, None)
+    assert records[0]["github_license"] is None  # no repo, no call
+    # The items match the plain enrich_items output.
+    plain, _ = _run(items, _entries(hf_pages, items))
+    assert out == plain
+
+
+def test_record_keeps_safetensors_and_base_model_tags(items):
+    paper = _paper(**_model("org/m"))
+    model = {
+        "id": "org/m",
+        "cardData": {"license": "gemma"},
+        "tags": ["license:gemma", "base_model:google/gemma-2-2b", "base_model:finetune:x/y"],
+        "safetensors": {"parameters": {"F32": 302130176}, "total": 302130176},
+    }
+    with respx.mock(assert_all_mocked=True, assert_all_called=False) as router:
+        mock_enrich(router, papers={items[0].paper_id: paper}, models={"org/m": model})
+        _, (rec,) = enrich.enrich_items_with_records(items[:1], [])
+    assert rec["safetensors"] == {"total": 302130176, "parameters": {"F32": 302130176}}
+    assert rec["base_model_tags"] == ["base_model:google/gemma-2-2b", "base_model:finetune:x/y"]
+    assert rec["weights_license"]["license"] == "gemma"
+
+
+def test_record_for_failed_paper_fetch(items):
+    _, records = _records(items[:2], [], fail=True)
+    for rec in records:
+        assert set(rec) == RECORD_KEYS
+        assert rec["paper_fetch_ok"] is False
+        assert rec["paper_id"] in (items[0].paper_id, items[1].paper_id)
+        for key in ("model_id", "weights_license", "gated", "safetensors", "github_license"):
+            assert rec[key] is None, key
+        for key in ("linked_models", "spaces", "datasets", "base_model_tags", "evidence"):
+            assert rec[key] == [], key
+    bad = items[0].model_copy(update={"paper_id": "not-a-paper"})
+    _, (rec,) = _records([bad], [])
+    assert rec["paper_fetch_ok"] is False
+
+
+def test_records_hold_no_authors_ko_or_tokens(items, hf_pages, monkeypatch):
+    monkeypatch.setenv("GITHUB_TOKEN", "ghs_" + "a" * 36)
+    _, records = _records(items, _entries(hf_pages, items))
+    text = json.dumps(records, ensure_ascii=False)
+    assert '"authors"' not in text
+    assert "_ko" not in text
+    assert not TOKEN_RE.search(text)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        {"id": "org/m", "cardData": {"license": "apache-2.0"}, "tags": []},
+        {"id": "org/m", "cardData": {}, "tags": ["license:apache-2.0"]},
+    ],
+    ids=["cardData", "tag-fallback"],
+)
+def test_weights_license_card_and_tag_paths_agree(items, model):
+    out, _ = _one(items[0], _paper(**_model("org/m")), {"org/m": model})
+    assert out.commercial.verdict == "가능"
+    assert out.commercial.weights_license.spdx_id == "apache-2.0"
+    assert out.commercial.code_license is None
 
 
 # ---------------------------------------------------------------- run_build
