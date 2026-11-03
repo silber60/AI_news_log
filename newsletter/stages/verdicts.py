@@ -1,15 +1,18 @@
 """Code-decided practical verdicts (EVID-03..05, D-05, D-11, D-15).
 
-Pure functions: no I/O and no logging. Every verdict here comes from the HF/GitHub
-facts that enrich captured. Claude never decides a verdict; it only explains it later.
+Pure functions: no I/O. The only log line is the weekly 직접 사용 count in
+`finalize`. Every verdict here comes from the HF/GitHub facts that enrich captured. Claude never decides a verdict; it only explains it later.
 
 `enforce_evidence` runs last: a positive verdict without evidence on huggingface.co
 or github.com falls back to `확인 필요`.
 """
 
+import logging
 from typing import Any
 
 from newsletter.schema import UNKNOWN, EvidenceLink, Hardware, Item, LocalRun, PocReadiness
+
+log = logging.getLogger(__name__)
 
 HF_HOST = "https://huggingface.co/"
 GITHUB_HOST = "https://github.com/"
@@ -21,6 +24,8 @@ POC_GATED_LABEL = "HF 모델 (승인 필요)"
 POC_POSITIVE = ("바로 가능", "코드만")
 COMMERCIAL_POSITIVE = ("가능", "조건부")
 LOCAL_RUN_POSITIVE = ("가능", "제한적")
+# D-11: more 직접 사용 items than this in one week is unusual; log the count only.
+DIRECT_USE_WARN_OVER = 3
 
 # D-04, D-10: fp16/bf16 weights (2 bytes/param) plus 20% for activations and context.
 BYTES_PER_PARAM = 2
@@ -136,4 +141,8 @@ def enforce_evidence(item: Item) -> Item:
 
 def finalize(items: list[Item]) -> list[Item]:
     """Last verdict step before the Issue is built."""
-    return [enforce_evidence(it) for it in items]
+    out = [enforce_evidence(it) for it in items]
+    direct = sum(it.claude_gpt.verdict == "직접 사용" for it in out)
+    if direct > DIRECT_USE_WARN_OVER:
+        log.warning("claude_gpt=direct_many count=%d", direct)
+    return out

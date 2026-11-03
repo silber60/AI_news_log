@@ -164,6 +164,8 @@ VALID = {
     "kind_ko": "Vision-Language 모델",
     "architecture_ko": "확인 필요",
     "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있어요.",
+    "claude_gpt": "기법 적용 가능",
+    "claude_gpt_reason_ko": "긴 자료를 나눠 읽고 묻는 흐름을 대화에서 따라 할 수 있어요.",
 }
 
 

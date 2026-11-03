@@ -16,7 +16,14 @@ import anthropic
 from pydantic import ValidationError
 
 from newsletter.errors import AnalysisInvalid
-from newsletter.schema import UNKNOWN, HfEntry, Item, ItemAnalysisLLM, ModelInfo
+from newsletter.schema import (
+    UNKNOWN,
+    ClaudeGptUse,
+    HfEntry,
+    Item,
+    ItemAnalysisLLM,
+    ModelInfo,
+)
 from newsletter.stages import select
 from newsletter.store import PROMPTS_DIR
 
@@ -95,6 +102,7 @@ _TEXT_FIELDS = (
     "kind_ko",
     "architecture_ko",
     "use_idea_ko",
+    "claude_gpt_reason_ko",
 )
 
 
@@ -390,6 +398,10 @@ def to_item(rank: int, entry: HfEntry, analysis: ItemAnalysisLLM) -> Item:
             # D-07: size / training_data / release stay UNKNOWN; only code fills them.
             model_info=ModelInfo(
                 kind_ko=analysis.kind_ko, architecture_ko=analysis.architecture_ko
+            ),
+            # D-06: Claude proposes the label; verdicts.finalize guards 직접 사용 (D-11).
+            claude_gpt=ClaudeGptUse(
+                verdict=analysis.claude_gpt, reason_ko=analysis.claude_gpt_reason_ko or None
             ),
         )
     except ValidationError as e:

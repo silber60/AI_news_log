@@ -3,7 +3,7 @@
 import json
 
 import respx
-from conftest import FakeAnthropic, mock_hf_week
+from conftest import DEFAULT_CLAUDE_GPT_REASON, FakeAnthropic, mock_hf_week
 
 from newsletter.schema import UNKNOWN, HfEntry, Issue
 from newsletter.stages.analyze import strip_urls
@@ -83,7 +83,9 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert (c5.code_license.spdx_id, c5.weights_license.spdx_id) == ("Apache-2.0", "gemma")
     for it in stored.items:
         assert it.poc.evidence
-        assert it.claude_gpt.verdict == "확인 필요"
+        # ANLY-02, D-06: Claude's label and reason from the analyze call.
+        assert it.claude_gpt.verdict == "기법 적용 가능"
+        assert it.claude_gpt.reason_ko == DEFAULT_CLAUDE_GPT_REASON
         assert len(it.summary_lines_ko) == 3
         assert all(line.strip() for line in it.summary_lines_ko)
         assert it.poc.has_weights in (True, None)
@@ -164,6 +166,8 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert "🧪 바로 써볼 수 있어요" in cards[1]
     assert "🖥️ 개인 GPU 약 1GB" in cards[4]
     assert sum("🖥️" in c for c in cards) == 1
+    assert len(cards) == 10
+    assert all("🤖 Claude/GPT 기법 적용" in c for c in cards)
     assert "구독자님" in (week / "email.txt").read_text(encoding="utf-8")
 
 
@@ -190,6 +194,8 @@ def test_claude_output_model_has_no_code_owned_fields():
         "kind_ko",
         "architecture_ko",
         "use_idea_ko",
+        "claude_gpt",
+        "claude_gpt_reason_ko",
     }
     for name in fields:
         assert "url" not in name and "rank" not in name and "verdict" not in name

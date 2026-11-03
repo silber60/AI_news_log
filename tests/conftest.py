@@ -284,6 +284,9 @@ def _user_text(kw: dict) -> str:
     return "\n".join(parts)
 
 
+DEFAULT_CLAUDE_GPT_REASON = "대화에서 단계를 나눠 묻는 방식으로 따라 해 볼 수 있어요."
+
+
 def default_analysis(kw: dict) -> ItemAnalysisLLM:
     """Deterministic valid analysis derived from the paper title in the user content."""
     m = re.search(r"^title: (.*)$", _user_text(kw), re.MULTILINE)
@@ -298,6 +301,8 @@ def default_analysis(kw: dict) -> ItemAnalysisLLM:
         kind_ko="테스트 모델",
         architecture_ko="확인 필요",
         use_idea_ko="테스트 업무에 쓸 수 있어요.",
+        claude_gpt="기법 적용 가능",
+        claude_gpt_reason_ko=DEFAULT_CLAUDE_GPT_REASON,
     )
 
 

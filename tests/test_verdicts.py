@@ -253,6 +253,31 @@ def test_enforce_evidence_direct_claude_gpt_needs_an_artifact(item):
     assert verdicts.enforce_evidence(demo).claude_gpt.verdict == "직접 사용"
 
 
+def test_finalize_direct_use_without_artifact_is_unknown(item):
+    direct = {"verdict": "직접 사용", "reason_ko": "이유"}
+    bare = _set(_bare(item), claude_gpt=direct, poc={"has_demo": None})
+    out = verdicts.finalize([bare])[0].claude_gpt
+    assert (out.verdict, out.reason_ko) == (UNKNOWN, None)
+
+
+def test_finalize_warns_once_with_count_only_over_three_direct(item, caplog):
+    direct = {"verdict": "직접 사용", "reason_ko": "이유"}
+    items = [
+        _set(item, claude_gpt=direct).model_copy(update={"rank": r, "title_ko": f"비밀제목{r}"})
+        for r in range(1, 5)
+    ]
+    with caplog.at_level("WARNING", logger="newsletter.stages.verdicts"):
+        out = verdicts.finalize(items)
+    assert [it.claude_gpt.verdict for it in out] == ["직접 사용"] * 4
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert warnings == ["claude_gpt=direct_many count=4"]
+    assert not any("비밀제목" in w or item.title_en in w for w in warnings)
+    caplog.clear()
+    with caplog.at_level("WARNING", logger="newsletter.stages.verdicts"):
+        verdicts.finalize(items[:3])
+    assert not caplog.records
+
+
 def test_enforce_evidence_negatives_pass_unchanged(item):
     it = _set(
         _bare(item),

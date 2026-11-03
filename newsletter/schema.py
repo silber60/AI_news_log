@@ -258,6 +258,8 @@ class ItemAnalysisLLM(BaseModel):
     kind_ko: str  # ANLY-08: 유형, <= 30
     architecture_ko: str  # ANLY-08: 구조, <= 60, or exactly UNKNOWN
     use_idea_ko: str  # ANLY-10: 활용 아이디어, one 해요체 line, <= 50 (checked in analyze)
+    claude_gpt: ClaudeGptVerdict  # ANLY-02, D-06: closed enum; code guards 직접 사용 (D-11)
+    claude_gpt_reason_ko: str  # one 해요체 sentence, <= 60 chars (checked in analyze)
 
 
 HeadlineEmoji = Literal["🤖", "💬", "👀", "🎬", "🎙️", "🧠", "🛠️", "🔍", "📈", "⚡️"]
