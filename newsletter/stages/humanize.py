@@ -54,11 +54,58 @@ _HARD_PATTERNS: dict[str, re.Pattern[str]] = {
         r"단순(?:히|한)\s?[^.?!]{0,30}?(?:이|가)?\s?아니(?:라|고|에요)"
         r"|(?:뿐|뿐만)\s?(?:아니라|아니고)|에\s?그치지\s?않(?:고|아요)"
     ),
+    # "기존 기록을 넘어섰어요" and "100자를 넘어가면" are facts and do not match.
+    "beyond": re.compile(r"[을를]\s?넘어(?:서)?(?=[\s,])(?!\s?섰)"),
+    "significance": re.compile(
+        r"중요성을\s?(?:보여|강조|일깨)|새(?:로운)?\s?기준을\s?(?:세웠|제시)"
+        r"|앞으로(?:가|의)?\s?(?:더\s?)?기대|주목할\s?만한|눈여겨\s?볼|꼭\s?알아야\s?할"
+        r"|이정표|한\s?획을|시사하는\s?바가|의미가\s?(?:커요|크다|있어요)"
+    ),
+    "chatbot": re.compile(
+        r"도움이\s?되(?:셨|었)으면|궁금한\s?(?:점|게)\s?있으|물론이(?:죠|에요)|좋은\s?질문"
+        r"|알려\s?드릴게요|살펴볼까요|알아볼까요|함께\s?보시죠"
+    ),
+    "authority": re.compile(
+        r"전문가들(?:은|이)|업계에서는|많은\s?(?:연구자|전문가)들|평가를\s?받고\s?있"
+    ),
+    "run_up": re.compile(
+        r"^(?:자,|그럼|결론부터\s?말하면|솔직히|사실,|핵심은|중요한\s?(?:건|것은))", re.MULTILINE
+    ),
+    "double_passive": re.compile(r"되어지|되어져|되어졌|보여지|보여져"),
 }
-_SENTENCE_ONLY_HARD = ("haeyo",)
+# Sentence fields only. headline_ko is never collected (its emoji is an enum field).
+_EMOJI_RE = re.compile("[\U0001f300-\U0001faff\u2600-\u27bf]")
 
-HARD_CODES: tuple[str, ...] = (*_HARD_PATTERNS, *_SENTENCE_ONLY_HARD)
-WEAK_CODES: tuple[str, ...] = ()
+# ---- weak codes: two or more hits in one field flag it (counted per match) ----
+_WEAK_PATTERNS: dict[str, re.Pattern[str]] = {
+    # High false-positive risk alone: "사람이 아니라 로봇이…" is informative.
+    "not_x_plain": re.compile(r"(?:이|가)\s아니라\s"),
+    "saying": re.compile(r"본질적으로|근본적으로|결국\s?(?:핵심|중요한)|진정한|그\s?자체"),
+    "role_verb": re.compile(r"역할을\s?(?:해요|한다|합니다|하는)|자리매김|로서\s?기능"),
+    "rider": re.compile(
+        r"(?:을|를)\s?보여\s?(?:줘요|주며|준다|주고)|(?:을|를)\s?시사(?:해요|한다|하며)"
+        r"|(?:을|를)\s?강조(?:해요|한다|하며)"
+    ),
+    "ai_words": re.compile(
+        r"다양한|효과적으로|원활(?:한|하게)|극대화|최적화된|심층(?:적)?|면밀(?:히|한)|핵심적인"
+    ),
+    # Real lists ("역량, 최적화, 평가 방법") hit this, so it is weak only.
+    "triad": re.compile(r"(?:[^\s,]{1,12},\s){2}(?:그리고\s)?[^\s,]{1,12}"),
+    "hedge_stack": re.compile(r"수도\s?있을\s?(?:것|수)|일\s?수도\s?있|어쩌면|아마도"),
+    "subject_repeat": re.compile(
+        r"^(?:이\s?논문은|본\s?연구는|이\s?연구는|이\s?모델은)", re.MULTILINE
+    ),
+}
+CLOSER_MAX = 18  # a last sentence this short, with no digit, restates instead of adding
+_DIGIT_RE = re.compile(r"\d")
+
+HARD_CODES: tuple[str, ...] = (*_HARD_PATTERNS, "emoji", "haeyo")
+WEAK_CODES: tuple[str, ...] = (*_WEAK_PATTERNS, "closer", "same_opening")
+
+_BOLD_RE = re.compile(r"\*\*|__|`")
+_LEAD_MARK_RE = re.compile(r"^(?:\s*(?:#{1,6}|[-*])\s+)+")
+_QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
+_DASH_RE = re.compile(r"\s*[—–]\s*|\s--\s")
 
 
 def _field(path: str, kind: Kind, limit: int | None, text: str | None) -> FieldRef | None:
@@ -120,13 +167,31 @@ def collect_fields(issue: Issue) -> list[FieldRef]:
     return [r for r in refs if r is not None and r.text.strip()]
 
 
+def _sentences(text: str) -> list[str]:
+    return [t for t in (x.strip() for x in analyze._SENT_SPLIT.split(text.strip())) if t]
+
+
 def lint(text: str, *, kind: Kind = "sentence") -> list[str]:
-    """Codes found in text, one entry per match."""
+    """Codes found in text, one entry per match (research §1).
+
+    `emoji` and `haeyo` apply to sentence fields only; names keep their own form.
+    """
     codes: list[str] = []
-    for code, pattern in _HARD_PATTERNS.items():
-        codes += [code] * len(pattern.findall(text))
-    if kind == "sentence" and analyze.not_haeyo(text):
-        codes.append("haeyo")
+    for patterns in (_HARD_PATTERNS, _WEAK_PATTERNS):
+        for code, pattern in patterns.items():
+            codes += [code] * len(pattern.findall(text))
+    if kind == "sentence":
+        codes += ["emoji"] * len(_EMOJI_RE.findall(text))
+        if analyze.not_haeyo(text):
+            codes.append("haeyo")
+    sents = _sentences(text)
+    if len(sents) >= 3:
+        last = sents[-1]
+        if len(last) <= CLOSER_MAX and not _DIGIT_RE.search(last):
+            codes.append("closer")
+        firsts = [s.split()[0] for s in sents]
+        if max(firsts.count(f) for f in firsts) >= 3:
+            codes.append("same_opening")
     return codes
 
 
@@ -153,3 +218,17 @@ def lint_issue(issue: Issue) -> dict[str, list[str]]:
         ",".join(all_codes) or "-",
     )
     return flagged
+
+
+def cleanup(text: str) -> str:
+    """Research cleanup steps 1-3: drop bold/markdown markers, straighten curly
+    quotes, collapse whitespace. Idempotent. Length caps stay with each stage."""
+    text = _BOLD_RE.sub("", text).translate(_QUOTES)
+    text = analyze._one_line(text)
+    return _LEAD_MARK_RE.sub("", text).strip()
+
+
+def dash_fallback(text: str) -> str:
+    """Research cleanup step 4 (after polish only): connector dashes become ", ".
+    English hyphens ("Vision-Language-Action", "GPT-5") are left alone."""
+    return _DASH_RE.sub(", ", text)
