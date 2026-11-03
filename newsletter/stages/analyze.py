@@ -23,8 +23,11 @@ from newsletter.store import PROMPTS_DIR
 log = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "claude-sonnet-5-5"
-_URL_RE = re.compile(r"https?://\S+")
+# A URL stops at a bracket so "(https://...)" leaves "()" for _EMPTY_BRACKETS.
+_URL_RE = re.compile(r"https?://[^\s()\[\]（）<>]*")
 _TAG_RE = re.compile(r"</?paper>", re.IGNORECASE)
+# D-14: an empty pair of brackets, half- or full-width, with the space before it.
+_EMPTY_BRACKETS = re.compile(r"\s*[(\[（]\s*[)\]）]")
 
 
 def model_name() -> str:
@@ -39,7 +42,7 @@ def strip_urls(text: str | None) -> str:
     """Remove every http(s) URL and any <paper> tag from untrusted paper text."""
     if not text:
         return ""
-    text = _TAG_RE.sub("", _URL_RE.sub("", text))
+    text = _EMPTY_BRACKETS.sub("", _TAG_RE.sub("", _URL_RE.sub("", text)))
     return re.sub(r"[ \t]{2,}", " ", text).strip()
 
 
@@ -72,6 +75,7 @@ SUMMARY_LIMIT = 80  # ANLY-03, measured in Python len() characters
 LINE_LIMIT = 70  # ANLY-07: does_ko / new_ko / result_ko
 KIND_LIMIT = 30  # ANLY-08: kind_ko
 ARCH_LIMIT = 60  # ANLY-08: architecture_ko
+IDEA_LIMIT = 50  # ANLY-10, D-13: use_idea_ko
 _LINE_FIELDS = ("does_ko", "new_ko", "result_ko")
 _WS_RE = re.compile(r"[\r\n\t]+")
 _BOUNDARY_CHARS = " ,."
@@ -90,6 +94,7 @@ _TEXT_FIELDS = (
     "result_ko",
     "kind_ko",
     "architecture_ko",
+    "use_idea_ko",
 )
 
 
@@ -124,11 +129,13 @@ def bad_info_prose(text: str) -> bool:
 
 
 def normalize(a: ItemAnalysisLLM) -> ItemAnalysisLLM:
-    return a.model_copy(update={f: _one_line(getattr(a, f)) for f in _TEXT_FIELDS})
+    return a.model_copy(
+        update={f: _one_line(_EMPTY_BRACKETS.sub("", getattr(a, f))) for f in _TEXT_FIELDS}
+    )
 
 
 def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
-    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 limits. Messages carry field names
+    """Code-enforced ANLY-03 / ANLY-07 / ANLY-08 / ANLY-10 limits and the 해요체 rule. Messages carry field names
     and counts, never model text."""
     errs: list[tuple[str, str]] = []
     if not a.title_ko.strip():
@@ -151,6 +158,10 @@ def check(a: ItemAnalysisLLM) -> list[tuple[str, str]]:
         errs.append(
             ("arch_len", f"architecture_ko가 {len(a.architecture_ko)}자로 {ARCH_LIMIT}자를 넘음")
         )
+    if not a.use_idea_ko.strip():
+        errs.append(("idea_empty", "use_idea_ko가 비어 있음"))
+    elif len(a.use_idea_ko) > IDEA_LIMIT:
+        errs.append(("idea_len", f"use_idea_ko가 {len(a.use_idea_ko)}자로 {IDEA_LIMIT}자를 넘음"))
     for field in HAEYO_FIELDS:
         text = getattr(a, field)
         if text.strip() and not_haeyo(text):
@@ -169,8 +180,9 @@ _TRIM_LIMITS = {
     "result_ko": LINE_LIMIT,
     "kind_ko": KIND_LIMIT,
     "architecture_ko": ARCH_LIMIT,
+    "use_idea_ko": IDEA_LIMIT,
 }
-_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len"}
+_LENGTH_CODES = {"summary_len", "line_len", "kind_len", "arch_len", "idea_len"}
 # D-19: a wrong sentence ending left after the retry is logged, never fatal.
 _NON_FATAL_CODES = _LENGTH_CODES | {"tone"}
 
