@@ -179,6 +179,22 @@ def test_safetensors_size_and_param_count(items):
     out, _ = _one(items[0], paper, {"org/m": model})
     assert out.model_info.size == "494M 파라미터"
     assert out.hardware.param_count == 494032768
+    # D-10: 494M x 2 bytes x 1.2 = 1.2 GB, cited by the model page.
+    assert (out.hardware.est_vram_gb, out.hardware.local_run) == (1.2, "가능")
+    assert [e.url for e in out.hardware.evidence] == ["https://huggingface.co/org/m"]
+
+
+def test_packed_quantized_safetensors_keep_count_but_no_vram(items):
+    paper = _paper(**_model("org/m"))
+    model = {
+        "id": "org/m",
+        "safetensors": {"parameters": {"I32": 6476005376, "F16": 263772160}, "total": 6739777536},
+        "tags": ["base_model:quantized:meta-llama/Llama-2-7b-hf"],
+    }
+    out, _ = _one(items[0], paper, {"org/m": model})
+    assert out.hardware.param_count == 6739777536
+    assert (out.hardware.est_vram_gb, out.hardware.local_run) == (None, UNKNOWN)
+    assert out.hardware.evidence == []
 
 
 def test_size_billions_and_extra_models(items):
