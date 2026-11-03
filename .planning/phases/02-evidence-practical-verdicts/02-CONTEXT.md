@@ -54,6 +54,16 @@ Not in this phase: highlight / Skill-GPTs picks and the explainer (Phase 3), the
 ### 트렌드 총평 (ANLY-05)
 - **D-07:** 2-3 sentences of 해요체 placed right under the greeting (the Figma "이번 주 흐름 한눈에" slot). It mentions only this week's N items, and code checks that every model it names is in the Top N.
 
+### Decisions after research (2026-11-03)
+- **D-08:** The schema stays at v3. The existing verdict models suffice; only the Claude output models change (ItemAnalysisLLM gets claude_gpt + reason, plus new VerdictNotesLLM and TrendLLM). The gated flag goes to `enriched.json`, which is not frozen.
+- **D-09:** The code license comes from GitHub `/repos/{o}/{r}/license` using `GITHUB_TOKEN: ${{ github.token }}` in the build step env, not `secrets.` (this keeps the static test that counts `secrets.`). The weights license comes from HF `cardData.license` → `license_name` → `license:` tags. When only the code license is known, the line says "💼 코드 상업 이용 가능".
+- **D-10:** VRAM uses only `safetensors.total` × 2 bytes × 1.2. Non-float or packed dtypes and adapter/quantized base models give `확인 필요`. Expected W44 coverage is low (1/10); this is accepted.
+- **D-11:** The `해당 없음` Claude/GPT verdict is hidden in the email line (owner). Only `직접 사용` and `기법 적용 가능` show. Code downgrades `직접 사용` to `확인 필요` when there is no repo, project page or Space.
+- **D-12:** The footer gets a license disclaimer (owner): "상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. 실제 사용 전 원문을 확인해 주세요."
+- **D-13:** The trend goes right under the greeting and above the highlight slot (D-07 confirmed against the Figma order).
+- **D-14:** Verdicts that are `확인 필요` get a fixed code-written reason; no Claude call. Positive and negative verdicts get Claude reasons from one batched call. Code checks that each reason names only licenses from the input, does not contradict the verdict, and is 해요체. On failure the reason is stored as None and the build continues.
+- **D-15:** Set `논문만` only when the paper API call succeeded (it is a negative claim). Recapture the `hf_models_w44.json` fields `cardData.license` and `safetensors.parameters`, and add an `api.github.com` route to `mock_enrich`.
+
 ### Claude's Discretion
 - SPDX table contents, the VRAM formula, the exact one-line format and emojis, the golden-set (~10 papers) composition, and how the trend call fits in the call budget.
 
