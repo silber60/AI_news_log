@@ -1,11 +1,22 @@
-"""Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> Issue -> render -> archive."""
+"""Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> notes -> trend
+-> headline -> Issue -> render -> archive."""
 
 import logging
 from datetime import datetime
 
 from newsletter import store
 from newsletter.schema import Issue
-from newsletter.stages import analyze, enrich, fetch, headline, render, select, verdicts
+from newsletter.stages import (
+    analyze,
+    enrich,
+    fetch,
+    headline,
+    notes,
+    render,
+    select,
+    trend,
+    verdicts,
+)
 from newsletter.week import KST, parse_week
 
 log = logging.getLogger(__name__)
@@ -61,6 +72,10 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         out / "enriched.json", {"issue_id": issue_id, "count": len(records), "items": records}
     )
     items = verdicts.finalize(items)
+    # ANLY-04, D-14: reasons are written after finalize, so a downgraded verdict
+    # gets the fixed code reason, never a Claude one. Both calls are non-fatal.
+    items = notes.write_notes(items, client)
+    trend_ko = trend.write_trend(items, client)  # ANLY-05, D-07: None on failure
 
     issue = Issue(
         issue_id=issue_id,
@@ -70,6 +85,7 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         model=analyze.model_name(),
         fetch_method=fetched.method,
         items=items,
+        trend_ko=trend_ko,
         headline_ko=headline.write_headline(items, client),
     )
     store.write_json(out / "issue.json", issue)

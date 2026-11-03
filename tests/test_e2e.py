@@ -2,10 +2,19 @@
 
 import json
 
+import anthropic
+import httpx2
 import respx
-from conftest import DEFAULT_CLAUDE_GPT_REASON, FakeAnthropic, mock_hf_week
+from conftest import (
+    DEFAULT_CLAUDE_GPT_REASON,
+    DEFAULT_TREND,
+    FakeAnthropic,
+    default_notes,
+    mock_hf_week,
+)
 
-from newsletter.schema import UNKNOWN, HfEntry, Issue
+from newsletter.schema import UNKNOWN, HfEntry, Issue, TrendLLM
+from newsletter.stages import notes
 from newsletter.stages.analyze import strip_urls
 from newsletter.stages.headline import fallback_headline
 from newsletter.stages.render import build_subject
@@ -72,7 +81,8 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
 
     assert stored.explainer is None
     assert stored.highlights == []
-    assert stored.trend_ko is None
+    # ANLY-05, D-07: the trend call's default text.
+    assert stored.trend_ko == DEFAULT_TREND
     # EVID-03: PoC decided by code from the HF paper capture.
     assert [it.poc.verdict for it in stored.items] == STAR_POC
     assert [it.commercial.verdict for it in stored.items] == STAR_COMMERCIAL
@@ -124,13 +134,25 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
     assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
-    assert len(fake.calls) == 11  # 10 analysis calls + 1 headline call
+    # 10 analysis calls, then notes, trend and headline (one call each).
+    assert len(fake.calls) == 13
     texts = fake.user_texts()
     for text in texts[:10]:
         assert "http" not in text
         assert text.startswith("<paper>")
-    assert texts[10].startswith("<items>")
-    assert "http" not in texts[10]
+    for text in texts[10:13]:
+        assert text.startswith("<items>")
+        assert "http" not in text
+
+    # ANLY-04, D-14: Claude reasons for known verdicts, the code reason otherwise.
+    note = default_notes({"messages": [{"content": "rank: 1"}]}).notes[0]
+    commercial_reasons = [it.commercial.reason_ko for it in stored.items]
+    assert commercial_reasons == [
+        notes.UNKNOWN_REASON if v == UNKNOWN else note.commercial_reason_ko for v in STAR_COMMERCIAL
+    ]
+    assert commercial_reasons.count(note.commercial_reason_ko) == 9
+    assert commercial_reasons.count(notes.UNKNOWN_REASON) == 1
+    assert [it.poc.reason_ko for it in stored.items] == [note.poc_reason_ko] * 10
 
     raw_text = (week / "raw.json").read_text(encoding="utf-8")
     assert '"authors"' not in raw_text
@@ -155,6 +177,12 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
 
     html = (week / "email.html").read_text(encoding="utf-8")
     assert "구독자님" in html
+    # D-13: the trend sits right under the greeting, above the top 3.
+    greeting, trend_pos, top3 = (
+        html.index(f'data-section="{n}"') for n in ("greeting", "trend", "top3")
+    )
+    assert greeting < trend_pos < top3
+    assert greeting < html.index(DEFAULT_TREND) < top3
     assert "IBM Plex Sans KR" in html
     cards = html.split("data-card=")[1:]
     assert "🧪 코드만 공개됐어요" in cards[0]
@@ -169,6 +197,31 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert len(cards) == 10
     assert all("🤖 Claude/GPT 기법 적용" in c for c in cards)
     assert "구독자님" in (week / "email.txt").read_text(encoding="utf-8")
+
+
+def test_trend_api_error_keeps_the_build(hf_pages, archive_tmp):
+    """A failed trend call is non-fatal: no trend_ko and no trend section."""
+    req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+
+    class TrendDown(FakeAnthropic):
+        def _handle(self, ns, kw):
+            if kw.get("output_format") is TrendLLM:
+                self.calls.append({"ns": ns, "kw": kw})
+                raise anthropic.APIConnectionError(request=req)
+            return super()._handle(ns, kw)
+
+    fake = TrendDown()
+    issue = _build(hf_pages, fake)
+
+    week = archive_tmp / "archive" / ISSUE_ID
+    stored = Issue.model_validate_json((week / "issue.json").read_text(encoding="utf-8"))
+    assert stored == issue
+    assert stored.trend_ko is None
+    assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"
+    assert len(stored.items) == 10
+    html = (week / "email.html").read_text(encoding="utf-8")
+    assert 'data-section="trend"' not in html
+    assert DEFAULT_TREND not in html
 
 
 def test_fixture_abstract_url_is_stripped(hf_pages):
