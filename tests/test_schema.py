@@ -1,4 +1,4 @@
-"""Frozen Issue v2 contract: validators and committed JSON-schema snapshot."""
+"""Frozen Issue v3 contract: validators and committed JSON-schema snapshot."""
 
 import json
 from pathlib import Path
@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from newsletter.schema import UNKNOWN, Explainer, HfEntry, Issue, Item, ItemImage, ModelInfo
 
-SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v2.json"
+SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v3.json"
 FIXTURE = Path(__file__).parent / "fixtures" / "issue_w44.json"
 
 
@@ -30,7 +30,7 @@ def _issue_with(n_items: int = 5, **update) -> dict:
 
 
 def test_fixture_issue_validates_with_phase1_defaults(issue_w44):
-    assert issue_w44.schema_version == 2
+    assert issue_w44.schema_version == 3
     assert issue_w44.headline_ko
     assert issue_w44.explainer is None
     assert issue_w44.highlights == []
@@ -78,11 +78,42 @@ def test_three_summary_lines_accepted():
         "javascript:alert(1)",
         "https://example.com/x.png",
         "https://cdn-uploads.huggingface.co.evil.com/x.png",
+        "https://raw.githubusercontent.com.evil.com/x.png",
+        "http://raw.githubusercontent.com/a/b/main/x.png",
+        "https://github.com/user-attachments/assets/abc",
+        "https://huggingface.co/a/b/resolve/main/x.png",
+        "https://cdn-uploads.huggingface.co/x.png?w=1",
+        "https://raw.githubusercontent.com/a/b/main/x.png#top",
+        "https://raw.githubusercontent.com/" + "a" * 263 + ".png",  # 301 chars
     ],
 )
 def test_item_image_rejects_other_schemes_and_hosts(url):
     with pytest.raises(ValidationError):
         ItemImage(url=url, width=576, height=234)
+
+
+def test_item_image_accepts_raw_github_host_up_to_300_chars():
+    url = "https://raw.githubusercontent.com/a/b/main/docs/teaser.png"
+    assert ItemImage(url=url, width=576, height=234).url == url
+    long_url = "https://raw.githubusercontent.com/" + "a" * 262 + ".pn"
+    assert len(long_url) == 299
+    assert ItemImage(url=long_url + "g", width=576, height=234).url == long_url + "g"
+    with pytest.raises(ValidationError):
+        ItemImage(url=long_url + "gg", width=576, height=234)  # 301 chars
+
+
+def test_item_without_use_idea_rejected():
+    data = _item_data()
+    del data["use_idea_ko"]
+    with pytest.raises(ValidationError):
+        Item.model_validate(data)
+
+
+def test_item_github_stars_defaults_to_none():
+    data = _item_data()
+    del data["github_stars"]
+    assert Item.model_validate(data).github_stars is None
+    assert Item.model_validate(_item_data(github_stars=5221)).github_stars == 5221
 
 
 def test_item_image_needs_positive_size():
@@ -104,9 +135,10 @@ def test_v1_ideas_key_rejected():
         Item.model_validate(_item_data(use_ideas_ko=["a"]))
 
 
-def test_v1_issue_rejected():
+@pytest.mark.parametrize("version", [1, 2])
+def test_older_issue_versions_rejected(version):
     data = _issue_data()
-    data["schema_version"] = 1
+    data["schema_version"] = version
     with pytest.raises(ValidationError):
         Issue.model_validate(data)
 
@@ -223,7 +255,7 @@ def test_schema_snapshot_matches():
     assert SNAPSHOT.is_file(), f"missing {SNAPSHOT}"
     committed = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     assert Issue.model_json_schema() == committed, (
-        "Issue schema drifted from schema/issue.schema.v2.json. The v2 contract is frozen: "
+        "Issue schema drifted from schema/issue.schema.v3.json. The v3 contract is frozen: "
         "change it only in a planned phase and bump schema_version (new snapshot file). "
         "Do not regenerate this snapshot silently."
     )

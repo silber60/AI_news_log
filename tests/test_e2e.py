@@ -9,9 +9,22 @@ from newsletter.schema import UNKNOWN, HfEntry, Issue
 from newsletter.stages.analyze import strip_urls
 from newsletter.stages.headline import fallback_headline
 from newsletter.stages.render import build_subject
-from newsletter.stages.select import sort_key
+from newsletter.stages.select import select_top
 
 ISSUE_ID = "2026-W44"
+# D-02, D-03: the W44 fixtures' 10 most-starred repo papers, in star order.
+STAR_TOP10 = [
+    "2610.35518",
+    "2610.40599",
+    "2610.36729",
+    "2610.31635",
+    "2610.30006",
+    "2610.32253",
+    "2610.33106",
+    "2610.14018",
+    "2610.33005",
+    "2610.33845",
+]
 WEEK_FILES = ("raw.json", "selected.json", "issue.json", "email.html", "email.txt")
 
 
@@ -40,8 +53,12 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert [it.rank for it in stored.items] == list(range(1, 11))
 
     entries = [HfEntry.model_validate(d) for page in hf_pages for d in page]
-    expected = [e.paper.id for e in sorted(entries, key=sort_key)[:10]]
+    expected = [e.paper.id for e in select_top(entries)]
+    assert expected == STAR_TOP10
     assert [it.paper_id for it in stored.items] == expected
+    assert stored.items[0].github_stars == 5221
+    assert all(it.github_stars is not None for it in stored.items)
+    assert all(it.use_idea_ko for it in stored.items)
 
     assert stored.explainer is None
     assert stored.highlights == []
@@ -63,10 +80,14 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         UNKNOWN,
         UNKNOWN,
     )
-    assert rank3.model_info.training_data == "JusperLee/RealSSA-Real, JusperLee/RealSSA-Sim"
+    assert rank3.paper_id == "2610.36729"
+    assert rank3.model_info.training_data == UNKNOWN  # no cardData datasets in the capture
     assert rank3.model_info.release == "가중치 · GitHub · 데모"
-    assert rank3.model_info.size == UNKNOWN
-    assert stored.schema_version == 2
+    assert rank3.model_info.size == UNKNOWN  # no safetensors in the capture
+    for it in stored.items[3:]:
+        mi = it.model_info
+        assert (mi.size, mi.training_data, mi.release) == (UNKNOWN, UNKNOWN, UNKNOWN)
+    assert stored.schema_version == 3
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
     assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"
     assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
@@ -87,6 +108,8 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert raw["count"] == len(raw["entries"]) == 214
     selected = json.loads((week / "selected.json").read_text(encoding="utf-8"))
     assert [s["paper_id"] for s in selected["items"]] == expected
+    assert [s["basis"] for s in selected["items"]] == ["stars"] * 10
+    assert selected["items"][0]["github_stars"] == 5221
 
     html = (week / "email.html").read_text(encoding="utf-8")
     assert "구독자님" in html
@@ -116,9 +139,11 @@ def test_claude_output_model_has_no_code_owned_fields():
         "result_ko",
         "kind_ko",
         "architecture_ko",
+        "use_idea_ko",
     }
     for name in fields:
         assert "url" not in name and "rank" not in name and "verdict" not in name
+        assert "star" not in name
 
 
 def test_deliver_test_mode_sends_one_message(hf_pages, archive_tmp, fake_smtp, monkeypatch):

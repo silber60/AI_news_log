@@ -344,7 +344,24 @@ def test_image_never_reads_more_than_64k(items, hf_pages):
 
 
 def test_build_gives_rank1_the_only_image(hf_pages, archive_tmp):
-    issue = _build(hf_pages)
+    from newsletter.pipeline import run_build
+
+    # The star rank-1 paper (2610.35518) has no HF image in the W44 capture, so a
+    # test-local copy gives it the old rank-1 PNG.
+    pages = json.loads(json.dumps(hf_pages))
+    hits = [d for page in pages for d in page if d["paper"]["id"] == "2610.35518"]
+    assert len(hits) == 1
+    hits[0]["paper"]["mediaUrls"] = [RANK1_IMG]
+    with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
+        mock_hf_week(router, pages, ISSUE_ID)
+        cdn = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
+            return_value=httpx.Response(
+                206, headers={"content-type": "image/png"}, content=image_bytes()
+            )
+        )
+        issue = run_build(ISSUE_ID, claude_client=FakeAnthropic())
+    assert cdn.call_count == 1
+    assert issue.items[0].paper_id == "2610.35518"
     first = issue.items[0].image
     assert first is not None
     assert (first.url, first.width, first.height) == (RANK1_IMG, 576, 234)

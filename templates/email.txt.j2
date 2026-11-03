@@ -1,7 +1,7 @@
 {# template-version: 4 #}
 {%- macro card(it) %}
 ----------------------------------------
-{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ ▲ {{ it.upvotes }}
+{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}
 {{ it.title_ko }}
 {{ it.title_en }}
 

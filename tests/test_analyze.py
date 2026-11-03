@@ -162,6 +162,7 @@ VALID = {
     "result_ko": "공개 benchmark에서 기존 공개 모델보다 높은 점수를 보고했다.",
     "kind_ko": "Vision-Language 모델",
     "architecture_ko": "확인 필요",
+    "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있다.",
 }
 
 

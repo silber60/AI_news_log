@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "issue_id": "2026-W44",
   "week_start": "2026-10-26",
   "week_end": "2026-11-01",
@@ -13,6 +13,7 @@
       "title_en": "PDRVLA: A Vision-Language-Action Model with Physical Dynamics Representations",
       "upvotes": 153,
       "num_comments": 2,
+      "github_stars": null,
       "submitted_on_daily_at": "2026-10-28",
       "affiliation": null,
       "hf_url": "https://huggingface.co/papers/2610.37381",
@@ -27,6 +28,7 @@
         "행동 예측에 물체의 물리 동역학 표현을 함께 학습한다.",
         "로봇 조작 benchmark에서 기존 VLA보다 높은 성공률을 보고했다."
       ],
+      "use_idea_ko": "로봇 팔이 물체를 집고 옮기는 작업에 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "Vision-Language-Action 모델",
         "architecture_ko": "VLM backbone에 dynamics 표현 모듈 결합",
@@ -76,6 +78,7 @@
       "title_en": "OmniShowcase: Omnidirectional Subject-Consistent Video Generation from Multi-View Images",
       "upvotes": 139,
       "num_comments": 2,
+      "github_stars": 11,
       "submitted_on_daily_at": "2026-10-29",
       "affiliation": "KAIST AI",
       "hf_url": "https://huggingface.co/papers/2610.35684",
@@ -90,6 +93,7 @@
         "multi-view 입력으로 대상의 일관성을 유지한다.",
         "대상 일관성 지표에서 기존 영상 생성 방법보다 나은 결과를 보고했다."
       ],
+      "use_idea_ko": "상품을 여러 각도에서 보여주는 360도 영상에 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "이미지-비디오 diffusion 모델",
         "architecture_ko": "video diffusion model 기반",
@@ -135,6 +139,7 @@
       "title_en": "Efficient Streaming Audio-Visual Target Speaker Extraction for Real-World Acoustic Scenes",
       "upvotes": 136,
       "num_comments": 2,
+      "github_stars": 41,
       "submitted_on_daily_at": "2026-10-29",
       "affiliation": "Tsinghua Machine Learning Group",
       "hf_url": "https://huggingface.co/papers/2610.32749",
@@ -149,6 +154,7 @@
         "streaming 처리로 지연을 줄이고 실제 소음 환경을 다룬다.",
         "실제 녹음 데이터에서 분리 품질과 처리 속도를 함께 보고했다."
       ],
+      "use_idea_ko": "시끄러운 곳의 화상회의에서 말하는 사람 목소리만 살릴 때 써요.",
       "model_info": {
         "kind_ko": "Audio-Visual 화자 분리 모델",
         "architecture_ko": "확인 필요",
@@ -194,6 +200,7 @@
       "title_en": "Hy-Nomas: Towards Free-form Interactive World Generation",
       "upvotes": 123,
       "num_comments": 2,
+      "github_stars": 445,
       "submitted_on_daily_at": "2026-10-28",
       "affiliation": "Tencent Hunyuan",
       "hf_url": "https://huggingface.co/papers/2610.36729",
@@ -208,6 +215,7 @@
         "정해진 동작 대신 자유 형식 입력으로 장면을 조작한다.",
         "장면 일관성과 조작 반응성을 정성 평가로 보고했다."
       ],
+      "use_idea_ko": "텍스트와 카메라 조작으로 움직이는 게임 장면을 만들 때 써요.",
       "model_info": {
         "kind_ko": "interactive world 생성 모델",
         "architecture_ko": "video diffusion 기반 world model",
@@ -253,6 +261,7 @@
       "title_en": "Work Agents: Systems, Capabilities, and Optimization",
       "upvotes": 116,
       "num_comments": 2,
+      "github_stars": 71,
       "submitted_on_daily_at": "2026-10-27",
       "affiliation": "Shanghai Jiao Tong University",
       "hf_url": "https://huggingface.co/papers/2610.35845",
@@ -267,6 +276,7 @@
         "업무 자동화 관점에서 agent 연구를 분류했다.",
         "분류 체계와 공개 자료 목록을 함께 제공했다."
       ],
+      "use_idea_ko": "업무 자동화 agent를 설계하기 전에 참고 자료로 볼 수 있어요.",
       "model_info": {
         "kind_ko": "AI agent survey",
         "architecture_ko": "확인 필요",
@@ -312,6 +322,7 @@
       "title_en": "Look Only When Needed: Certificate-Guided Visual Routing for Efficient Diffusion VLMs",
       "upvotes": 107,
       "num_comments": 3,
+      "github_stars": 14,
       "submitted_on_daily_at": "2026-10-30",
       "affiliation": "KAIST AI",
       "hf_url": "https://huggingface.co/papers/2610.36671",
@@ -326,6 +337,7 @@
         "certificate로 시각 정보 참조 시점을 정한다.",
         "정확도를 유지하면서 추론 비용을 줄였다고 보고했다."
       ],
+      "use_idea_ko": "이미지를 읽는 diffusion VLM의 추론 비용을 줄일 때 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "diffusion VLM 추론 기법",
         "architecture_ko": "diffusion VLM에 visual routing 추가",
@@ -371,6 +383,7 @@
       "title_en": "TAO: Tool-Aware Joint Scheduling for LLM-Based Agentic Serving",
       "upvotes": 95,
       "num_comments": 4,
+      "github_stars": null,
       "submitted_on_daily_at": "2026-10-29",
       "affiliation": "AIOR",
       "hf_url": "https://huggingface.co/papers/2610.37230",
@@ -385,6 +398,7 @@
         "도구 실행 시간을 고려해 요청 순서를 정한다.",
         "agent 서빙 workload에서 지연 시간 감소를 보고했다."
       ],
+      "use_idea_ko": "도구를 많이 부르는 LLM agent 서비스의 응답 지연을 줄일 때 써요.",
       "model_info": {
         "kind_ko": "LLM agent 서빙 시스템",
         "architecture_ko": "확인 필요",
@@ -430,6 +444,7 @@
       "title_en": "StreamVibe: Proactive Video Agents for Evolving User Intent",
       "upvotes": 95,
       "num_comments": 2,
+      "github_stars": null,
       "submitted_on_daily_at": "2026-10-27",
       "affiliation": "Google",
       "hf_url": "https://huggingface.co/papers/2610.34662",
@@ -444,6 +459,7 @@
         "질문을 기다리지 않고 영상 흐름에 맞춰 먼저 응답한다.",
         "새 benchmark에서 기존 video agent보다 나은 응답 시점을 보고했다."
       ],
+      "use_idea_ko": "라이브 영상을 보며 먼저 말을 거는 비서를 만들 때 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "proactive video agent",
         "architecture_ko": "확인 필요",
@@ -489,6 +505,7 @@
       "title_en": "Rollback: Experience Backtracking in World Models for Policy Improvement",
       "upvotes": 82,
       "num_comments": 2,
+      "github_stars": null,
       "submitted_on_daily_at": "2026-10-28",
       "affiliation": "AgiBot World",
       "hf_url": "https://huggingface.co/papers/2610.36068",
@@ -503,6 +520,7 @@
         "실패한 지점으로 되돌아가 다른 행동을 시도한다.",
         "여러 control 과제에서 정책 성능 향상을 보고했다."
       ],
+      "use_idea_ko": "실제 로봇을 덜 돌려 보고 정책을 개선할 때 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "world model 기반 강화학습 기법",
         "architecture_ko": "확인 필요",
@@ -548,6 +566,7 @@
       "title_en": "ChronoReplay: One Answer Interface Is Not Enough for Streaming Spatial Intelligence",
       "upvotes": 74,
       "num_comments": 2,
+      "github_stars": 36,
       "submitted_on_daily_at": "2026-10-28",
       "affiliation": "LINs lab",
       "hf_url": "https://huggingface.co/papers/2610.34283",
@@ -562,6 +581,7 @@
         "답변 형식 하나만으로는 공간 지능을 재기 어렵다고 본다.",
         "여러 답변 형식을 쓰는 benchmark와 평가 결과를 공개했다."
       ],
+      "use_idea_ko": "영상 속 공간 질문에 답하는 모델을 학습시킬 때 쓸 수 있어요.",
       "model_info": {
         "kind_ko": "streaming 공간 지능 benchmark",
         "architecture_ko": "확인 필요",

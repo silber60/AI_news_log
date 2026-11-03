@@ -9,6 +9,9 @@ import pytest
 import respx
 from conftest import FakeAnthropic, mock_enrich
 
+from newsletter.schema import HfEntry
+from newsletter.stages.select import select_top
+
 HF_URL = "https://huggingface.co/api/daily_papers"
 W53 = "2026-W53"
 W53_MON = date(2026, 12, 28)
@@ -72,7 +75,10 @@ def test_w53_builds_end_to_end_via_date_loop(hf_pages, archive_tmp):
     assert stored["fetch_method"] == "date"
     assert stored["week_start"] == "2026-12-28"
     assert stored["week_end"] == "2027-01-03"
-    assert [it["rank"] for it in stored["items"]] == list(range(1, 11))
+    # D-03: N follows the star count of the 30 date-loop papers, not a fixed 10.
+    expected = select_top([HfEntry.model_validate(e) for e in raw["entries"]])
+    assert [it["paper_id"] for it in stored["items"]] == [e.paper.id for e in expected]
+    assert [it["rank"] for it in stored["items"]] == list(range(1, len(expected) + 1))
     assert issue.fetch_method == "date"
 
 

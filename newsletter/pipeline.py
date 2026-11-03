@@ -43,6 +43,8 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
                     "upvotes": e.paper.upvotes,
                     "numComments": e.numComments,
                     "submittedOnDailyAt": e.paper.submittedOnDailyAt.isoformat(),
+                    "github_stars": select.stars(e) if select.has_repo(e) else None,
+                    "basis": "stars" if select.has_repo(e) else "upvotes",
                     "entry": raw_by_id[e.paper.id],
                 }
                 for i, e in enumerate(top)

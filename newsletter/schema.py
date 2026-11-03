@@ -1,9 +1,9 @@
 """Data contracts.
 
-`Issue` (schema_version 2) is FROZEN since Phase 1.1. Later phases fill its
+`Issue` (schema_version 3) is FROZEN since Phase 1.2. Later phases fill its
 fields; they do not add or rename them outside a planned phase. The committed
-snapshot `schema/issue.schema.v2.json` guards against drift
-(`schema/issue.schema.v1.json` is kept as history).
+snapshot `schema/issue.schema.v3.json` guards against drift
+(`schema/issue.schema.v1.json` and `schema/issue.schema.v2.json` are kept as history).
 
 Code owns ranks, URLs, affiliation and every verdict. Claude only fills
 `ItemAnalysisLLM` (and, in later phases, other small sub-models) which code
@@ -15,9 +15,13 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 UNKNOWN = "확인 필요"
 IMAGE_HOST = "https://cdn-uploads.huggingface.co/"
+# D-09, D-18: only hosts that serve the image directly, without redirects.
+RAW_IMAGE_HOST = "https://raw.githubusercontent.com/"
+IMAGE_HOSTS = (IMAGE_HOST, RAW_IMAGE_HOST)
+IMAGE_URL_MAX = 300
 
 # Enum labels quoted from .planning/REQUIREMENTS.md.
 AiType = Literal["LLM", "비전", "멀티모달", "음성", "에이전트", "이미지/비디오 생성", "기타"]
@@ -38,9 +42,15 @@ def _require_https(v: str) -> str:
 HttpsUrl = Annotated[str, AfterValidator(_require_https)]
 
 
-def _require_hf_image(v: str) -> str:
-    if not v.startswith(IMAGE_HOST):
-        raise ValueError("image URL must be on cdn-uploads.huggingface.co")
+def _require_image_host(v: str) -> str:
+    if not v.startswith(IMAGE_HOSTS):
+        raise ValueError(
+            "image URL must be on cdn-uploads.huggingface.co or raw.githubusercontent.com"
+        )
+    if "?" in v or "#" in v:
+        raise ValueError("image URL must not carry a query or fragment")
+    if len(v) > IMAGE_URL_MAX:
+        raise ValueError(f"image URL must be at most {IMAGE_URL_MAX} characters")
     return v
 
 
@@ -95,7 +105,7 @@ class SkillGptFitInfo(Strict):  # Phase 3 (HILT-01)
 
 
 class ItemImage(Strict):  # DSGN-07, D-11: code-chosen, never base64
-    url: Annotated[HttpsUrl, AfterValidator(_require_hf_image)]
+    url: Annotated[HttpsUrl, AfterValidator(_require_image_host)]
     width: Annotated[int, Field(gt=0)]  # display px
     height: Annotated[int, Field(gt=0)]
 
@@ -116,6 +126,9 @@ class Item(Strict):
     title_en: str
     upvotes: int
     num_comments: int
+    github_stars: int | None = (
+        None  # D-15, D-17: HF paper.githubStars; None for no repo / upvote fill
+    )
     submitted_on_daily_at: date
     affiliation: str | None = None  # D-08: organization.fullname
     hf_url: HttpsUrl  # D-06: always
@@ -127,6 +140,7 @@ class Item(Strict):
     ai_type: AiType
     summary_ko: str  # bold one-liner, <= 80 (checked in analyze)
     summary_lines_ko: list[str]  # ANLY-07: exactly 3 (does, new, result)
+    use_idea_ko: str  # ANLY-10, D-13: one line, <= 50 (checked in analyze)
     model_info: ModelInfo  # ANLY-08
     image: ItemImage | None = None  # D-11: code-chosen
     # Later phases (defaults keep Phase 1 valid)
@@ -160,7 +174,7 @@ class Explainer(Strict):  # Phase 3 (EXPL-01/02, D-16)
 
 
 class Issue(Strict):
-    schema_version: Literal[2] = 2
+    schema_version: Literal[3] = 3
     issue_id: str
     week_start: date
     week_end: date
@@ -240,6 +254,7 @@ class ItemAnalysisLLM(BaseModel):
     result_ko: str  # ANLY-07: 보고된 결과, <= 70
     kind_ko: str  # ANLY-08: 유형, <= 30
     architecture_ko: str  # ANLY-08: 구조, <= 60, or exactly UNKNOWN
+    use_idea_ko: str  # ANLY-10: 활용 아이디어, one 해요체 line, <= 50 (checked in analyze)
 
 
 HeadlineEmoji = Literal["🤖", "💬", "👀", "🎬", "🎙️", "🧠", "🛠️", "🔍", "📈", "⚡️"]

@@ -38,7 +38,10 @@ def mock_hf_week(
 
     Every run_build test goes through here, so later plans add their HF routes
     in one place. The enrich routes (`mock_enrich`) are registered too;
-    `enrich_fail=True` makes them all answer 500.
+    `enrich_fail=True` makes them all answer 500. The HF CDN route is not
+    registered: the W44 star Top 10 has no HF image (only an .mp4), and an unused
+    route would trip `assert_all_called`. Tests that need it call `mock_enrich`'s
+    CDN route themselves.
     """
     routes = [
         router.get(
@@ -47,7 +50,7 @@ def mock_hf_week(
         ).mock(return_value=httpx.Response(200, json=page))
         for i, page in enumerate(pages)
     ]
-    mock_enrich(router, fail=enrich_fail)
+    mock_enrich(router, fail=enrich_fail, cdn=False)
     return routes
 
 
@@ -69,6 +72,7 @@ def mock_enrich(
     papers: dict | None = None,
     models: dict | None = None,
     image: httpx.Response | None = None,
+    cdn: bool = True,
 ) -> dict[str, respx.Route]:
     """Register the enrich routes (HF paper / model APIs, HF upload CDN) backed by
     the W44 captures.
@@ -76,6 +80,7 @@ def mock_enrich(
     Unknown ids get 404. `fail=True` answers 500 everywhere. `papers` / `models`
     override the fixture dicts for single-case tests. CDN requests get a 1152x468
     PNG as a 206 partial response unless `image` gives another response.
+    `cdn=False` skips the CDN route.
     """
     papers = _load_fixture("hf_papers_w44.json") if papers is None else papers
     models = _load_fixture("hf_models_w44.json") if models is None else models
@@ -100,17 +105,19 @@ def mock_enrich(
             return httpx.Response(image.status_code, headers=image.headers, content=image.content)
         return httpx.Response(206, headers={"content-type": "image/png"}, content=image_bytes())
 
-    return {
+    routes = {
         "papers": router.get(url__regex=r"^https://huggingface\.co/api/papers/").mock(
             side_effect=paper_side
         ),
         "models": router.get(url__regex=r"^https://huggingface\.co/api/models/").mock(
             side_effect=model_side
         ),
-        "cdn": router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
-            side_effect=cdn_side
-        ),
     }
+    if cdn:
+        routes["cdn"] = router.get(url__regex=r"^https://cdn-uploads\.huggingface\.co/").mock(
+            side_effect=cdn_side
+        )
+    return routes
 
 
 # ---------------------------------------------------------------- Claude fakes
@@ -157,12 +164,13 @@ def default_analysis(kw: dict) -> ItemAnalysisLLM:
     return ItemAnalysisLLM(
         title_ko=f"{title}: 테스트 제목",
         ai_type="멀티모달",
-        summary_ko="테스트용 한줄 요약입니다.",
-        does_ko="테스트 모델이 하는 일이다.",
-        new_ko="이전 방법과 다른 점이다.",
-        result_ko="논문이 보고한 결과다.",
+        summary_ko="테스트용 한줄 요약이에요.",
+        does_ko="테스트 모델이 하는 일이에요.",
+        new_ko="이전 방법과 다른 점이에요.",
+        result_ko="논문이 보고한 결과예요.",
         kind_ko="테스트 모델",
         architecture_ko="확인 필요",
+        use_idea_ko="테스트 업무에 쓸 수 있어요.",
     )
 
 

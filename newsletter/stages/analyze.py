@@ -17,6 +17,7 @@ from pydantic import ValidationError
 
 from newsletter.errors import AnalysisInvalid
 from newsletter.schema import HfEntry, Item, ItemAnalysisLLM, ModelInfo
+from newsletter.stages import select
 from newsletter.store import PROMPTS_DIR
 
 log = logging.getLogger(__name__)
@@ -310,6 +311,8 @@ def to_item(rank: int, entry: HfEntry, analysis: ItemAnalysisLLM) -> Item:
             title_en=p.title,
             upvotes=p.upvotes,
             num_comments=entry.numComments,
+            # D-17: stars only for repo papers; None means the card shows upvotes.
+            github_stars=select.stars(entry) if select.has_repo(entry) else None,
             submitted_on_daily_at=p.submittedOnDailyAt.date(),
             affiliation=(entry.organization.fullname if entry.organization else None) or None,
             hf_url=f"https://huggingface.co/papers/{p.id}",
@@ -320,6 +323,7 @@ def to_item(rank: int, entry: HfEntry, analysis: ItemAnalysisLLM) -> Item:
             ai_type=analysis.ai_type,
             summary_ko=analysis.summary_ko,
             summary_lines_ko=[analysis.does_ko, analysis.new_ko, analysis.result_ko],
+            use_idea_ko=analysis.use_idea_ko,
             # D-07: size / training_data / release stay UNKNOWN; only code fills them.
             model_info=ModelInfo(
                 kind_ko=analysis.kind_ko, architecture_ko=analysis.architecture_ko

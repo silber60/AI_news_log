@@ -22,6 +22,13 @@ from newsletter.stages.render import (
 ISSUE_ID = "2026-W44"
 
 
+def _meta(it) -> str:
+    """D-17: ★ stars (thousands separator) for star-ranked items, ▲ upvotes otherwise."""
+    if it.github_stars is not None:
+        return f"{it.rank}위 ㅣ {it.ai_type} ㅣ ★ {it.github_stars:,}"
+    return f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}"
+
+
 def _build(hf_pages):
     from newsletter.pipeline import run_build
 
@@ -40,7 +47,9 @@ def test_build_renders_full_card_email(hf_pages, archive_tmp):
     assert out.count("data-card=") == 10
     for it in issue.items:
         assert html_lib.escape(it.title_ko, quote=False) in out
-        assert f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}" in out
+        assert _meta(it) in out
+    assert "1위 ㅣ 멀티모달 ㅣ ★ 5,221" in out
+    assert "▲" not in out
     assert "구독자님" in out
     assert "2026.11.02 월요일" in out
 
@@ -278,7 +287,7 @@ def test_card_content_in_figma_order(issue_w44):
         cards[1],
         [
             "<img",
-            f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}",
+            _meta(it),
             f">{esc(it.title_ko)}<",
             f">{esc(it.title_en)}<",
             f">{esc(it.summary_ko)}<",
@@ -362,10 +371,12 @@ def test_text_part_card_format(issue_w44):
     )
     txt = render_text(issue, "구독자님")
     for it in issue.items:
-        assert f"{it.rank}위 ㅣ {it.ai_type} ㅣ ▲ {it.upvotes}" in txt
+        assert _meta(it) in txt
         assert f"논문: {it.hf_url}" in txt
         assert f"arXiv: {it.arxiv_url}" in txt
     assert "코드: https://github.com/acme/repo" in txt
+    assert "1위 ㅣ 멀티모달 ㅣ ▲ 153" in txt  # no repo: upvotes
+    assert "4위 ㅣ 멀티모달 ㅣ ★ 445" in txt
     assert "프로젝트: https://acme.example/p" in txt
 
 

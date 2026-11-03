@@ -38,7 +38,7 @@
 {%- if show_image and it.image %}
 <tr><td style="padding: 0 0 10px 0;"><img src="{{ it.image.url }}" width="{{ it.image.width }}" height="{{ it.image.height }}" alt="{{ it.title_ko }} 대표 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ ▲ {{ it.upvotes }}</td></tr>
+<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}</td></tr>
 <tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 19px; font-weight: bold; line-height: 145%; color: #222222;">{{ it.title_ko }}</td></tr>
 <tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 13px; color: #A3A3A3;">{{ it.title_en }}</td></tr>
 <tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 16px; font-weight: bold; line-height: 170%; color: #222222;">{{ it.summary_ko }}</td></tr>
