@@ -187,7 +187,7 @@ def test_notify_failure_mails_owner_only(archive_tmp, fake_smtp, monkeypatch):
     assert len(sent) == 1
     msg = sent[0]
     assert msg["To"] == "owner@example.com"
-    assert str(msg["Subject"]) == f"[실패] AI 주간 모델 브리프 {ISSUE_ID}"
+    assert str(msg["Subject"]) == f"[실패] AI 주간 해달 브리프 {ISSUE_ID}"
     assert msg.get_content_type() == "text/plain"
     body = msg.get_content()
     assert "fetch" in body

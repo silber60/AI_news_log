@@ -143,7 +143,7 @@ def test_header_date_is_monday_after_week(issue_w44):
     out = render_html(issue_w44, "구독자님")
     assert "2026.11.02 월요일" in out
     assert "#멀티모달" in out
-    assert "AI 주간 모델 브리프" in out
+    assert "AI 주간 해달 브리프" in out
     assert "매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요" in out
 
 
@@ -658,7 +658,7 @@ def test_subject_test_prefix_only_in_test_mode(issue_w44):
 
 def test_subject_has_no_brand_prefix(issue_w44):
     for mode in ("test", "send", "preview"):
-        assert "[AI 주간 모델 브리프]" not in build_subject(issue_w44, mode)
+        assert "[AI 주간 해달 브리프]" not in build_subject(issue_w44, mode)
 
 
 def test_subject_has_no_line_breaks(issue_w44):

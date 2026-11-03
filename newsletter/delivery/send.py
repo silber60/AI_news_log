@@ -16,7 +16,7 @@ from newsletter.errors import DeliveryError
 
 log = logging.getLogger(__name__)
 
-SENDER_NAME = "AI 주간 모델 브리프"
+SENDER_NAME = "AI 주간 해달 브리프"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 

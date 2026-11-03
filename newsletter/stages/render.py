@@ -15,7 +15,7 @@ from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, Issue, Item
 from newsletter.store import TEMPLATES_DIR
 
-BRAND = "AI 주간 모델 브리프"
+BRAND = "AI 주간 해달 브리프"
 # Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
 MAX_EMAIL_BYTES = 90 * 1024
 # Written on every text cell (~23 per card), so each byte counts ~230 times
