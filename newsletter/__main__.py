@@ -1,5 +1,9 @@
 """CLI: `python -m newsletter build --week YYYY-Www`, `deliver --mode test|send`,
-`notify-failure --mode test|send`.
+`notify-failure --mode test|send`, `record-topic --mode preview|test|send`.
+
+`record-topic` appends the current issue's explainer topic to
+data/explainer_topics.json, only in send mode (D-06, D-15). It logs issue ids
+and status codes only, never topic text.
 
 The top-level handler reports a failure as `stage=<stage> error=<ClassName>` only
 and writes the same two fields to out/status.json. Exception text and tracebacks
@@ -20,6 +24,9 @@ from newsletter.errors import DeliveryError, PipelineError
 from newsletter.week import KST, previous_iso_week
 
 NOTIFY = "notify-failure"
+RECORD = "record-topic"
+
+log = logging.getLogger("newsletter")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -31,7 +38,26 @@ def _parser() -> argparse.ArgumentParser:
     d.add_argument("--mode", choices=["test", "send"], required=True)
     n = sub.add_parser(NOTIFY, help="mail a failure notice to the owner")
     n.add_argument("--mode", choices=["test", "send"], required=True)
+    r = sub.add_parser(RECORD, help="append the sent issue's explainer topic to the record")
+    r.add_argument("--mode", choices=["preview", "test", "send"], required=True)
     return p
+
+
+def _record_topic(mode: str) -> None:
+    if mode != "send":
+        log.info("topic=skipped mode=%s", mode)
+        return
+    from newsletter import topics
+    from newsletter.schema import Issue
+
+    issue_id = store.read_current()
+    issue = Issue.model_validate(store.read_json(store.week_dir(issue_id) / "issue.json"))
+    if issue.explainer is None:
+        log.info("topic=none issue=%s", issue.issue_id)
+    elif topics.record(issue):
+        log.info("topic=recorded issue=%s", issue.issue_id)
+    else:
+        log.info("topic=exists issue=%s", issue.issue_id)
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -48,6 +74,8 @@ def _run(args: argparse.Namespace) -> None:
         from newsletter.delivery.notify import send_failure_notice
 
         send_failure_notice(args.mode)
+    elif args.command == RECORD:
+        _record_topic(args.mode)
 
 
 _EMAIL_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")

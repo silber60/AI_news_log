@@ -234,3 +234,76 @@ def test_delivery_error_detail_is_printed_without_addresses(capsys):
     assert "stage=notify-failure error=DeliveryError" in err
     assert "detail=SMTPAuthenticationError code=535" in err
     assert "@" not in err
+
+
+# ------------------------------------------------------------ record-topic (D-06, D-15)
+
+
+def _stage_issue(root: Path, issue) -> None:
+    store.write_json(store.week_dir(issue.issue_id) / "issue.json", issue)
+    store.write_current(issue.issue_id)
+
+
+def _topics_file(root: Path, monkeypatch) -> Path:
+    p = root / "explainer_topics.json"
+    p.write_text('{"version": 1, "topics": []}\n', encoding="utf-8")
+    monkeypatch.setenv("NEWSLETTER_TOPICS_PATH", str(p))
+    return p
+
+
+def _explained(issue):
+    from newsletter.schema import Explainer
+
+    topic = Explainer(topic="Mixture of Experts", body_ko="본문", related_ranks=[1])
+    return issue.model_copy(update={"explainer": topic})
+
+
+def test_record_topic_send_writes_one_entry_once(archive_tmp, issue_w44, monkeypatch, caplog):
+    from newsletter.__main__ import main
+
+    p = _topics_file(archive_tmp, monkeypatch)
+    _stage_issue(archive_tmp, _explained(issue_w44))
+    with caplog.at_level("INFO"):
+        assert main(["record-topic", "--mode", "send"]) == 0
+        assert main(["record-topic", "--mode", "send"]) == 0
+    entries = json.loads(p.read_text(encoding="utf-8"))["topics"]
+    assert entries == [{"issue_id": ISSUE_ID, "date": "2026-11-02", "topic": "Mixture of Experts"}]
+    assert f"topic=recorded issue={ISSUE_ID}" in caplog.text
+    assert f"topic=exists issue={ISSUE_ID}" in caplog.text
+    assert "Mixture" not in caplog.text
+
+
+def test_record_topic_preview_and_test_write_nothing(archive_tmp, issue_w44, monkeypatch, caplog):
+    from newsletter.__main__ import main
+
+    p = _topics_file(archive_tmp, monkeypatch)
+    before = p.read_bytes()
+    _stage_issue(archive_tmp, _explained(issue_w44))
+    with caplog.at_level("INFO"):
+        for mode in ("preview", "test"):
+            assert main(["record-topic", "--mode", mode]) == 0
+            assert f"topic=skipped mode={mode}" in caplog.text
+    assert p.read_bytes() == before
+
+
+def test_record_topic_without_explainer_writes_nothing(archive_tmp, issue_w44, monkeypatch, caplog):
+    from newsletter.__main__ import main
+
+    p = _topics_file(archive_tmp, monkeypatch)
+    before = p.read_bytes()
+    _stage_issue(archive_tmp, issue_w44)
+    with caplog.at_level("INFO"):
+        assert main(["record-topic", "--mode", "send"]) == 0
+    assert f"topic=none issue={ISSUE_ID}" in caplog.text
+    assert p.read_bytes() == before
+
+
+def test_record_topic_without_current_issue_fails(archive_tmp, monkeypatch, capsys):
+    from newsletter.__main__ import main
+
+    p = _topics_file(archive_tmp, monkeypatch)
+    before = p.read_bytes()
+    monkeypatch.delenv("NEWSLETTER_DEBUG", raising=False)
+    assert main(["record-topic", "--mode", "send"]) == 1
+    assert "stage=record-topic error=FileNotFoundError" in capsys.readouterr().err
+    assert p.read_bytes() == before
