@@ -10,7 +10,7 @@
 
 {%- macro subscribe_form(form_id) %}
 <form class="form-card" id="{{ form_id }}" method="post" action="{{ subscribe_url }}" data-endpoint="{{ subscribe_url }}">
-<h2>매주 월요일 아침, 메일함으로 받아보세요</h2>
+<h2>매주 월요일 아침,<br>메일함으로 받아보세요</h2>
 <input type="hidden" name="action" value="subscribe">
 <input type="hidden" name="fmt" value="html">
 <input type="hidden" name="cv" value="{{ consent_version }}">
