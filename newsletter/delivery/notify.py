@@ -70,6 +70,6 @@ def send_failure_notice(mode: str) -> int:
         to=recipient,
         text=build_notice_text(mode, issue_id, _status()),
     )
-    sent = send_messages([msg], user=user, password=password)
+    sent = send_messages([msg], password=password)
     log.info("failure notice sent=%d", sent)
     return sent

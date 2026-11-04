@@ -423,7 +423,8 @@ def test_readme_combined_setup():
     assert "새 배포" in text and "새 버전" in text
     assert "붙여 넣지 않아요" in text  # never paste a key value anywhere
     found = ADDRESS_RE.findall(text)
-    assert all(a.lower().endswith("@example.com") for a in found), found
+    allowed = ("@example.com", "newsletter@modaklog.characterplanner.co.kr")  # public sender
+    assert all(a.lower().endswith(allowed) for a in found), found
 
 
 def test_queue_waits_while_no_issue_is_published():
@@ -442,3 +443,24 @@ def test_requeue_unwelcomed_is_owner_only_and_never_rewelcomes():
     assert "'form'" in body  # import rows never get a welcome (D-06)
     assert "WELCOME_DAILY_CAP" in body
     assert "Logger.log" not in body and "Gmail." not in body
+
+
+def test_welcome_prefers_resend_with_the_weekly_from_and_headers():
+    # Phase 4.2: same From domain as send.py; Gmail advanced service is only the fallback.
+    body = _body("sendWelcome_")
+    send = (ROOT / "newsletter" / "delivery" / "send.py").read_text(encoding="utf-8")
+    assert "const MAIL_FROM = 'newsletter@modaklog.characterplanner.co.kr';" in _src()
+    assert 'MAIL_DOMAIN = "modaklog.characterplanner.co.kr"' in send
+    assert "prop_('RESEND_API_KEY')" in body
+    assert body.index("RESEND_URL") < body.index("Gmail.Users.Messages.send")
+    for s in (
+        "reply_to: me",
+        "to: [email]",
+        "'List-Unsubscribe': unsub",
+        "'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'",
+        "Authorization: 'Bearer ' + resendKey",
+        "muteHttpExceptions: true",
+    ):
+        assert s in body, s
+    # The key and the reply never reach a log line.
+    assert "Logger.log" not in body and "console." not in body

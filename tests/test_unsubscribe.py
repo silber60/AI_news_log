@@ -165,9 +165,11 @@ def test_code_gs_get_never_writes():
 
 def test_code_gs_holds_no_secrets_and_quotes_the_token():
     src = CODE_GS.read_text(encoding="utf-8")
-    # Only the reserved example.com test-vector address may appear.
+    # Only the reserved example.com test-vector address and the public sender
+    # address (Phase 4.2, newsletter@ on the owner's verified domain) may appear.
     found = re.findall(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}", src)
-    assert found and all(a.lower().endswith("@example.com") for a in found), found
+    allowed = ("@example.com", "newsletter@modaklog.characterplanner.co.kr")
+    assert found and all(a.lower().endswith(allowed) for a in found), found
     header = src.split("const SHEET")[0]
     for name in ("SHEET_ID", "TOKEN_SECRET", "LIST_KEY", "SEND_LIST_KEY", "ADMIN_KEY"):
         assert name in header

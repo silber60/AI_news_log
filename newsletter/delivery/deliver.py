@@ -75,7 +75,7 @@ def _run_test(issue: Issue, user: str, password: str) -> dict:
         list_unsubscribe=header,
         one_click=t is not None,
     )
-    sent = send_messages([msg], user=user, password=password)
+    sent = send_messages([msg], password=password)
     result = {"recipients": 1, "sent": sent}
     log.info("mode=test recipients=%d sent=%d", result["recipients"], sent)
     return result
@@ -117,7 +117,7 @@ def _run_send(issue: Issue, user: str, password: str) -> dict:
         )
     sent = 0
     if messages:
-        sent = send_messages(messages, user=user, password=password, pause=SEND_PAUSE_SECONDS)
+        sent = send_messages(messages, password=password, pause=SEND_PAUSE_SECONDS)
     else:
         log.info("mode=send nothing to send after unsubscribe filter")
     result = {

@@ -1,4 +1,11 @@
-"""Build and send email messages over Gmail SMTP (SSL, port 465).
+"""Build and send email messages over Resend SMTP (SSL, port 465).
+
+Phase 4.2 (owner, 2026-11-04): mail goes out from the owner's own domain
+through Resend, so receivers see SPF/DKIM/DMARC for MAIL_DOMAIN instead of a
+personal Gmail. The From address is MAIL_FROM. The owner's Gmail (the
+SMTP_USER secret) becomes the Reply-To and the List-Unsubscribe mailto, so
+replies such as 수신거부 still reach the owner. The SMTP_PASSWORD secret holds
+the Resend API key; the SMTP login name is the fixed string "resend".
 
 Never enable SMTP debug output: it would print addresses and credentials to the
 public Actions log.
@@ -17,8 +24,11 @@ from newsletter.errors import DeliveryError
 log = logging.getLogger(__name__)
 
 SENDER_NAME = "모닥로그 AI 리포트"
-SMTP_HOST = "smtp.gmail.com"
+MAIL_DOMAIN = "modaklog.characterplanner.co.kr"  # verified in Resend (Tokyo region)
+MAIL_FROM = "newsletter@" + MAIL_DOMAIN
+SMTP_HOST = "smtp.resend.com"
 SMTP_PORT = 465
+SMTP_LOGIN = "resend"  # Resend's fixed SMTP user name; the password is the API key
 
 
 def build_message(
@@ -32,13 +42,15 @@ def build_message(
     one_click: bool = False,
 ) -> EmailMessage:
     """D-14: List-Unsubscribe when given; the one-click Post header only with an https target
-    (RFC 8058), which the caller signals with one_click."""
+    (RFC 8058), which the caller signals with one_click. sender_addr is the owner's
+    reply address (Reply-To); From is always MAIL_FROM (Phase 4.2)."""
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = formataddr((SENDER_NAME, sender_addr))
+    msg["From"] = formataddr((SENDER_NAME, MAIL_FROM))
+    msg["Reply-To"] = sender_addr
     msg["To"] = to
     msg["Date"] = formatdate(localtime=True)
-    msg["Message-ID"] = make_msgid(domain="gmail.com")
+    msg["Message-ID"] = make_msgid(domain=MAIL_DOMAIN)
     if list_unsubscribe:
         # Header injection guard: no CR/LF may reach the header.
         msg["List-Unsubscribe"] = list_unsubscribe.replace("\r", "").replace("\n", "")
@@ -53,20 +65,19 @@ def build_message(
 
 
 def build_text_message(*, subject: str, sender_addr: str, to: str, text: str) -> EmailMessage:
-    """Plain-text only message (owner failure notice, D-13)."""
+    """Plain-text only message (owner failure notice, D-13). sender_addr is the Reply-To."""
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = formataddr((SENDER_NAME, sender_addr))
+    msg["From"] = formataddr((SENDER_NAME, MAIL_FROM))
+    msg["Reply-To"] = sender_addr
     msg["To"] = to
     msg["Date"] = formatdate(localtime=True)
-    msg["Message-ID"] = make_msgid(domain="gmail.com")
+    msg["Message-ID"] = make_msgid(domain=MAIL_DOMAIN)
     msg.set_content(text)
     return msg
 
 
-def send_messages(
-    messages: Iterable[EmailMessage], *, user: str, password: str, pause: float = 0.0
-) -> int:
+def send_messages(messages: Iterable[EmailMessage], *, password: str, pause: float = 0.0) -> int:
     """Send all messages over one SMTP_SSL connection.
 
     SMTP and socket errors are re-raised as DeliveryError carrying only the class
@@ -78,7 +89,7 @@ def send_messages(
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as smtp:
-            smtp.login(user, password.replace(" ", ""))
+            smtp.login(SMTP_LOGIN, password.replace(" ", ""))
             for i, msg in enumerate(messages):
                 if i and pause > 0:
                     time.sleep(pause)

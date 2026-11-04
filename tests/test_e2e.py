@@ -353,12 +353,16 @@ def test_deliver_test_mode_sends_one_message(hf_pages, archive_tmp, fake_smtp, m
 
     assert len(fake_smtp.instances) == 1
     smtp = fake_smtp.instances[0]
-    assert (smtp.host, smtp.port) == ("smtp.gmail.com", 465)
-    assert smtp.login_calls == [("sender@example.com", "abcdefghijklmnop")]
+    # Phase 4.2: Resend SMTP on the owner's domain; the Gmail secret is the Reply-To.
+    assert (smtp.host, smtp.port) == ("smtp.resend.com", 465)
+    assert smtp.login_calls == [("resend", "abcdefghijklmnop")]
     assert len(smtp.sent) == 1
     msg = smtp.sent[0]
     assert msg.get_content_type() == "multipart/alternative"
     assert msg["To"] == "owner@example.com"
+    assert msg["From"].addresses[0].addr_spec == "newsletter@modaklog.characterplanner.co.kr"
+    assert msg["Reply-To"] == "sender@example.com"
+    assert "<mailto:sender@example.com?subject=unsubscribe>" in msg["List-Unsubscribe"]
     assert str(msg["Subject"]) == "[TEST] " + build_subject(stored, "send")
     html = msg.get_body(preferencelist=("html",)).get_content()
     assert "구독자님" in html

@@ -9,6 +9,8 @@
 //   LIST_KEY       = UNSUBSCRIBE_LIST_KEY   (action=list: unsubscribed ids only)
 //   SEND_LIST_KEY  = SUBSCRIBER_LIST_KEY    (action=members: names and addresses)
 //   ADMIN_KEY      = SUBSCRIBE_ADMIN_KEY    (action=import: the one-time import)
+//   RESEND_API_KEY = SMTP_PASSWORD          (Phase 4.2: welcome via Resend; optional,
+//                                            the Gmail advanced service is the fallback)
 //
 // The unsubscribes tab stores only the 32-hex id, the time and how it came in.
 // The subscribers tab holds name and address until the reader unsubscribes;
@@ -49,6 +51,8 @@ const WELCOME_MAX_ATTEMPTS = 3;         // trigger runs that may try one welcome
 const WELCOME_BATCH = 20;               // welcomes claimed per trigger run
 const WELCOME_MAX_BYTES = 92160;        // the filled html must stay below this (D-04)
 const LATEST_URL = SITE + 'welcome/latest.json';
+const MAIL_FROM = 'newsletter@modaklog.characterplanner.co.kr';   // Phase 4.2, verified in Resend
+const RESEND_URL = 'https://api.resend.com/emails';
 const BRAND = '모닥로그 AI 리포트';
 const SUB_TITLE = '구독 신청 | 모닥로그 AI 리포트';
 const REPLY = {
@@ -471,6 +475,32 @@ function sendWelcome_(email, name, t) {
   if (html === null || text === null || utf8Len_(html) >= WELCOME_MAX_BYTES) return 'shape';
   const me = Session.getEffectiveUser().getEmail();
   if (!me) return 'shape';
+  const unsub = '<mailto:' + me + '?subject=unsubscribe>, <' + d.endpoint + '?t=' + t + '>';
+  // Phase 4.2: with a RESEND_API_KEY script property the welcome goes out from the
+  // owner's domain through the Resend API (same From and headers as the weekly
+  // send.py mail; the owner's Gmail is the Reply-To). Without it, the Gmail
+  // advanced service below is the fallback.
+  const resendKey = prop_('RESEND_API_KEY');
+  if (resendKey) {
+    const r2 = UrlFetchApp.fetch(RESEND_URL, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + resendKey },
+      muteHttpExceptions: true,
+      payload: JSON.stringify({
+        from: String(d.from_name || BRAND) + ' <' + MAIL_FROM + '>',
+        to: [email],                    // the address only; the name never goes in a header
+        reply_to: me,
+        subject: String(d.subject).replace(/[\r\n]/g, ' '),
+        html: html,
+        text: text,
+        headers: { 'List-Unsubscribe': unsub, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+      })
+    });
+    const code = r2.getResponseCode();
+    if (code < 200 || code >= 300) throw new Error('resend ' + code);   // retried; never logged
+    return 'sent';
+  }
   const b = 'b' + Utilities.getUuid().replace(/-/g, '');
   const mime = [
     'From: ' + word_(String(d.from_name || BRAND)) + ' <' + me + '>',

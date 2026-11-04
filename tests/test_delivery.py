@@ -45,7 +45,7 @@ def test_send_mode_greets_subscriber_by_name(current_issue, send_env, fake_smtp)
 
     assert len(fake_smtp.instances) == 1
     smtp = fake_smtp.instances[0]
-    assert smtp.login_calls == [("owner@example.com", "abcdefgh")]
+    assert smtp.login_calls == [("resend", "abcdefgh")]  # Phase 4.2: Resend SMTP login
     assert len(smtp.sent) == 1
     msg = smtp.sent[0]
     assert msg.get_content_type() == "multipart/alternative"
