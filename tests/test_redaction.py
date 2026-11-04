@@ -149,7 +149,7 @@ def test_send_logs_counts_only(ready, fake_smtp, capsys, caplog):
     out = captured.out + captured.err + caplog.text
     assert "@" not in out
     assert "홍길동" not in out
-    assert "recipients=1 sent=1 skipped_rows=0" in out
+    assert "recipients=1 unsubscribed=0 sent=1 skipped_rows=0" in out
 
 
 def test_build_logs_never_carry_newsletter_text(hf_pages, archive_tmp, caplog):

@@ -4,6 +4,7 @@ import re
 import shutil
 from pathlib import Path
 
+import httpx
 import pytest
 import respx
 
@@ -64,7 +65,7 @@ def test_send_mode_one_message_per_recipient(current_issue, send_env, fake_smtp,
 
     result = run_deliver("send")
 
-    assert result == {"recipients": 2, "sent": 2, "skipped_rows": 1}
+    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 1}
     sent = fake_smtp.instances[0].sent
     assert [m["To"] for m in sent] == ["a@example.com", "b@example.com"]
     assert "가님" in sent[0].get_body(preferencelist=("plain",)).get_content()
@@ -204,3 +205,138 @@ def test_build_message_without_unsubscribe_has_no_header():
 
     msg = build_message(subject="s", sender_addr=OWNER, to="a@example.com", text="t", html="h")
     assert _raw_header_lines(msg, "List-Unsubscribe") == []
+
+
+# ------------------------------------------- send-time unsubscribe filter (D-13)
+
+LIST_KEY = "test-list-key-value"
+A, B = "a@example.com", "b@example.com"
+TWO_CSV = f"email,name\n{A},가\n{B},나\n"
+
+
+@pytest.fixture
+def filter_env(send_env, endpoint, monkeypatch):
+    monkeypatch.setenv("SUBSCRIBERS_CSV", TWO_CSV)
+    monkeypatch.setenv("UNSUBSCRIBE_TOKEN_SECRET", TOKEN_SECRET)
+    monkeypatch.setenv("UNSUBSCRIBE_LIST_KEY", LIST_KEY)
+
+
+def _secret_free(text: str) -> None:
+    from newsletter.delivery.unsubscribe import token
+
+    assert "@" not in text
+    for addr in (A, B, OWNER):
+        assert token(addr, TOKEN_SECRET) not in text
+    assert LIST_KEY not in text and TOKEN_SECRET not in text
+
+
+def test_send_skips_unsubscribed_reader(current_issue, filter_env, fake_smtp, caplog, capsys):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.delivery.unsubscribe import token
+
+    caplog.set_level("INFO")
+    with respx.mock(assert_all_mocked=True) as router:
+        route = router.post(LONG_ENDPOINT).respond(200, json={"ids": [token(A, TOKEN_SECRET)]})
+        result = run_deliver("send")
+    assert route.call_count == 1
+    assert result == {"recipients": 2, "unsubscribed": 1, "sent": 1, "skipped_rows": 0}
+    sent = fake_smtp.instances[0].sent
+    assert [m["To"] for m in sent] == [B]
+    t = token(B, TOKEN_SECRET)
+    assert f"<{LONG_ENDPOINT}?t={t}>" in _raw_header_lines(sent[0], "List-Unsubscribe")[0]
+    assert _raw_header_lines(sent[0], "List-Unsubscribe-Post")
+    assert f"unsubscribe/?t={t}" in sent[0].get_body(preferencelist=("html",)).get_content()
+    assert "mode=send recipients=2 unsubscribed=1 sent=1 skipped_rows=0" in caplog.text
+    captured = capsys.readouterr()
+    _secret_free(caplog.text + captured.out + captured.err)
+
+
+def test_send_with_everyone_unsubscribed_sends_nothing(
+    current_issue, filter_env, fake_smtp, caplog
+):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.delivery.unsubscribe import token
+
+    caplog.set_level("INFO")
+    ids = [token(A, TOKEN_SECRET), token(B, TOKEN_SECRET)]
+    with respx.mock(assert_all_mocked=True) as router:
+        router.post(LONG_ENDPOINT).respond(200, json={"ids": ids})
+        result = run_deliver("send")
+    assert result == {"recipients": 2, "unsubscribed": 2, "sent": 0, "skipped_rows": 0}
+    assert fake_smtp.instances == []
+    assert "mode=send recipients=2 unsubscribed=2 sent=0 skipped_rows=0" in caplog.text
+    _secret_free(caplog.text)
+
+
+@pytest.mark.parametrize(
+    "respond",
+    [
+        lambda r: r.respond(500),
+        lambda r: r.respond(200, text="not json"),
+        lambda r: r.mock(side_effect=httpx.ConnectError("boom")),
+    ],
+    ids=["status-500", "bad-json", "connect-error"],
+)
+def test_send_fails_closed_when_list_unreadable(current_issue, filter_env, fake_smtp, respond):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.errors import DeliveryError
+
+    with respx.mock(assert_all_mocked=True) as router:
+        respond(router.post(LONG_ENDPOINT))
+        with pytest.raises(DeliveryError) as exc:
+            run_deliver("send")
+    _secret_free(str(exc.value))
+    assert fake_smtp.instances == []
+
+
+@pytest.mark.parametrize("missing", ["UNSUBSCRIBE_LIST_KEY", "UNSUBSCRIBE_TOKEN_SECRET"])
+def test_send_fails_closed_without_unsubscribe_secret(
+    current_issue, filter_env, fake_smtp, monkeypatch, missing
+):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.errors import DeliveryError
+
+    monkeypatch.delenv(missing)
+    with respx.mock(assert_all_mocked=True) as router:
+        with pytest.raises(DeliveryError, match=f"missing environment variable {missing}"):
+            run_deliver("send")
+        assert router.calls.call_count == 0
+    assert fake_smtp.instances == []
+
+
+def test_list_failure_goes_through_cli_failure_path(
+    current_issue, filter_env, fake_smtp, capsys, caplog
+):
+    from newsletter.__main__ import main
+
+    with respx.mock(assert_all_mocked=True) as router:
+        router.post(LONG_ENDPOINT).respond(500)
+        assert main(["deliver", "--mode", "send"]) != 0
+    status = store.read_json(store.out_root() / "status.json")
+    assert status == {"stage": "deliver", "error_class": "DeliveryError"}
+    assert fake_smtp.instances == []
+    captured = capsys.readouterr()
+    _secret_free(captured.out + captured.err + caplog.text)
+
+
+def test_send_without_endpoint_fetches_nothing_and_mails_everyone(
+    current_issue, send_env, fake_smtp, monkeypatch
+):
+    from newsletter.delivery import unsubscribe
+    from newsletter.delivery.deliver import run_deliver
+
+    assert unsubscribe.UNSUBSCRIBE_ENDPOINT is None
+    monkeypatch.setenv("SUBSCRIBERS_CSV", TWO_CSV)
+    monkeypatch.delenv("UNSUBSCRIBE_TOKEN_SECRET", raising=False)
+    monkeypatch.delenv("UNSUBSCRIBE_LIST_KEY", raising=False)
+    with respx.mock(assert_all_mocked=True) as router:
+        result = run_deliver("send")
+        assert router.calls.call_count == 0
+    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 0}
+    sent = fake_smtp.instances[0].sent
+    assert [m["To"] for m in sent] == [A, B]
+    for m in sent:
+        assert _raw_header_lines(m, "List-Unsubscribe") == [
+            f"List-Unsubscribe: <mailto:{OWNER}?subject=unsubscribe>"
+        ]
+        assert "구독 해지" not in m.get_body(preferencelist=("html",)).get_content()
