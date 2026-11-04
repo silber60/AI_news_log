@@ -1136,10 +1136,51 @@ def test_web_issue_drops_reply_line_and_header_link(issue_w44):
     assert "구독자님, 안녕하세요." in out
 
 
+UNSUB_URL = "https://silber60.github.io/AI_news_log/unsubscribe/?t=" + "0123456789abcdef" * 2
+# 04-04 Task 1 offered 32 or 64 hex; the size gate uses the longer one.
+UNSUB_URL_MAX = "https://silber60.github.io/AI_news_log/unsubscribe/?t=" + "f" * 64
+
+
+def test_email_footer_has_personal_unsubscribe_link(issue_w44):
+    out = render_html(issue_w44, "구독자님", unsubscribe_url=UNSUB_URL)
+    footer = out[_section_pos(out, "footer") :]
+    assert len(re.findall(rf'<a href="{re.escape(UNSUB_URL)}"[^>]*>구독 해지</a>', footer)) == 1
+    assert out.count(UNSUB_URL) == 1
+    assert "수신거부" in footer  # D-14: the reply line stays as a fallback
+    assert _ordered(footer, ["웹에서 보기", "지난 호 보기", "구독 해지"])
+    txt = render_text(issue_w44, "구독자님", unsubscribe_url=UNSUB_URL)
+    assert f"구독 해지: {UNSUB_URL}" in txt
+    assert "수신거부" in txt
+
+
+def test_no_unsubscribe_link_without_url(issue_w44):
+    out = render_html(issue_w44, "구독자님")
+    assert "구독 해지" not in out and "unsubscribe/?t=" not in out
+    txt = render_text(issue_w44, "구독자님")
+    assert "구독 해지" not in txt and "unsubscribe/?t=" not in txt
+
+
+def test_web_issue_has_no_unsubscribe_link(issue_w44):
+    out = render_mod.render_web_issue(issue_w44)
+    assert ">구독 해지<" not in out and "unsubscribe/?t=" not in out
+
+
+def test_footer_has_no_contact_address(issue_w44):
+    # D-15: brand name and send note only; the footer is also on the public web copy.
+    for out in (
+        render_html(issue_w44, "구독자님", unsubscribe_url=UNSUB_URL),
+        render_mod.render_web_issue(issue_w44),
+    ):
+        assert "@" not in out[_section_pos(out, "footer") :]
+    txt = render_text(issue_w44, "구독자님", unsubscribe_url=UNSUB_URL)
+    assert "@" not in txt[txt.rindex("이번 주 리포트는 여기까지") :]
+
+
 def test_worst_case_under_byte_limit(issue_w44):
     worst = _worst_case(issue_w44)
     assert all(len(it.use_idea_ko) == 50 and it.github_stars == 99999 for it in worst.items)
-    out = render_html(worst, "구독자님")
+    out = render_html(worst, "구독자님", unsubscribe_url=UNSUB_URL_MAX)
+    assert f'href="{UNSUB_URL_MAX}"' in out
     n = len(out.encode("utf-8"))
     print(f"worst-case email.html bytes={n} headroom={MAX_EMAIL_BYTES - n}")
     assert "★ 99,999" in out
