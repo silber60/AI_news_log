@@ -7,7 +7,15 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from conftest import FakeSMTP
+import respx
+from conftest import (
+    FakeAnthropic,
+    FakeSMTP,
+    default_analysis,
+    default_response,
+    make_parsed,
+    mock_hf_week,
+)
 
 from newsletter import store
 
@@ -142,3 +150,38 @@ def test_send_logs_counts_only(ready, fake_smtp, capsys, caplog):
     assert "@" not in out
     assert "홍길동" not in out
     assert "recipients=1 sent=1 skipped_rows=0" in out
+
+
+def test_build_logs_never_carry_newsletter_text(hf_pages, archive_tmp, caplog):
+    """T-03-19: a build whose rank-2 line trips the lint (so the polish call runs)
+    logs paths, counts and codes only, never the newsletter's text."""
+    from newsletter.pipeline import run_build
+
+    dirty = "혁신적인 이전 방법과 다른 점이에요."
+
+    def dirty_rank2(kw):
+        return make_parsed(default_analysis(kw).model_copy(update={"new_ko": dirty}))
+
+    fake = FakeAnthropic([default_response, dirty_rank2])
+    caplog.set_level("INFO")
+    with respx.mock(assert_all_mocked=True, assert_all_called=True) as router:
+        mock_hf_week(router, hf_pages, ISSUE_ID)
+        issue = run_build(ISSUE_ID, claude_client=fake)
+    assert len(fake.calls) == 16
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert any(m.startswith("polish attempt=1 ") for m in messages)
+    texts = {dirty, issue.trend_ko}
+    for it in issue.items:
+        texts |= {it.title_ko, it.summary_ko, *it.summary_lines_ko, it.use_idea_ko}
+        texts |= {it.claude_gpt.reason_ko, it.skill_gpt.reason_ko}
+        texts |= {it.commercial.reason_ko, it.poc.reason_ko}
+    for h in issue.highlights:
+        texts |= {h.why_ko, h.how_ko}
+    ex = issue.explainer
+    texts |= {ex.topic, ex.point_ko, ex.body_ko, ex.example_ko}
+    texts = {t for t in texts if t}
+    for m in messages:
+        for t in texts:
+            assert t not in m, m
+        assert "혁신적인" not in m

@@ -308,6 +308,7 @@ def test_every_system_prompt_carries_the_port():
         headline.headline_system_prompt(),
         trend.trend_system_prompt(),
         notes.notes_system_prompt(),
+        humanize.polish_system_prompt(),
     ):
         assert port in prompt
 
@@ -624,3 +625,30 @@ def test_default_fake_texts_are_lint_clean():
     ]  # fmt: skip
     for text in texts:
         assert not humanize.needs_polish(humanize.lint(text)), humanize.lint(text)
+
+
+# ---- 03-06 Task 3: polish prompt ----
+
+
+def _polish_md() -> str:
+    return (PROMPTS_DIR / "polish.md").read_text(encoding="utf-8")
+
+
+def test_polish_system_prompt_is_polish_md_plus_port():
+    prompt = humanize.polish_system_prompt()
+    assert prompt == _polish_md().strip() + "\n\n" + _humanizer().strip()
+
+
+def test_polish_prompt_has_one_hint_line_per_lint_code():
+    lines = _polish_md().splitlines()
+    for code in (*humanize.HARD_CODES, *humanize.WEAK_CODES):
+        hits = [line for line in lines if line.startswith(f"- `{code}`: ")]
+        assert len(hits) == 1, code
+
+
+def test_polish_prompt_fences_fields_as_data():
+    md = _polish_md()
+    assert "`<fields>`" in md and "데이터" in md
+    assert "<previous_output_problems>" in md
+    assert "id" in md and "그대로" in md
+    assert "**" not in md
