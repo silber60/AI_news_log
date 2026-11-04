@@ -227,21 +227,31 @@ def test_deploy_jobs_are_secret_free_and_checkout_free():
     assert "needs.publish.result == 'success'" in cond[0]
 
 
-def test_publish_job_is_send_on_main_only_and_secret_free():
+def test_publish_job_commits_every_run_on_main_and_is_secret_free():
+    # AUTO-03, D-04: always() so a failed or cancelled run still commits archive/ and the
+    # ledger; preview commits nothing; the sent-only steps carry their own gate.
     header, blocks = _jobs(_text(NEWSLETTER))["publish"]
     job = header + "\n" + "\n".join(blocks)
     assert "needs: run" in header
-    cond = [line for line in header.splitlines() if line.strip().startswith("if:")]
+    cond = [line for line in _code(header) if line.strip().startswith("if:")]
     assert len(cond) == 1
-    assert "inputs.mode == 'send'" in cond[0]
+    assert cond[0].strip().startswith("if: ${{ always() && ")
     assert "github.ref == 'refs/heads/main'" in cond[0]
-    assert "needs.run.result == 'success'" in cond[0]
+    assert "(github.event_name == 'schedule' || inputs.mode != 'preview')" in cond[0]
+    assert "needs.run.result" not in cond[0]
     assert "secrets." not in job
     for name in DELIVERY_SECRETS + ("ANTHROPIC_API_KEY",):
         assert name not in job, f"{name} reaches the publish job"
     checkout = [b for b in blocks if "actions/checkout@" in b]
     assert len(checkout) == 1
     assert "persist-credentials: false" in checkout[0]
+    downloads = [b for b in blocks if "actions/download-artifact@" in b]
+    assert len(downloads) == 2
+    assert "name: issue-${{ github.run_id }}" in downloads[0] and "path: archive/" in downloads[0]
+    assert "name: ledger-${{ github.run_id }}" in downloads[1]
+    assert "path: data/ledger/" in downloads[1]
+    for block in downloads:
+        assert "continue-on-error: true" in block
     assert "MODE: ${{ needs.run.outputs.mode }}" in header
     assert "OUTCOME: ${{ needs.run.outputs.outcome }}" in header
     sent_only = "if: ${{ env.OUTCOME == 'sent' }}"
@@ -249,8 +259,15 @@ def test_publish_job_is_send_on_main_only_and_secret_free():
     web = _named(blocks, "Publish web pages")
     assert 'record-topic --mode "$MODE"' in topic and sent_only in topic
     assert 'newsletter publish --mode "$MODE"' in web and sent_only in web
-    commit = _named(blocks, "Commit record and pages")
-    assert "git add -- data/explainer_topics.json data/issues docs" in commit
+    commit = _named(blocks, "Commit archive, ledger, record and pages")
+    assert "if:" not in commit  # commits after every non-preview run
+    paths = "for path in archive data/ledger data/explainer_topics.json data/issues docs; do"
+    assert paths in commit
+    assert 'if [ -e "$path" ]; then git add -- "$path"; fi' in commit
+    assert "git diff --cached --quiet && exit 0" in commit
+    assert 'git commit -m "chore(newsletter): archive, ledger and publish"' in commit
+    assert "for i in 1 2 3; do" in commit and "sleep $((i * 5))" in commit
+    assert "set -x" not in commit and "echo" not in commit
     assert "git config user.name silber60" in commit
     assert "git config user.email 81203897+silber60@users.noreply.github.com" in commit
     upload = blocks[-1]
@@ -276,7 +293,10 @@ def test_job_token_only_in_build_and_publish_commit():
     jobs = _jobs(_text(NEWSLETTER))
     _, run_blocks = jobs["run"]
     _, publish_blocks = jobs["publish"]
-    allowed = [_named(run_blocks, "Build"), _named(publish_blocks, "Commit record and pages")]
+    allowed = [
+        _named(run_blocks, "Build"),
+        _named(publish_blocks, "Commit archive, ledger, record and pages"),
+    ]
     holders = [b for _, blocks in jobs.values() for b in blocks if "github.token" in b]
     assert holders == allowed
     for header, _ in jobs.values():
@@ -292,14 +312,28 @@ def test_dispatch_inputs():
     assert "options: [preview, test, send]" in text
     assert "group: newsletter" in text
     assert "cancel-in-progress: false" in text
+    # D-03: the stale override is a deliberate dispatch choice, off by default.
+    block = text.split("      allow_stale:\n", 1)[1].split("\n\n", 1)[0]
+    assert block.startswith("        description: ")
+    assert "        type: boolean\n        default: false" in block
+    assert text.count("inputs.allow_stale") == 1
+    assert "ALLOW_STALE: ${{ inputs.allow_stale }}" in text
 
 
 def test_artifact_uploads_archive_only():
     _, blocks = _split(_text(NEWSLETTER))
     upload = _named(blocks, "Upload")
     assert "path: archive/" in upload
-    assert "if: ${{ !cancelled() }}" in upload
+    assert "if: ${{ always() }}" in upload  # Pitfall 3: a timeout or cancel keeps the archive
+    assert "overwrite: true" in upload
     assert "retention-days: 14" in upload
+    ledger = _named(blocks, "Ledger artifact")
+    assert "if: ${{ always() && env.MODE == 'send' }}" in ledger
+    assert "name: ledger-${{ github.run_id }}" in ledger
+    assert "path: data/ledger/" in ledger
+    assert "if-no-files-found: ignore" in ledger
+    assert "overwrite: true" in ledger and "retention-days: 14" in ledger
+    assert "secrets." not in ledger
 
 
 def test_actions_pinned_to_commit_sha():
@@ -361,6 +395,7 @@ def test_import_workflow_is_dispatch_only_and_serialized():
         assert f"{other}:" not in text
     assert "group: newsletter" in header
     assert "cancel-in-progress: false" in header
+    assert "queue: max" in header
     assert set(_jobs(text)) == {"import"}
 
 
@@ -453,3 +488,42 @@ def test_deliver_outcome_is_a_run_job_output():
     trigger = _named(blocks, "Trigger")
     assert "SCHEDULE_CRON: ${{ github.event.schedule }}" in trigger
     assert "secrets." not in trigger
+
+
+# ------------------------------------------- queue, tip checkouts, commit path (05-01)
+
+
+def test_concurrency_queues_and_never_cancels():
+    # D-08, Pitfall 2 and 9: the same three lines in both workflows of the group.
+    block = "concurrency:\n  group: newsletter{}\n  cancel-in-progress: false\n  queue: max"
+    for path in (NEWSLETTER, IMPORT):
+        header = "\n".join(_code(_workflow_header(_text(path))))
+        header = re.sub(r"  #.*$", "", header, flags=re.MULTILINE)
+        assert block.format("") in header, path.name
+        assert not any("cancel-in-progress: true" in ln for ln in _code(_text(path)))
+
+
+def test_every_checkout_uses_the_branch_tip():
+    # Pitfall 1: queued runs and re-runs must see the commits made after the run started.
+    blocks = [b for _, (_, job) in _jobs(_text(NEWSLETTER)).items() for b in job]
+    checkouts = [b for b in blocks if "actions/checkout@" in b]
+    assert len(checkouts) == 2
+    for block in checkouts:
+        assert "ref: ${{ github.ref }}" in block
+        assert "persist-credentials: false" in block
+
+
+def test_deliver_passes_allow_stale_only_for_literal_true():
+    _, blocks = _split(_text(NEWSLETTER))
+    deliver = _named(blocks, "Deliver")
+    assert 'if [ "$ALLOW_STALE" = "true" ]; then' in deliver
+    assert 'deliver --mode "$MODE" --allow-stale' in deliver
+    assert deliver.count("--allow-stale") == 1
+    assert "ALLOW_STALE" not in "\n".join(b for b in blocks if b != deliver)
+
+
+def test_no_actions_write_and_two_crons_in_code():
+    # Owner answer A3: the weekly commit is the keepalive; no re-enable step, no actions: write.
+    code = _code(_text(NEWSLETTER))
+    assert not any("actions: write" in line for line in code)
+    assert sum("cron:" in line for line in code) == 2

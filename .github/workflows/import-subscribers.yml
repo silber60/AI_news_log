@@ -13,6 +13,7 @@ permissions:
 concurrency:
   group: newsletter  # never overlaps a send
   cancel-in-progress: false
+  queue: max  # same block as newsletter.yml, so a pending run waits (D-08)
 
 jobs:
   import:

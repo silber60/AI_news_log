@@ -23,18 +23,26 @@ on:
         type: string
         required: false
         default: ""
+      allow_stale:
+        description: "send even outside the issue's Monday send day in KST (deliberate recovery only)"
+        type: boolean
+        default: false
 
 # The default token is read-only. Only the publish job gets contents: write: after a send
 # it commits the explainer topic record (D-06, D-15) and the web pages (D-03) in one push,
 # then uploads docs/ as the Pages artifact. Only the deploy-pages job gets pages: write and
 # id-token: write (a GITHUB_TOKEN push never triggers a Pages build, research Pitfall 1).
-# Archive commit-back stays in Phase 5 (D-20).
+# Phase 5: the same job also commits archive/<week>/ and data/ledger/ after every test or send
+# run, success or failure (D-04, AUTO-03).
 permissions:
   contents: read
 
+# One group with import-subscribers; queue: max keeps every pending run waiting instead of
+# cancelling it (D-08). queue: max cannot be combined with cancel-in-progress: true.
 concurrency:
   group: newsletter
   cancel-in-progress: false
+  queue: max
 
 jobs:
   run:
@@ -45,6 +53,7 @@ jobs:
       # Only the exact 08:00 cron sends; any other schedule is a test (fail safe, D-01).
       MODE: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}
       WEEK_INPUT: ${{ inputs.week }}  # reaches the shell via env only; validated in Python
+      ALLOW_STALE: ${{ inputs.allow_stale }}  # '' on a schedule; only the literal true counts
       CLAUDE_MODEL: claude-sonnet-5-5
       PYTHONUNBUFFERED: "1"
     outputs:
@@ -53,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
+          ref: ${{ github.ref }}  # branch tip, not the run's frozen SHA (queued runs, re-runs)
           persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
@@ -71,13 +81,14 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: uv run python -m newsletter build --week "$WEEK_INPUT"
       - name: Upload de-personalized preview
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: issue-${{ github.run_id }}
           # raw.json, selected.json, issue.json, email.html (구독자님), email.txt (D-14)
           path: archive/
           if-no-files-found: ignore
+          overwrite: true
           retention-days: 14
       - name: Deliver
         id: deliver
@@ -92,7 +103,22 @@ jobs:
           SUBSCRIBER_LIST_KEY: ${{ env.MODE == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}
           # D-02: the pause switch reaches only scheduled runs; a dispatch always sends.
           SEND_PAUSED: ${{ github.event_name == 'schedule' && vars.SEND_PAUSED || '' }}
-        run: uv run python -m newsletter deliver --mode "$MODE"
+        run: |
+          if [ "$ALLOW_STALE" = "true" ]; then
+            uv run python -m newsletter deliver --mode "$MODE" --allow-stale
+          else
+            uv run python -m newsletter deliver --mode "$MODE"
+          fi
+      # Hashes only (D-05); the publish job commits it even after a failed send.
+      - name: Ledger artifact (send only)
+        if: ${{ always() && env.MODE == 'send' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: ledger-${{ github.run_id }}
+          path: data/ledger/
+          if-no-files-found: ignore
+          overwrite: true
+          retention-days: 14
       - name: Failure notice (test/send only, D-13)
         if: ${{ failure() && inputs.mode != 'preview' }}
         env:
@@ -103,10 +129,15 @@ jobs:
 
   publish:
     needs: run
-    if: ${{ inputs.mode == 'send' && github.ref == 'refs/heads/main' && needs.run.result == 'success' }}
+    # Every test or send run on main, even a failed or cancelled one (AUTO-03, D-04); preview
+    # commits nothing. The topic record, web pages and Pages artifact follow only a sent issue.
+    # The only job with a write-scoped token, and the one serialized push path (D-08).
+    # Keepalive (D-07): this weekly content commit is the repository activity that stops the
+    # 60-day schedule auto-disable. No actions: write and no re-enable step (owner, A3). If the
+    # schedule is ever disabled: Actions tab, newsletter, Enable workflow.
+    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.mode != 'preview') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The only job with a write-scoped token: one commit for the topic record and the web pages.
     permissions:
       contents: write
     env:
@@ -116,6 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
+          ref: ${{ github.ref }}  # branch tip, not the run's frozen SHA (queued runs, re-runs)
           persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
@@ -124,28 +156,38 @@ jobs:
       - name: Install locked dependencies (publish)
         run: uv sync --frozen
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        continue-on-error: true
         with:
           name: issue-${{ github.run_id }}
           path: archive/
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        continue-on-error: true
+        with:
+          name: ledger-${{ github.run_id }}
+          path: data/ledger/
       - name: Append explainer topic
         if: ${{ env.OUTCOME == 'sent' }}
         run: uv run python -m newsletter record-topic --mode "$MODE"
       - name: Publish web pages
         if: ${{ env.OUTCOME == 'sent' }}
         run: uv run python -m newsletter publish --mode "$MODE"
-      - name: Commit record and pages
+      - name: Commit archive, ledger, record and pages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git add -- data/explainer_topics.json data/issues docs
+          # one path at a time: git add fails on a missing pathspec
+          for path in archive data/ledger data/explainer_topics.json data/issues docs; do
+            if [ -e "$path" ]; then git add -- "$path"; fi
+          done
           git diff --cached --quiet && exit 0
           # identity is needed by both the commit and the rebase in the retry loop
           git config user.name silber60
           git config user.email 81203897+silber60@users.noreply.github.com
-          git commit -m "chore(web): publish issue and topic record"
-          for i in 1 2; do
+          git commit -m "chore(newsletter): archive, ledger and publish"
+          for i in 1 2 3; do
             git pull --rebase "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main \
               && git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main && exit 0
+            sleep $((i * 5))
           done
           exit 1
       # Uploaded from this working tree after the commit, so the artifact holds the new pages

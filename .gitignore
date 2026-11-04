@@ -4,9 +4,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Pipeline output. Phase 1 keeps archive/ on the runner and in the artifact only (D-20).
-# Phase 5 removes the archive/ line when archive commit-back lands.
-archive/
+# Pipeline output. archive/<week>/ is committed de-personalized by the publish job
+# (Phase 5, D-04); the current-week pointer is per-run state.
+archive/current.json
 out/
 
 # Subscriber data and secrets must never be committed (public repo)
