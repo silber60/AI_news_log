@@ -22,7 +22,7 @@
 <label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요.{% if privacy_url %} <a href="{{ privacy_url }}">개인정보 처리방침</a>{% endif %}</span></label>
 <button type="submit">무료로 구독하기</button>
 <p class="msg" role="status" aria-live="polite"></p>
-<p class="note">신청하면 바로 환영 메일을 보내드려요. 스팸함에 들어갈 수 있으니 확인해 주세요.<br>메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
+<p class="note">신청하면 바로 환영 메일을 보내드려요.<br>스팸함에 들어갈 수 있으니 확인해 주세요.<br>메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
 </form>
 {%- endmacro %}
 
@@ -102,7 +102,7 @@
 <div class="hero-copy">
 <p class="tags">#매주 월요일 #GitHub star Top 10 #쉽게 풀어 씀</p>
 <h1>이번 주 꼭 알아야 할<br>AI 모델, 모닥로그가 골라 드려요</h1>
-<p class="body">Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 것만 골라, 무엇을 하는 모델인지 비전공자도 이해하게 풀어 써요. 상업적으로 써도 되는지, 바로 돌려볼 수 있는지도 함께 알려 드려요.</p>
+<p class="body">Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 것만 골라, 무엇을 하는 모델인지 이해하기 쉽게 풀어 써요.</p>
 {%- if subscribe_url %}
 <img class="art" src="{{ asset }}/otter-banner.jpg" width="544" height="306" alt="모닥불 앞에 앉은 해달">
 {%- endif %}
@@ -141,7 +141,7 @@
 <div>
 <p class="eyebrow">지난 호 미리보기</p>
 <h2>이런 메일이 매주 도착해요</h2>
-<p class="body">카드마다 한 줄 요약, 쉬운 설명 세 줄, 모델 정보와 활용 아이디어가 들어가요. 스크롤 몇 번이면 이번 주 Top 10을 다 볼 수 있어요.</p>
+<p class="body">카드마다 한 줄 요약, 쉬운 설명 세 줄, 모델 정보와 활용 아이디어가 들어가요.<br>스크롤 몇 번이면 이번 주 Top 10을 다 볼 수 있어요.</p>
 <a class="link" href="{{ archive_href }}">전체 지난 호 보기 →</a>
 </div>
 {%- if latest %}
