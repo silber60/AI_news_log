@@ -1,0 +1,904 @@
+{
+  "schema_version": 4,
+  "issue_id": "2026-W44",
+  "week_start": "2026-10-26",
+  "week_end": "2026-11-01",
+  "generated_at": "2026-11-04T14:33:01.674523+09:00",
+  "model": "claude-sonnet-5-5",
+  "fetch_method": "week",
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2610.35518",
+      "title_en": "S3AC: Stabilized, Selective, and Scalable Actor-Critic for LLM Reasoning",
+      "upvotes": 18,
+      "num_comments": 2,
+      "github_stars": 5222,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Shanghai AI Laboratory",
+      "hf_url": "https://huggingface.co/papers/2610.35518",
+      "arxiv_url": "https://arxiv.org/abs/2610.35518",
+      "github_url": "https://github.com/InternLM/xtuner",
+      "project_url": null,
+      "title_ko": "S3AC: LLM 추론용 actor-critic 학습 안정화",
+      "ai_type": "LLM",
+      "summary_ko": "긴 chain-of-thought 추론을 학습할 때 critic을 안정적으로 훈련하는 방법이에요.",
+      "summary_lines_ko": [
+        "RLVR에서 critic을 학습해 토큰별 advantage와 프롬프트별 baseline을 계산해요.",
+        "critic 없는 방식과 달리 grouped rollout 없이도 학습하고, DAPS로 생성 전에 프롬프트를 골라요.",
+        "1.5B부터 397B까지 모델에서 GRPO-X보다 높은 성능을 냈어요."
+      ],
+      "use_idea_ko": "수학 풀이처럼 긴 추론이 필요한 LLM을 학습하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "LLM 추론 강화학습 기법",
+        "architecture_ko": "actor-critic 구조, value head 추가, 난이도 기반 프롬프트 샘플링",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/InternLM/xtuner/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/InternLM/xtuner/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 Apache-2.0이 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/InternLM/xtuner"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "모델 학습 방법이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "학습 알고리즘이라 지시문으로 묶어 둘 내용이 없어요."
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2610.40599",
+      "title_en": "HairDeck: Animation-Ready Stylized Hair Cards from a Single Image",
+      "upvotes": 31,
+      "num_comments": 2,
+      "github_stars": 786,
+      "submitted_on_daily_at": "2026-10-30",
+      "affiliation": "Tsinghua University",
+      "hf_url": "https://huggingface.co/papers/2610.40599",
+      "arxiv_url": "https://arxiv.org/abs/2610.40599",
+      "github_url": "https://github.com/hyz317/HairDeck",
+      "project_url": "https://hyzcluster.github.io/HairDeck/",
+      "title_ko": "HairDeck: 이미지 한 장으로 애니메이션용 hair card 생성",
+      "ai_type": "이미지/비디오 생성",
+      "summary_ko": "캐릭터 사진 한 장을 넣으면 게임용 hair card와 흔들리는 spring bone을 만들어 줘요.",
+      "summary_lines_ko": [
+        "이미지 한 장에서 hair card와 이를 움직이는 spring-bone chain을 함께 만들어요.",
+        "hair card를 순서 없는 token 집합으로 보고 set diffusion transformer가 한꺼번에 만들어요.",
+        "CHARM 테스트 세트에서 Chamfer distance를 44% 낮추고 33배 빠르게 돌아가요."
+      ],
+      "use_idea_ko": "게임 캐릭터나 아바타에 머리카락을 입히는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "hair card 생성 diffusion 모델",
+        "architecture_ko": "card당 token 하나를 쓰는 set diffusion transformer",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "가중치 · GitHub · 데모",
+        "evidence": [
+          {
+            "label": "HF 모델",
+            "url": "https://huggingface.co/hyz317/HairDeck"
+          },
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/hyz317/HairDeck"
+          }
+        ]
+      },
+      "image": {
+        "url": "https://arxiv.org/html/2610.40599v1/pipeline.png",
+        "width": 576,
+        "height": 148
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/hyz317/HairDeck/blob/main/LICENSE"
+        },
+        "weights_license": {
+          "spdx_id": "apache-2.0",
+          "name": null,
+          "source_url": "https://huggingface.co/hyz317/HairDeck"
+        },
+        "evidence": [
+          {
+            "label": "가중치 라이선스",
+            "url": "https://huggingface.co/hyz317/HairDeck"
+          },
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/hyz317/HairDeck/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드와 가중치 모두 Apache-2.0 라이선스가 붙어 있어요."
+      },
+      "poc": {
+        "verdict": "바로 가능",
+        "has_weights": true,
+        "has_code": true,
+        "has_demo": true,
+        "evidence": [
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/hyz317/HairDeck"
+          }
+        ],
+        "reason_ko": "가중치, 코드, 데모가 모두 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "이미지에서 3D hair card를 만드는 생성 모델이라 대화에서 따라 할 것이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2610.36729",
+      "title_en": "Hy-Nomas: Towards Free-form Interactive World Generation",
+      "upvotes": 112,
+      "num_comments": 2,
+      "github_stars": 478,
+      "submitted_on_daily_at": "2026-10-28",
+      "affiliation": "Tencent Hunyuan",
+      "hf_url": "https://huggingface.co/papers/2610.36729",
+      "arxiv_url": "https://arxiv.org/abs/2610.36729",
+      "github_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas",
+      "project_url": "https://hy-nomas.hy.tencent.com/",
+      "title_ko": "Hy-Nomas: 텍스트와 카메라로 이어 가는 월드 생성",
+      "ai_type": "이미지/비디오 생성",
+      "summary_ko": "텍스트 지시와 카메라 조작을 여러 번 이어 받아 영상 세계를 만들어 주는 모델이에요.",
+      "summary_lines_ko": [
+        "텍스트 지시와 카메라 조작에 따라 영상 구간을 이어서 생성해요.",
+        "캡션 맥락은 계속 보게 하고 action 지시는 해당 시간 구간에만 적용해요.",
+        "human evaluation에서 기존 world model보다 우수한 성능을 기록했어요."
+      ],
+      "use_idea_ko": "텍스트로 장면을 바꿔 가며 가상 공간을 탐색하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "인터랙티브 비디오 world model",
+        "architecture_ko": "8B diffusion backbone, causal attention, Prompt Enhancer",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "가중치 · GitHub · 데모",
+        "evidence": [
+          {
+            "label": "HF 모델",
+            "url": "https://huggingface.co/tencent/Hy-Nomas"
+          },
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/tencent/hy-nomas"
+          }
+        ]
+      },
+      "image": {
+        "url": "https://arxiv.org/html/2610.36729v1/Hy-Nomas-Bench_overview_clear.png",
+        "width": 576,
+        "height": 302
+      },
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": {
+          "spdx_id": null,
+          "name": "Other",
+          "source_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE"
+        },
+        "weights_license": {
+          "spdx_id": "apache-2.0",
+          "name": null,
+          "source_url": "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+        },
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE"
+          },
+          {
+            "label": "가중치 라이선스",
+            "url": "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "공개된 근거를 찾지 못해 확인이 필요해요."
+      },
+      "poc": {
+        "verdict": "바로 가능",
+        "has_weights": true,
+        "has_code": true,
+        "has_demo": true,
+        "evidence": [
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/tencent/hy-nomas"
+          }
+        ],
+        "reason_ko": "가중치, 코드, 데모가 모두 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "영상 생성 모델이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 가중치라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.30006",
+      "title_en": "Building Auditable AI Text Detectors with Sparse Autoencoders",
+      "upvotes": 13,
+      "num_comments": 2,
+      "github_stars": 411,
+      "submitted_on_daily_at": "2026-10-26",
+      "affiliation": "GoogleDeepMind",
+      "hf_url": "https://huggingface.co/papers/2610.30006",
+      "arxiv_url": "https://arxiv.org/abs/2610.30006",
+      "github_url": "https://github.com/google-deepmind/detectorscope",
+      "project_url": null,
+      "title_ko": "Sparse Autoencoder로 설명 가능한 AI 생성 텍스트 탐지기 만들기",
+      "ai_type": "LLM",
+      "summary_ko": "AI가 쓴 글을 가려내는 탐지기가 어떤 말버릇을 보고 판단하는지 사람이 읽을 수 있게 바꿔 줘요.",
+      "summary_lines_ko": [
+        "탐지기 내부 신호를 사람이 읽는 개념으로 바꿔서 AI 생성 텍스트를 분류해요.",
+        "fine-tuning한 탐지기의 residual stream에 SAE를 학습시켜 해석 가능한 feature만 골라 써요.",
+        "out-of-distribution 텍스트에서 neural, stylometric 탐지기보다 성능이 높았어요."
+      ],
+      "use_idea_ko": "논문 심사나 교육 현장에서 AI 글 판정 근거를 보여 주는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "해석 가능한 AI 텍스트 탐지 기법",
+        "architecture_ko": "탐지기 residual stream 위 sparse autoencoder, 해석 가능 feature 기반…",
+        "size": "302M 파라미터 (외 2개 모델)",
+        "training_data": "확인 필요",
+        "release": "가중치 · GitHub · 데모",
+        "evidence": [
+          {
+            "label": "HF 모델",
+            "url": "https://huggingface.co/liamdugan/detector-scope"
+          },
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/liamdugan/detector-scope-demo"
+          }
+        ]
+      },
+      "image": {
+        "url": "https://raw.githubusercontent.com/google-deepmind/detectorscope/HEAD/assets/overview.png",
+        "width": 576,
+        "height": 245
+      },
+      "commercial": {
+        "verdict": "조건부",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+        },
+        "weights_license": {
+          "spdx_id": "gemma",
+          "name": null,
+          "source_url": "https://huggingface.co/liamdugan/detector-scope"
+        },
+        "evidence": [
+          {
+            "label": "가중치 라이선스",
+            "url": "https://huggingface.co/liamdugan/detector-scope"
+          },
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드는 Apache-2.0이고 가중치는 gemma 라이선스 조건을 따라요."
+      },
+      "poc": {
+        "verdict": "바로 가능",
+        "has_weights": true,
+        "has_code": true,
+        "has_demo": true,
+        "evidence": [
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/liamdugan/detector-scope-demo"
+          }
+        ],
+        "reason_ko": "가중치, 코드, 데모가 모두 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": 302130176,
+        "est_vram_gb": 0.7,
+        "local_run": "가능",
+        "evidence": [
+          {
+            "label": "HF 모델",
+            "url": "https://huggingface.co/liamdugan/detector-scope"
+          }
+        ]
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "탐지기 내부를 분석하는 연구라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "SAE 학습이 필요한 방법이라 지시문으로 묶어 둘 것이 없어요."
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2610.31635",
+      "title_en": "HiP3R: Hierarchical Pose Graphs for Long-Horizon 3D Reconstruction",
+      "upvotes": 24,
+      "num_comments": 2,
+      "github_stars": 402,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Nanyang Technological University Singapore",
+      "hf_url": "https://huggingface.co/papers/2610.31635",
+      "arxiv_url": "https://arxiv.org/abs/2610.31635",
+      "github_url": "https://github.com/HiP3Rs/HiP3R",
+      "project_url": "https://kkakkkka.github.io/HiP3R/",
+      "title_ko": "HiP3R: 계층적 pose graph로 긴 영상 3D 복원 정렬",
+      "ai_type": "비전",
+      "summary_ko": "긴 영상을 나눠 복원한 결과를 하나의 카메라 궤적과 3D 구조로 합쳐 주는 방법이에요.",
+      "summary_lines_ko": [
+        "긴 영상 조각별 3D 복원 결과를 합쳐 일관된 카메라 궤적과 3D 구조를 만들어요.",
+        "chunk 단위 Sim(3) graph로 전체 배치를 잡고, 프레임마다 SE(3) 카메라 하나를 추정해요.",
+        "여러 benchmark에서 카메라 궤적과 3D 복원 결과가 좋아졌어요."
+      ],
+      "use_idea_ko": "수천 프레임짜리 주행 영상에서 카메라 경로를 복원하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "긴 영상 3D 복원용 pose graph 최적화 기법",
+        "architecture_ko": "chunk 단위 Sim(3) graph와 프레임 단위 SE(3) 카메라의 계층 구조",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": {
+        "url": "https://arxiv.org/html/2610.31635v1/teaser.png",
+        "width": 576,
+        "height": 237
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/HiP3Rs/HiP3R/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/HiP3Rs/HiP3R/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 Apache-2.0이 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/HiP3Rs/HiP3R"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "3D 복원과 카메라 추정이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "지시문으로 묶을 내용이 없는 3D 복원 최적화 방법이에요."
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2610.33106",
+      "title_en": "VibeGame: Prompt-to-Game Development with AI-Native Engine and Self-Evolving Adversarial Agent Team",
+      "upvotes": 25,
+      "num_comments": 2,
+      "github_stars": 358,
+      "submitted_on_daily_at": "2026-10-30",
+      "affiliation": "Nanjing University",
+      "hf_url": "https://huggingface.co/papers/2610.33106",
+      "arxiv_url": "https://arxiv.org/abs/2610.33106",
+      "github_url": "https://github.com/tettethu/VibeGame",
+      "project_url": "https://vibegame.tettet.org",
+      "title_ko": "VibeGame: 프롬프트로 2D 게임을 만드는 에이전트 팀",
+      "ai_type": "에이전트",
+      "summary_ko": "말로 설명하면 완성된 2D 게임 프로젝트를 만들어 주는 에이전트 프레임워크예요.",
+      "summary_lines_ko": [
+        "자연어 프롬프트와 참고 이미지로 2D 게임 프로젝트 전체를 만들어요.",
+        "구현과 검토를 맡은 에이전트 여덟 개를 나누고, 완성한 프로젝트는 재사용 부품으로 정리해요.",
+        "GameCraft-Bench 일부에서 같은 모델을 쓴 다른 agent harness보다 높은 성과를 냈어요."
+      ],
+      "use_idea_ko": "아이디어만 적어 간단한 2D 게임 시제품을 만드는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "게임 개발 멀티 에이전트 프레임워크",
+        "architecture_ko": "AI-native 게임 엔진과 8개 적대적 에이전트 팀",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": {
+        "url": "https://arxiv.org/html/2610.33106v1/fig/teaser_v2.jpg",
+        "width": 576,
+        "height": 221
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/tettethu/VibeGame/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/tettethu/VibeGame/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 Apache-2.0이 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/tettethu/VibeGame"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "기법 적용 가능",
+        "reason_ko": "구현과 검토 역할을 나눠 반복하는 방식은 대화에서 따라 할 수 있어요."
+      },
+      "skill_gpt": {
+        "fit": "Claude Skill",
+        "reason_ko": "역할 분담과 검토 규칙을 지시문으로 정리해 둘 수 있어요."
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2610.32253",
+      "title_en": "RSIHub: A Composable Framework for Agent-Evolution Methods",
+      "upvotes": 42,
+      "num_comments": 2,
+      "github_stars": 320,
+      "submitted_on_daily_at": "2026-10-26",
+      "affiliation": "ByteDance",
+      "hf_url": "https://huggingface.co/papers/2610.32253",
+      "arxiv_url": "https://arxiv.org/abs/2610.32253",
+      "github_url": "https://github.com/simple-agent-lab/RSIHub",
+      "project_url": "https://simpleagentlab.com/rsihub",
+      "title_ko": "RSIHub: 에이전트 진화 방법을 비교하는 공통 프레임워크",
+      "ai_type": "에이전트",
+      "summary_ko": "에이전트 진화 방법을 같은 환경에서 만들고 비교하게 해 주는 오픈소스 프레임워크예요.",
+      "summary_lines_ko": [
+        "실행 피드백으로 prompt, skill, tool을 개선하는 방법을 공통 인프라 위에서 만들고 비교해요.",
+        "recipe와 operator를 조합하고, 실행, 평가, 복구, lineage 기록은 프레임워크가 맡아요.",
+        "AHE, GEPA 등 네 방법을 구현했고 가장 큰 pass@1 향상은 13.5%p였어요."
+      ],
+      "use_idea_ko": "코딩 에이전트의 prompt와 skill 개선 방법을 비교하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "에이전트 진화 연구용 프레임워크",
+        "architecture_ko": "재사용 operator를 조합하는 recipe 구조, 평가는 변경 대상 밖에 분리",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": {
+        "url": "https://raw.githubusercontent.com/simple-agent-lab/RSIHub/HEAD/docs/assets/paper-poster-lora-gen0.png",
+        "width": 576,
+        "height": 360
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/simple-agent-lab/RSIHub/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/simple-agent-lab/RSIHub/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 Apache-2.0이 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/simple-agent-lab/RSIHub"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "기법 적용 가능",
+        "reason_ko": "실행 피드백으로 prompt와 skill을 고치는 흐름을 따라 해 볼 수 있어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "연구용 프레임워크라 지시문으로 묶어 둘 작업 순서가 따로 없어요."
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2610.14018",
+      "title_en": "RoboHarness: A Simple Harness Outperforms VLA and World Action Models",
+      "upvotes": 5,
+      "num_comments": 2,
+      "github_stars": 288,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Zhejiang University",
+      "hf_url": "https://huggingface.co/papers/2610.14018",
+      "arxiv_url": "https://arxiv.org/abs/2610.14018",
+      "github_url": "https://github.com/BinceQu/RoboHarness",
+      "project_url": "https://bincequ.github.io/RoboHarness/",
+      "title_ko": "RoboHarness: LLM 에이전트로 로봇 조작을 푸는 harness",
+      "ai_type": "에이전트",
+      "summary_ko": "LLM 에이전트가 시각·기하 제어판으로 로봇 조작 작업을 직접 수행하게 해 주는 harness예요.",
+      "summary_lines_ko": [
+        "LLM 에이전트가 시각·기하 제어판으로 로봇 조작 작업을 직접 호출하게 해요.",
+        "VLA처럼 action head를 붙여 학습하지 않고 coding agent에 harness를 붙였어요.",
+        "Qwen3.8-Flash-Next가 BEHAVIOR Challenge 2025에서 VLA 모델을 앞섰어요."
+      ],
+      "use_idea_ko": "로봇 팔에게 말로 물체 조작 작업을 시키는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "LLM 에이전트용 로봇 harness",
+        "architecture_ko": "LLM coding agent에 visual-geometric 제어 인터페이스 결합",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": {
+        "url": "https://raw.githubusercontent.com/BinceQu/RoboHarness/HEAD/docs/assets/overview.png",
+        "width": 576,
+        "height": 468
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "MIT",
+          "name": "MIT License",
+          "source_url": "https://github.com/BinceQu/RoboHarness/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/BinceQu/RoboHarness/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 MIT 라이선스가 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/BinceQu/RoboHarness"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "로봇 제어 환경이 있어야 해서 대화만으로 따라 하기 어려워요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "로봇 제어 인터페이스라 지시문으로 묶어 둘 내용이 없어요."
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.33005",
+      "title_en": "OpenESM: Energy-Steered Models Are Scalable Foundation Learners",
+      "upvotes": 6,
+      "num_comments": 2,
+      "github_stars": 248,
+      "submitted_on_daily_at": "2026-10-27",
+      "affiliation": "Shanghai AI Laboratory",
+      "hf_url": "https://huggingface.co/papers/2610.33005",
+      "arxiv_url": "https://arxiv.org/abs/2610.33005",
+      "github_url": "https://github.com/datamllab/OpenEBFM",
+      "project_url": "https://huggingface.co/collections/guan-wang/openebfm",
+      "title_ko": "OpenESM: energy 기반 탐색을 넣은 언어 모델 사전학습",
+      "ai_type": "LLM",
+      "summary_ko": "토큰을 만들기 전에 energy 값으로 내부 상태를 다듬어 글을 생성하는 언어 모델이에요.",
+      "summary_lines_ko": [
+        "energy landscape에서 latent state를 먼저 최적화한 뒤 토큰을 생성하는 언어 모델이에요.",
+        "energy steering과 토큰 생성을 한 architecture 안에 합쳐 pre-training했어요.",
+        "26개 downstream task 평가에서 대부분 GPTs보다 높은 성능을 냈어요."
+      ],
+      "use_idea_ko": "다양한 분야의 일반 텍스트 문제를 푸는 언어 모델 연구에 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "energy-steered 언어 모델",
+        "architecture_ko": "latent state energy 최적화와 토큰 생성을 결합한 단일 구조",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "GitHub",
+        "evidence": []
+      },
+      "image": {
+        "url": "https://raw.githubusercontent.com/datamllab/OpenEBFM/HEAD/figs/dclm_pretrain.png",
+        "width": 576,
+        "height": 429
+      },
+      "commercial": {
+        "verdict": "가능",
+        "code_license": {
+          "spdx_id": "MIT",
+          "name": "MIT License",
+          "source_url": "https://github.com/datamllab/OpenEBFM/blob/main/LICENSE"
+        },
+        "weights_license": null,
+        "evidence": [
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/datamllab/OpenEBFM/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "코드에 MIT 라이선스가 붙어 있고 가중치 라이선스는 못 찾았어요."
+      },
+      "poc": {
+        "verdict": "코드만",
+        "has_weights": null,
+        "has_code": true,
+        "has_demo": null,
+        "evidence": [
+          {
+            "label": "GitHub",
+            "url": "https://github.com/datamllab/OpenEBFM"
+          }
+        ],
+        "reason_ko": "코드만 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "새 architecture를 pre-training한 별개 모델이라 대화에서 따라 할 수 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "새 architecture와 직접 호스팅할 가중치라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "2610.39633",
+      "title_en": "Intrinsic Distribution Matching",
+      "upvotes": 28,
+      "num_comments": 4,
+      "github_stars": 235,
+      "submitted_on_daily_at": "2026-10-30",
+      "affiliation": "inclusionAI",
+      "hf_url": "https://huggingface.co/papers/2610.39633",
+      "arxiv_url": "https://arxiv.org/abs/2610.39633",
+      "github_url": "https://github.com/inclusionAI/IDM",
+      "project_url": "https://www.inclusion-ai.org/IDM/?lang=zh",
+      "title_ko": "IDM: few-step 이미지 생성에 moment 제약 추가",
+      "ai_type": "이미지/비디오 생성",
+      "summary_ko": "글자가 많은 프롬프트도 한두 번 계산만으로 이미지에 정확히 그려 내게 하는 증류 방법이에요.",
+      "summary_lines_ko": [
+        "텍스트로 이미지를 만드는 diffusion 모델을 1~2단계 만에 생성하도록 증류해요.",
+        "DMD 보정에 EMA 복사본 feature의 평균과 표준편차를 맞추는 moment 제약을 더했어요.",
+        "두 번 계산에서 LongText-Bench 중국어 94.25%, 영어 90.20%를 기록했어요."
+      ],
+      "use_idea_ko": "간판이나 포스터처럼 글자가 들어간 이미지를 빠르게 만드는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "text-to-image 증류 학습 기법",
+        "architecture_ko": "DMD 기반, generator EMA feature의 moment matching 추가",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "가중치 · GitHub · 데모",
+        "evidence": [
+          {
+            "label": "HF 모델",
+            "url": "https://huggingface.co/akhaliq/Fibo-2.0-edit-IDM-2steps"
+          },
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/akhaliq/fibo2-edit-idm-demo"
+          }
+        ]
+      },
+      "image": {
+        "url": "https://raw.githubusercontent.com/inclusionAI/IDM/HEAD/assets/overview.png",
+        "width": 576,
+        "height": 208
+      },
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": {
+          "spdx_id": "Apache-2.0",
+          "name": "Apache License 2.0",
+          "source_url": "https://github.com/inclusionAI/IDM/blob/main/LICENSE"
+        },
+        "weights_license": {
+          "spdx_id": "other",
+          "name": "bria-fibo",
+          "source_url": "https://huggingface.co/akhaliq/Fibo-2.0-edit-IDM-2steps"
+        },
+        "evidence": [
+          {
+            "label": "가중치 라이선스",
+            "url": "https://huggingface.co/akhaliq/Fibo-2.0-edit-IDM-2steps"
+          },
+          {
+            "label": "코드 라이선스",
+            "url": "https://github.com/inclusionAI/IDM/blob/main/LICENSE"
+          }
+        ],
+        "reason_ko": "공개된 근거를 찾지 못해 확인이 필요해요."
+      },
+      "poc": {
+        "verdict": "바로 가능",
+        "has_weights": true,
+        "has_code": true,
+        "has_demo": true,
+        "evidence": [
+          {
+            "label": "HF 데모",
+            "url": "https://huggingface.co/spaces/akhaliq/fibo2-edit-idm-demo"
+          }
+        ],
+        "reason_ko": "가중치, 코드, 데모가 모두 공개돼 있어요."
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "이미지 생성 모델의 증류 학습이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "학습 방법이라 지시문이나 규칙으로 묶어 둘 내용이 없어요."
+      }
+    }
+  ],
+  "headline_ko": "🛠️ 긴 추론 학습, 이제 안정적으로 이번 주 AI 모델 10",
+  "trend_ko": "이번 주는 에이전트 항목이 RSIHub, VibeGame, RoboHarness까지 세 편 올라왔어요. 게임 제작, 로봇 조작, 에이전트 진화 방법 비교처럼 쓰임새가 각각 달라요. 이미지/비디오 생성에서는 HairDeck, Hy-Nomas, Intrinsic Distribution Matching이 순위에 들었어요.",
+  "highlights": [
+    {
+      "rank": 2,
+      "tag": "데모",
+      "why_ko": "캐릭터 사진 한 장으로 게임용 hair card와 흔들리는 spring bone을 한 번에 얻어요.",
+      "how_ko": "데모에 캐릭터 사진을 올려 hair card가 머리 모양과 얼마나 맞는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/hyz317/HairDeck"
+    },
+    {
+      "rank": 3,
+      "tag": "데모",
+      "why_ko": "텍스트 지시와 카메라 조작을 이어 가며 영상 속 세계를 넓혀 갈 수 있어요.",
+      "how_ko": "데모에서 장면 설명을 넣고 카메라를 바꿔 가며 영상 구간을 이어 봐요.",
+      "demo_url": "https://huggingface.co/spaces/tencent/hy-nomas"
+    }
+  ],
+  "explainer": {
+    "topic": "Diffusion: 노이즈에서 단계별로 만드는 생성 방식",
+    "body_ko": "무작위 노이즈로 시작해서 모델이 노이즈를 조금씩 걷어 내며 결과물을 완성해요. 단계를 많이 거칠수록 결과는 정교하지만 계산 시간이 길어져요. IDM은 증류로 이 단계를 한두 번으로 줄였어요. HairDeck은 hair card를 set diffusion transformer로 한꺼번에 만들고, Hy-Nomas는 8B diffusion backbone으로 영상 구간을 이어서 생성해요.",
+    "related_ranks": [
+      10,
+      2,
+      3
+    ],
+    "point_ko": "노이즈를 단계마다 걷어 내며 이미지를 만들어요.",
+    "example_ko": "흐릿하게 번진 낙서 위에 연필과 지우개로 조금씩 선을 다듬어 그림을 완성하는 것과 비슷해요. 처음엔 알아보기 어려워도 손질할수록 모양이 잡혀요.",
+    "image": {
+      "url": "https://raw.githubusercontent.com/inclusionAI/IDM/HEAD/assets/overview.png",
+      "width": 576,
+      "height": 208
+    }
+  }
+}

@@ -1,1 +1,10 @@
-{"version": 1, "topics": []}
+{
+  "version": 1,
+  "topics": [
+    {
+      "issue_id": "2026-W44",
+      "date": "2026-11-02",
+      "topic": "Diffusion: 노이즈에서 단계별로 만드는 생성 방식"
+    }
+  ]
+}
