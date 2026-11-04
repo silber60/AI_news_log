@@ -1,0 +1,35 @@
+name: import-subscribers
+
+# One-time job (D-06): the owner runs it once after the cut-over to copy the existing
+# readers from the old CSV secret into the Sheet through Apps Script action=import.
+# It logs counts only and uploads nothing. The two secrets reach only the import step.
+# Deleted again in 04.1-06.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newsletter  # never overlaps a send
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --frozen
+      - name: Import subscribers (counts only)
+        env:
+          SUBSCRIBERS_CSV: ${{ secrets.SUBSCRIBERS_CSV }}
+          SUBSCRIBE_ADMIN_KEY: ${{ secrets.SUBSCRIBE_ADMIN_KEY }}
+        run: uv run python -m newsletter import-subscribers
