@@ -244,7 +244,15 @@ GREETING_VECTORS = (
 )
 
 # google.script.run can call any top-level function without a trailing "_".
-PUBLIC_FUNCTIONS = {"doGet", "doPost", "unsubscribe", "setup", "selfTest", "processWelcomeQueue"}
+PUBLIC_FUNCTIONS = {
+    "doGet",
+    "doPost",
+    "unsubscribe",
+    "setup",
+    "selfTest",
+    "processWelcomeQueue",
+    "requeueUnwelcomed",
+}
 
 
 def test_public_functions_are_the_known_set():
@@ -257,7 +265,7 @@ def test_public_functions_are_the_known_set():
         assert name in header, name
     # setup, selfTest and processWelcomeQueue hand nothing back to a caller
     # (only their own top-level returns count; inner callbacks are indented deeper).
-    for name in ("setup", "selfTest", "processWelcomeQueue"):
+    for name in ("setup", "selfTest", "processWelcomeQueue", "requeueUnwelcomed"):
         assert re.search(r"^  return [^;]", _body(name), re.MULTILINE) is None, name
     assert set(re.findall(r"return ([^;]+);", _body("unsubscribe"))) == {"false", "true"}
 
@@ -416,3 +424,21 @@ def test_readme_combined_setup():
     assert "붙여 넣지 않아요" in text  # never paste a key value anywhere
     found = ADDRESS_RE.findall(text)
     assert all(a.lower().endswith("@example.com") for a in found), found
+
+
+def test_queue_waits_while_no_issue_is_published():
+    # Owner fix 2026-11-04: a sign-up before the first send must not lose its welcome.
+    body = _body("processWelcomeQueue")
+    assert "if (!issuePublished_()) return;" in body
+    assert body.index("issuePublished_()") < body.index("tryLock")
+    assert "res === 'no_issue'" in body and "requeue_(j.t, j.n);" in body
+
+
+def test_requeue_unwelcomed_is_owner_only_and_never_rewelcomes():
+    body = _body("requeueUnwelcomed")
+    assert "Session.getActiveUser().getEmail()" in body
+    assert "if (!me || me !== Session.getEffectiveUser().getEmail()) return;" in body
+    assert "String(r[8])" in body  # welcomed_at set: already welcomed, skip
+    assert "'form'" in body  # import rows never get a welcome (D-06)
+    assert "WELCOME_DAILY_CAP" in body
+    assert "Logger.log" not in body and "Gmail." not in body

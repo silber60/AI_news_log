@@ -20,9 +20,11 @@
 //
 // google.script.run lets any visitor of the doGet page call any top-level
 // function whose name has no trailing underscore, and it runs as the owner.
-// Those public functions are doGet, doPost, unsubscribe, setup, selfTest and
-// processWelcomeQueue. Each is safe to call that way: idempotent, and none
-// returns a key, member data or an address. Every other function ends in "_".
+// Those public functions are doGet, doPost, unsubscribe, setup, selfTest,
+// processWelcomeQueue and requeueUnwelcomed. Each is safe to call that way:
+// idempotent, and none returns a key, member data or an address.
+// requeueUnwelcomed also does nothing unless the owner runs it in the editor.
+// Every other function ends in "_".
 // tests/test_apps_script.py pins this list, so add a public one only on purpose.
 //
 // The first deployment is the only 새 배포. To change this script later:
@@ -323,10 +325,14 @@ function installTrigger_() {
 // q_<id>, at most WELCOME_MAX_ATTEMPTS runs in all. This function never deletes
 // or rewrites w_<id>: no outcome (sent, no_issue, shape, gone, failed) lets a
 // second welcome happen sooner than the 24 h rule allows. A reader whose
-// welcome is dropped stays registered and gets the Monday mail.
+// welcome is dropped (shape, gone, failed) stays registered and gets the
+// Monday mail.
 function processWelcomeQueue() {
   const props = PropertiesService.getScriptProperties();
   if (!Object.keys(props.getProperties()).some(queued_)) return;
+  // No issue published yet (or Pages still serves the old null file): keep the
+  // queue untouched and try again next minute. One fetch per run, not per id.
+  if (!issuePublished_()) return;
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;
   const jobs = [];
@@ -349,6 +355,8 @@ function processWelcomeQueue() {
     }
     if (res === 'sent') {
       markWelcomed_(j.t);
+    } else if (res === 'no_issue') {
+      requeue_(j.t, j.n);               // wait for the first issue; not a failure
     } else if ((res === 'fetch' || res === 'error') && j.n + 1 < WELCOME_MAX_ATTEMPTS) {
       requeue_(j.t, j.n + 1);
     }
@@ -356,6 +364,52 @@ function processWelcomeQueue() {
 }
 
 function queued_(k) { return k.indexOf('q_') === 0; }
+
+function issuePublished_() {
+  try {
+    const r = UrlFetchApp.fetch(LATEST_URL, { muteHttpExceptions: true, followRedirects: true });
+    if (r.getResponseCode() !== 200) return true;   // let sendWelcome_ count it as a fetch error
+    const d = JSON.parse(r.getContentText('UTF-8'));
+    return !!(d && d.version === 1 && d.issue_id);
+  } catch (err) {
+    return true;
+  }
+}
+
+// Owner-only, run once from the editor: queues a welcome for every active
+// form sign-up that never got one (empty welcomed_at), e.g. readers who signed
+// up before the first issue was published and whose welcome was dropped by the
+// old worker. It ignores the 24 h gap (no welcome was ever sent to them) but
+// keeps the daily cap. A visitor calling it through google.script.run has no
+// active user, so it does nothing then. Returns nothing.
+function requeueUnwelcomed() {
+  const me = Session.getActiveUser().getEmail();
+  if (!me || me !== Session.getEffectiveUser().getEmail()) return;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    const sh = subsSheet_();
+    if (!sh || sh.getLastRow() < 2) return;
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, SUBS_COLS.length).getValues();
+    const props = PropertiesService.getScriptProperties();
+    const all = props.getProperties();
+    const day = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd');
+    let today = Number(all['wd_' + day]) || 0;
+    const set = {};
+    rows.forEach(function (r) {
+      const t = String(r[0]);
+      if (!TOKEN_RE.test(t) || String(r[3]) !== 'active' || String(r[6]) !== 'form') return;
+      if (String(r[8]) || all['q_' + t] !== undefined || today >= WELCOME_DAILY_CAP) return;
+      set['q_' + t] = '0';
+      set['w_' + t] = String(Date.now());
+      today += 1;
+    });
+    set['wd_' + day] = String(today);
+    props.setProperties(set);
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 function requeue_(t, n) {
   const lock = LockService.getScriptLock();
