@@ -10,7 +10,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 - [x] **Phase 1.1: Newsletter Design v2 & Model Detail Fields** (INSERTED) - The email follows the approved Figma v2 draft (otter mascot, Top 3 → explainer → 4-10 layout, headline-style subject) and each card shows one-line + multi-line summaries and a model info table
 - [x] **Phase 1.2: GitHub-Star Selection & Friendly Content** (INSERTED) - Items are picked by GitHub stars (3-10, star ≥ 100 decides the count), each article carries its own image, empty model-info rows disappear, and every text reads in friendly 해요체 with a one-line use idea
 - [x] **Phase 2: Evidence & Practical Verdicts** - Each item shows code-decided 상업적 사용 / PoC / GPU verdicts with evidence, plus Claude/GPT applicability and a weekly trend
-- [ ] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
+- [x] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
 - [ ] **Phase 4.1: Public Subscribe & Instant Welcome Issue** (INSERTED) - Anyone can subscribe from a web page, lands on the subscriber list, and immediately receives the latest issue
 - [ ] **Phase 5: Scheduled Automation & Hardening** - Mail arrives every Monday 08:00 KST unattended, re-runs never double-send, and the owner gets a run report
@@ -114,13 +114,13 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Tracer: skill_gpt_fit + reason in analyze (prompt v6, non-fatal downgrade), one highlight pick call with code guards, always-on section with "이번 주는 해당 항목 없음", call count 14 (wave 1)
-- [ ] 03-02-PLAN.md — Humanizer: full Korean port of humanizer_ko.md, unit-tested banned-pattern lint over every Claude field, cleanup + dash fallback (wave 1)
-- [ ] 03-03-PLAN.md — Past-topics record: data/explainer_topics.json, topics.load_past/record, `record-topic` CLI, owner decision, then the send-on-main record-topic job with contents: write and job-aware static tests (wave 1)
-- [ ] 03-04-PLAN.md — Explainer: one call over this week's items + past topics, caps and grounding checks, alias-aware repeat rule with #1 fallback, image copied from a related item, call count 15 (wave 2)
-- [ ] 03-05-PLAN.md — Size: explainer image row, worst case with 3 picks + full explainer + image, per-table font stack (one revertable commit, about 14 KB saved) (wave 2)
-- [ ] 03-06-PLAN.md — Polish: lint-gated single polish pass at the end of the build with fact, stage and whole-dump diff guards, leftovers warn only, call counts 15 / 16 (wave 3)
-- [ ] 03-07-PLAN.md — Owner push, one live preview with lint and log audit, mode=test send to Gmail + Naver for the font checklist, owner review (no mode=send) (wave 4)
+- [x] 03-01-PLAN.md — Tracer: skill_gpt_fit + reason in analyze (prompt v6, non-fatal downgrade), one highlight pick call with code guards, always-on section with "이번 주는 해당 항목 없음", call count 14 (wave 1)
+- [x] 03-02-PLAN.md — Humanizer: full Korean port of humanizer_ko.md, unit-tested banned-pattern lint over every Claude field, cleanup + dash fallback (wave 1)
+- [x] 03-03-PLAN.md — Past-topics record: data/explainer_topics.json, topics.load_past/record, `record-topic` CLI, owner decision, then the send-on-main record-topic job with contents: write and job-aware static tests (wave 1)
+- [x] 03-04-PLAN.md — Explainer: one call over this week's items + past topics, caps and grounding checks, alias-aware repeat rule with #1 fallback, image copied from a related item, call count 15 (wave 2)
+- [x] 03-05-PLAN.md — Size: explainer image row, worst case with 3 picks + full explainer + image, per-table font stack (one revertable commit, about 14 KB saved) (wave 2)
+- [x] 03-06-PLAN.md — Polish: lint-gated single polish pass at the end of the build with fact, stage and whole-dump diff guards, leftovers warn only, call counts 15 / 16 (wave 3)
+- [x] 03-07-PLAN.md — Owner push, one live preview with lint and log audit, mode=test send to Gmail + Naver for the font checklist, owner review (no mode=send) (wave 4)
 
 ### Phase 4: Figma Design, Email Template & Web Archive
 **Goal**: The newsletter looks like the designed brand in Naver Mail and Gmail, and every issue can also be read and browsed on the web.
@@ -169,7 +169,7 @@ Plans:
 | 1.1. Newsletter Design v2 & Model Detail Fields (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 1.2. GitHub-Star Selection & Friendly Content (INSERTED) | 5/5 | Complete | 2026-11-03 |
 | 2. Evidence & Practical Verdicts | 6/6 | Complete | 2026-11-03 |
-| 3. Humanizer, Highlight & Explainer | 0/7 | Planned | - |
+| 3. Humanizer, Highlight & Explainer | 7/7 | Complete | 2026-11-04 |
 | 4. Figma Design, Email Template & Web Archive | 0/TBD | Not started | - |
 | 4.1. Public Subscribe & Instant Welcome Issue (INSERTED) | 0/TBD | Not started | - |
 | 5. Scheduled Automation & Hardening | 0/TBD | Not started | - |
