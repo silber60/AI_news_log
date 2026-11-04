@@ -16,7 +16,8 @@ on:
         required: false
         default: ""
 
-# Read-only token. Archive commit-back (write scope) is Phase 5 (D-20).
+# The default token is read-only. Only the record-topic job gets write scope, for the
+# explainer topic record (D-06, D-15). Archive commit-back stays in Phase 5 (D-20).
 permissions:
   contents: read
 
@@ -74,3 +75,45 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           TEST_RECIPIENT: ${{ secrets.TEST_RECIPIENT }}
         run: uv run python -m newsletter notify-failure --mode "$MODE"
+
+  record-topic:
+    needs: run
+    if: ${{ inputs.mode == 'send' && github.ref == 'refs/heads/main' && needs.run.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The only job with a write-scoped token: it commits data/explainer_topics.json after a send (D-06, D-15).
+    permissions:
+      contents: write
+    env:
+      MODE: ${{ inputs.mode }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Install locked dependencies (record)
+        run: uv sync --frozen
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: issue-${{ github.run_id }}
+          path: archive/
+      - name: Append explainer topic
+        run: uv run python -m newsletter record-topic --mode "$MODE"
+      - name: Commit topic record
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git diff --quiet -- data/explainer_topics.json && exit 0
+          # identity is needed by both the commit and the rebase in the retry loop
+          git config user.name silber60
+          git config user.email 81203897+silber60@users.noreply.github.com
+          git commit -m "chore(data): record explainer topic" -- data/explainer_topics.json
+          for i in 1 2; do
+            git pull --rebase "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main \
+              && git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main && exit 0
+          done
+          exit 1

@@ -19,9 +19,10 @@ def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _split(text: str) -> tuple[str, list[str]]:
-    """Return (header before the first step, step blocks) for newsletter.yml."""
-    lines = text.splitlines()
+JOB_LINE = re.compile(r"^  [\w-]+:$")
+
+
+def _blocks(lines: list[str]) -> tuple[str, list[str]]:
     starts = [i for i, line in enumerate(lines) if line.startswith(STEP_PREFIX)]
     assert starts, "no steps found"
     header = "\n".join(lines[: starts[0]])
@@ -30,6 +31,35 @@ def _split(text: str) -> tuple[str, list[str]]:
         end = starts[n + 1] if n + 1 < len(starts) else len(lines)
         blocks.append("\n".join(lines[start:end]))
     return header, blocks
+
+
+def _jobs(text: str) -> dict[str, tuple[str, list[str]]]:
+    """Per job: (job header before its first step, its step blocks)."""
+    lines = text.splitlines()
+    top = lines.index("jobs:")
+    starts = [i for i in range(top + 1, len(lines)) if JOB_LINE.match(lines[i])]
+    assert starts, "no jobs found"
+    jobs = {}
+    for n, start in enumerate(starts):
+        end = starts[n + 1] if n + 1 < len(starts) else len(lines)
+        jobs[lines[start].strip().rstrip(":")] = _blocks(lines[start:end])
+    return jobs
+
+
+def _workflow_header(text: str) -> str:
+    lines = text.splitlines()
+    return "\n".join(lines[: lines.index("jobs:")])
+
+
+def _split(text: str) -> tuple[str, list[str]]:
+    """Return (workflow header + run job header, run job step blocks) for newsletter.yml."""
+    header, blocks = _jobs(text)["run"]
+    return _workflow_header(text) + "\n" + header, blocks
+
+
+def _code(text: str) -> list[str]:
+    """Non-comment lines."""
+    return [line for line in text.splitlines() if not line.lstrip().startswith("#")]
 
 
 def _named(blocks: list[str], prefix: str) -> str:
@@ -107,11 +137,60 @@ def test_week_input_reaches_shell_via_env_only():
 
 
 def test_permissions_read_only():
-    for path in (NEWSLETTER, CI):
-        text = _text(path)
-        assert "contents: read" in text
-        assert "contents: write" not in text
-        assert "write-all" not in text
+    ci = _text(CI)
+    assert "contents: read" in ci
+    assert "contents: write" not in ci
+    assert "write-all" not in ci
+    text = _text(NEWSLETTER)
+    assert "write-all" not in text
+    header = _code(_workflow_header(text))
+    assert "  contents: read" in header
+    assert not any("write" in line for line in header)
+    run_header, _ = _jobs(text)["run"]
+    assert "permissions:" not in run_header, "run job must keep the read-only workflow token"
+
+
+def test_only_record_topic_job_has_write_scope():
+    text = _text(NEWSLETTER)
+    writes = [line for line in _code(text) if "contents: write" in line]
+    assert len(writes) == 1
+    jobs = _jobs(text)
+    assert set(jobs) == {"run", "record-topic"}
+    header, _ = jobs["record-topic"]
+    assert "contents: write" in header
+    for name, (job_header, blocks) in jobs.items():
+        if name != "record-topic":
+            assert "contents: write" not in job_header + "\n".join(blocks)
+
+
+def test_record_topic_job_is_send_on_main_only_and_secret_free():
+    header, blocks = _jobs(_text(NEWSLETTER))["record-topic"]
+    job = header + "\n" + "\n".join(blocks)
+    assert "needs: run" in header
+    cond = [line for line in header.splitlines() if line.strip().startswith("if:")]
+    assert len(cond) == 1
+    assert "inputs.mode == 'send'" in cond[0]
+    assert "github.ref == 'refs/heads/main'" in cond[0]
+    assert "needs.run.result == 'success'" in cond[0]
+    assert "secrets." not in job
+    for name in DELIVERY_SECRETS + ("ANTHROPIC_API_KEY",):
+        assert name not in job, f"{name} reaches the record-topic job"
+    checkout = [b for b in blocks if "actions/checkout@" in b]
+    assert len(checkout) == 1
+    assert "persist-credentials: false" in checkout[0]
+    assert 'record-topic --mode "$MODE"' in _named(blocks, "Append explainer topic")
+
+
+def test_job_token_only_in_build_and_topic_commit():
+    jobs = _jobs(_text(NEWSLETTER))
+    _, run_blocks = jobs["run"]
+    _, record_blocks = jobs["record-topic"]
+    allowed = [_named(run_blocks, "Build"), _named(record_blocks, "Commit topic record")]
+    holders = [b for _, blocks in jobs.values() for b in blocks if "github.token" in b]
+    assert holders == allowed
+    for header, _ in jobs.values():
+        assert "github.token" not in header
+    assert "github.token" not in _workflow_header(_text(NEWSLETTER))
 
 
 def test_dispatch_inputs():
