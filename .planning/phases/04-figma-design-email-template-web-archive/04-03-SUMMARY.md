@@ -2,7 +2,7 @@
 phase: 04-figma-design-email-template-web-archive
 plan: 03
 subsystem: web-archive
-status: partial  # Tasks 1-2 complete; Task 3 (owner preview, checkpoint B) pending-owner
+status: complete
 tags: [web, github-pages, home, figma, archive]
 requires: [04-01]
 provides:
@@ -33,7 +33,7 @@ metrics:
   completed: 2026-11-04
 actuals:
   tokens: 9000   # chars/4 over the realized diff
-  tasks: 2       # Tasks 1-2; Task 3 pending-owner
+  tasks: 3
   commits: 3
 plan_head_before: 200607f
 plan_head_after: 1c51522
@@ -64,9 +64,9 @@ Task 1: card fields; archive newest first with Top 3 and date; image only when i
 - 176c89f feat(04-03): home page follows the Figma 25:356 subscribe landing
 - 1c51522 fix(04-03): keep home grid columns inside narrow screens
 
-## Task 3: pending-owner (checkpoint B)
+## Task 3: owner preview, checkpoint B (done 2026-11-04)
 
-Preview built at out/home-preview/site/index.html (gitignored) from 2026-W44 (fixture) and a 2026-W43 copy (dates one week back, new headline, #1 image removed to show the no-image card). docs/ and data/ unchanged. Owner answers to record here.
+Preview built at out/home-preview/site/index.html (gitignored) from 2026-W44 (fixture) and a 2026-W43 copy (dates one week back, new headline, #1 image removed to show the no-image card). docs/ and data/ unchanged. Owner answers: "Both ok" (2026-11-04), all six checklist items accepted. The orchestrator checked the preview at 375px: no element wider than the viewport, #archive present with 2 cards, no form or input, and no old brand.
 
 ## Deviations from Plan
 
