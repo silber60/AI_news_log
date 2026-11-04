@@ -14,7 +14,8 @@ from markupsafe import Markup
 
 from newsletter.delivery.subscribers import DEFAULT_GREETING
 from newsletter.errors import RenderTooLarge
-from newsletter.schema import UNKNOWN, Issue, Item
+from newsletter.schema import UNKNOWN, EvidenceLink, Issue, Item, LicenseInfo
+from newsletter.stages.enrich import fmt_params
 from newsletter.stages.highlight import SPACE_PREFIX
 from newsletter.stages.verdicts import EVIDENCE_HOSTS, POC_GATED_LABEL
 from newsletter.store import TEMPLATES_DIR
@@ -155,6 +156,68 @@ def license_link(it: Item) -> str | None:
     if len(url) > EVIDENCE_LINK_MAX or not url.startswith(EVIDENCE_HOSTS):
         return None
     return url
+
+
+def _license_row(label: str, lic: LicenseInfo | None) -> dict:
+    if lic is None:
+        return {"label": label, "value": UNKNOWN, "url": None}
+    url = lic.source_url
+    if url is not None and not url.startswith(EVIDENCE_HOSTS):
+        url = None  # T-04-05: link only HF/GitHub sources, like the evidence line
+    return {"label": label, "value": lic.spdx_id or lic.name or UNKNOWN, "url": url}
+
+
+def _with_reason(verdict: str, reason: str | None) -> str:
+    return f"{verdict} · {reason}" if reason else verdict
+
+
+def _gpu_detail(it: Item) -> str:
+    """GPU basis value: code-decided local_run, VRAM rounded up as in the card, params as in
+    모델 정보 (fmt_params). 확인 필요 when none is known."""
+    hw = it.hardware
+    parts = []
+    if hw.local_run != UNKNOWN:
+        parts.append(f"로컬 실행 {hw.local_run}")
+    if hw.est_vram_gb is not None:
+        parts.append(f"약 {math.ceil(hw.est_vram_gb)}GB")
+    if hw.param_count is not None:
+        parts.append(f"{fmt_params(hw.param_count)} 파라미터")
+    return " · ".join(parts) or UNKNOWN
+
+
+def basis_rows(it: Item) -> list[dict]:
+    """D-05: the web-only 판정 근거 rows. Values are the code-decided verdicts plus the
+    stored reason_ko text; nothing here decides a verdict. 해당 없음 hides Claude/GPT (D-11)."""
+    c = it.commercial
+    rows = [
+        {"label": "상업 이용", "value": _with_reason(c.verdict, c.reason_ko), "url": None},
+        _license_row("코드 라이선스", c.code_license),
+        _license_row("가중치 라이선스", c.weights_license),
+        {
+            "label": "바로 써보기",
+            "value": _with_reason(it.poc.verdict, it.poc.reason_ko),
+            "url": None,
+        },
+        {"label": "GPU", "value": _gpu_detail(it), "url": None},
+    ]
+    cg = it.claude_gpt
+    if cg.verdict != "해당 없음":
+        rows.append(
+            {"label": "Claude/GPT", "value": _with_reason(cg.verdict, cg.reason_ko), "url": None}
+        )
+    return rows
+
+
+def basis_links(it: Item) -> list[EvidenceLink]:
+    """D-05: HF/GitHub evidence behind the verdicts, deduped by url in first-seen order."""
+    seen: set[str] = set()
+    links: list[EvidenceLink] = []
+    for ev in (*it.commercial.evidence, *it.poc.evidence, *it.hardware.evidence):
+        if ev.url in seen or not ev.url.startswith(EVIDENCE_HOSTS):
+            continue
+        seen.add(ev.url)
+        links.append(ev)
+    return links
 
 
 def demo_label(url: str) -> str:
