@@ -35,7 +35,8 @@ def _stage_lines(caplog) -> dict[str, list[str]]:
         msg = r.getMessage()
         if msg.startswith("checkpoint="):
             stage, verdict = msg.removeprefix("checkpoint=").split(" ", 1)
-            out.setdefault(stage, []).append(verdict)
+            if verdict in ("reused", "computed"):
+                out.setdefault(stage, []).append(verdict)
     return out
 
 
