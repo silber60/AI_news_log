@@ -186,7 +186,7 @@ def test_web_evidence_hrefs_stay_on_evidence_hosts(issue_w44):
         for it in issue_w44.items
     ]
     out = render_web_issue(issue_w44.model_copy(update={"items": items}))
-    ev = [a["href"] for a, _ in _anchors(out) if a.get("data-evidence") is not None]
+    ev = [a["href"] for a, _ in _anchors(out) if "data-evidence" in a]
     assert len(ev) == len(items) * 2  # one license link + one evidence link per card
     assert all(h.startswith(("https://huggingface.co/", "https://github.com/")) for h in ev)
     assert "example.com" not in out

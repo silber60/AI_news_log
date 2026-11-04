@@ -9,7 +9,10 @@
     template-version 8 (schema v4): a highlight pick links its demo (HF Space, else
     the project page) when code found one.
     template-version 9 (04-01): 웹에서 보기 / 지난 호 보기 link the Pages site; web=True renders
-    the public copy (no reply line, no recipient data; D-06, D-15). -#}
+    the public copy (no reply line, no recipient data; D-06, D-15).
+    04-02 (still v9): web=True adds the 판정 근거 block under every card (code-built rows from
+    render.basis_rows), the headline page title, the 680px phone rule and the 지난 호 전체 보기 link;
+    the 640 table gets the wrap class in web mode only, so the email bytes do not change. -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
 {%- set img_style = "display: block; border: 0; outline: none; text-decoration: none;" -%}
 {%- set banner_style = img_style ~ " width: 100%; max-width: 640px; height: auto;" -%}
@@ -35,6 +38,20 @@
 <tr><td style="padding: 4px 0 0 0; font-size: 15px; line-height: 170%; color: #222222;">{{ text }}</td></tr>
 </table>
 </td></tr></table>
+{%- endmacro -%}
+
+{#- 04-02 (D-05): web-only 판정 근거. Rows and links come from code; text is autoescaped. #}
+{%- macro basis(rank) -%}
+<tr><td style="padding: 12px 0 0 0;">
+<table role="presentation" data-basis="{{ rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} background-color: #F7F7F9; border-radius: 8px;">
+<tr><td colspan="2" style="padding: 14px 16px 4px 16px; font-size: 14px; font-weight: bold; color: #303A83;">판정 근거</td></tr>
+{%- for row in basis_rows[rank] %}
+<tr><td width="104" valign="top" style="padding: 4px 0 4px 16px; font-size: 13px; font-weight: 500; color: #737373;">{{ row.label }}</td><td valign="top" style="padding: 4px 16px 4px 0; font-size: 14px; line-height: 160%; color: #222222;">{% if row.url %}<a data-evidence href="{{ row.url }}" style="color: #222222; text-decoration: underline;">{{ row.value }}</a>{% else %}{{ row.value }}{% endif %}</td></tr>
+{%- endfor %}
+{%- set links = basis_links[rank] %}
+<tr><td colspan="2" style="padding: 6px 16px 14px 16px; font-size: 13px; line-height: 170%; color: #737373;">근거 링크: {% if links %}{% for ev in links %}<a data-evidence href="{{ ev.url }}" style="color: #FF6B00;">{{ ev.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}{% else %}확인 필요{% endif %}</td></tr>
+</table>
+</td></tr>
 {%- endmacro -%}
 
 {#- Figma card (node 7:2): image, meta, titles, summary, 3 lines + 💡 idea, 모델 정보, verdict line (D-01), links.
@@ -65,6 +82,9 @@
 {%- if vl %}
 <tr><td style="padding: 12px 0 0 0; font-size: 13px; line-height: 170%; color: #555555;">{{ vl|join(" · ") }}{% if license_links[it.rank] %} · <a href="{{ license_links[it.rank] }}" style="color: #A3A3A3;">라이선스</a>{% endif %}</td></tr>
 {%- endif %}
+{%- if web %}
+{{ basis(it.rank) }}
+{%- endif %}
 <tr><td style="padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
 </table>
 </td></tr>
@@ -75,17 +95,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ brand }} {{ issue.issue_id }}</title>
+<title>{% if web %}{{ issue.headline_ko }} · {{ brand }}{% else %}{{ brand }} {{ issue.issue_id }}{% endif %}</title>
 <link rel="stylesheet" href="{{ web_font_url }}">
 <style>
 body { margin: 0; padding: 0; background-color: #ffffff; font-family: {{ font }}; }
 a { color: #FF6B00; text-decoration: none; }
+{%- if web %}
+@media (max-width: 680px) { .wrap { width: 100% !important; } img { max-width: 100% !important; height: auto !important; } }
+{%- endif %}
 </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #ffffff;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} background-color: #ffffff;">
 <tr><td align="center" style="padding: 0;">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} width: 640px; max-width: 640px; background-color: #ffffff;">
+<table role="presentation"{% if web %} class="wrap"{% endif %} width="640" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} width: 640px; max-width: 640px; background-color: #ffffff;">
+
+{%- if web %}
+<tr data-section="back"><td style="padding: 14px 32px; font-size: 13px; font-weight: 500;"><a href="{{ archive_url }}" style="color: #FF6B00; text-decoration: none;">← 지난 호 전체 보기</a></td></tr>
+{%- endif %}
 
 <tr data-section="banner"><td style="padding: 0;"><img src="{{ asset }}/otter-banner.jpg" width="640" height="359" alt="{{ brand }}" style="{{ banner_style }}"></td></tr>
 

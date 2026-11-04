@@ -273,6 +273,9 @@ def _context(issue: Issue, greeting: str, *, web: bool = False) -> dict:
         "verdict_lines": {it.rank: verdict_line(it) for it in issue.items},
         "license_links": {it.rank: license_link(it) for it in issue.items},
         "demo_label": demo_label,
+        # D-05: web only, so the email pays no bytes for the 판정 근거 block.
+        "basis_rows": {it.rank: basis_rows(it) for it in issue.items} if web else {},
+        "basis_links": {it.rank: basis_links(it) for it in issue.items} if web else {},
     }
 
 
