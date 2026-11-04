@@ -9,6 +9,9 @@ from pathlib import Path
 WORKFLOWS = Path(__file__).parent.parent / ".github" / "workflows"
 NEWSLETTER = WORKFLOWS / "newsletter.yml"
 CI = WORKFLOWS / "ci.yml"
+PAGES = WORKFLOWS / "pages.yml"
+DEPLOY_PAGES_PIN = "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346"
+UPLOAD_PAGES_PIN = "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9"
 
 DELIVERY_SECRETS = ("SMTP_USER", "SMTP_PASSWORD", "TEST_RECIPIENT", "SUBSCRIBERS_CSV")
 STEP_PREFIX = "      - "
@@ -125,7 +128,7 @@ def test_anthropic_key_only_in_build():
 
 
 def test_no_expression_interpolation_in_run_lines():
-    for path in (NEWSLETTER, CI):
+    for path in (NEWSLETTER, CI, PAGES):
         for line in _run_lines(_text(path)):
             assert "${{" not in line, f"{path.name}: expression in run line: {line!r}"
 
@@ -150,21 +153,47 @@ def test_permissions_read_only():
     assert "permissions:" not in run_header, "run job must keep the read-only workflow token"
 
 
-def test_only_record_topic_job_has_write_scope():
+def test_only_publish_job_has_write_scope():
     text = _text(NEWSLETTER)
     writes = [line for line in _code(text) if "contents: write" in line]
     assert len(writes) == 1
     jobs = _jobs(text)
-    assert set(jobs) == {"run", "record-topic"}
-    header, _ = jobs["record-topic"]
+    assert set(jobs) == {"run", "publish", "deploy-pages"}
+    header, _ = jobs["publish"]
     assert "contents: write" in header
     for name, (job_header, blocks) in jobs.items():
-        if name != "record-topic":
+        if name != "publish":
             assert "contents: write" not in job_header + "\n".join(blocks)
 
 
-def test_record_topic_job_is_send_on_main_only_and_secret_free():
-    header, blocks = _jobs(_text(NEWSLETTER))["record-topic"]
+def test_pages_scopes_only_on_deploy_jobs():
+    for path, deploy in ((NEWSLETTER, "deploy-pages"), (PAGES, "deploy")):
+        jobs = _jobs(_text(path))
+        for name, (header, blocks) in jobs.items():
+            job = "\n".join(_code(header + "\n" + "\n".join(blocks)))
+            if name == deploy:
+                assert "pages: write" in job and "id-token: write" in job, path.name
+            else:
+                assert "pages: write" not in job, (path.name, name)
+                assert "id-token: write" not in job, (path.name, name)
+        assert not any("write" in line for line in _code(_workflow_header(_text(path))))
+
+
+def test_deploy_jobs_are_secret_free_and_checkout_free():
+    for path, deploy in ((NEWSLETTER, "deploy-pages"), (PAGES, "deploy")):
+        header, blocks = _jobs(_text(path))[deploy]
+        job = header + "\n" + "\n".join(blocks)
+        assert "secrets." not in job, path.name
+        assert "github.token" not in job, path.name
+        assert "actions/checkout@" not in job, path.name
+        assert "name: github-pages" in header
+        assert "group: pages" in header and "cancel-in-progress: false" in header
+        assert len(blocks) == 1 and DEPLOY_PAGES_PIN in blocks[0]
+    assert "needs: publish" in _jobs(_text(NEWSLETTER))["deploy-pages"][0]
+
+
+def test_publish_job_is_send_on_main_only_and_secret_free():
+    header, blocks = _jobs(_text(NEWSLETTER))["publish"]
     job = header + "\n" + "\n".join(blocks)
     assert "needs: run" in header
     cond = [line for line in header.splitlines() if line.strip().startswith("if:")]
@@ -174,23 +203,45 @@ def test_record_topic_job_is_send_on_main_only_and_secret_free():
     assert "needs.run.result == 'success'" in cond[0]
     assert "secrets." not in job
     for name in DELIVERY_SECRETS + ("ANTHROPIC_API_KEY",):
-        assert name not in job, f"{name} reaches the record-topic job"
+        assert name not in job, f"{name} reaches the publish job"
     checkout = [b for b in blocks if "actions/checkout@" in b]
     assert len(checkout) == 1
     assert "persist-credentials: false" in checkout[0]
     assert 'record-topic --mode "$MODE"' in _named(blocks, "Append explainer topic")
+    assert 'newsletter publish --mode "$MODE"' in _named(blocks, "Publish web pages")
+    commit = _named(blocks, "Commit record and pages")
+    assert "git add -- data/explainer_topics.json data/issues docs" in commit
+    assert "git config user.name silber60" in commit
+    assert "git config user.email 81203897+silber60@users.noreply.github.com" in commit
+    upload = blocks[-1]
+    assert UPLOAD_PAGES_PIN in upload and "path: docs/" in upload
 
 
-def test_job_token_only_in_build_and_topic_commit():
+def test_pages_workflow_triggers_and_build():
+    text = _text(PAGES)
+    assert "workflow_dispatch:" in text
+    assert "branches: [main]" in text
+    assert 'paths: ["docs/**"]' in text
+    assert "  contents: read" in _workflow_header(text)
+    jobs = _jobs(text)
+    assert set(jobs) == {"build", "deploy"}
+    _, blocks = jobs["build"]
+    assert "secrets." not in text
+    assert "persist-credentials: false" in blocks[0]
+    assert UPLOAD_PAGES_PIN in blocks[1] and "path: docs/" in blocks[1]
+
+
+def test_job_token_only_in_build_and_publish_commit():
     jobs = _jobs(_text(NEWSLETTER))
     _, run_blocks = jobs["run"]
-    _, record_blocks = jobs["record-topic"]
-    allowed = [_named(run_blocks, "Build"), _named(record_blocks, "Commit topic record")]
+    _, publish_blocks = jobs["publish"]
+    allowed = [_named(run_blocks, "Build"), _named(publish_blocks, "Commit record and pages")]
     holders = [b for _, blocks in jobs.values() for b in blocks if "github.token" in b]
     assert holders == allowed
     for header, _ in jobs.values():
         assert "github.token" not in header
     assert "github.token" not in _workflow_header(_text(NEWSLETTER))
+    assert "github.token" not in _text(PAGES)
 
 
 def test_dispatch_inputs():
@@ -211,7 +262,7 @@ def test_artifact_uploads_archive_only():
 
 
 def test_actions_pinned_to_commit_sha():
-    for path in (NEWSLETTER, CI):
+    for path in (NEWSLETTER, CI, PAGES):
         uses = [line for line in _text(path).splitlines() if "uses:" in line]
         assert uses
         for line in uses:
