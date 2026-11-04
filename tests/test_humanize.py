@@ -4,7 +4,17 @@ import json
 import logging
 
 import pytest
-from conftest import FIXTURES, FakeAnthropic, make_parsed
+from conftest import (
+    DEFAULT_TREND,
+    FIXTURES,
+    FakeAnthropic,
+    default_analysis,
+    default_explainer,
+    default_highlights,
+    default_notes,
+    default_polish,
+    make_parsed,
+)
 
 from newsletter.schema import Explainer, Highlight, Issue, PolishFixLLM, PolishLLM
 from newsletter.stages import analyze, headline, humanize, notes, trend
@@ -366,3 +376,247 @@ def test_polish_diff_guard_discards_an_outside_change(issue_w44, monkeypatch, ca
     assert _same_outside(out, issue, set())
     assert any("polish=discarded reason=diff" in r.getMessage() for r in caplog.records)
     assert any("humanizer=unfixed fields=1 codes=hype" in r.getMessage() for r in caplog.records)
+
+
+# ---- 03-06 Task 2: per-fix guards, stage re-checks, retry and leftovers ----
+
+LINE = "multi-view 입력을 써서 영상 내내 대상이 바뀌지 않게 해요."
+DIRTY = "혁신적인 " + LINE
+
+
+def _patch(issue: Issue, updates: dict) -> Issue:
+    data = issue.model_dump(mode="json")
+    for path, value in updates.items():
+        keys = path.split(".")
+        node = data
+        for k in keys[:-1]:
+            node = node[int(k)] if isinstance(node, list) else node[k]
+        last = keys[-1]
+        node[int(last) if isinstance(node, list) else last] = value
+    return Issue.model_validate(data)
+
+
+def _dirty_base(issue_w44: Issue) -> Issue:
+    return _patch(_phase3(issue_w44), {LINE_PATH: DIRTY})
+
+
+def _value(issue: Issue, path: str):
+    node = issue.model_dump(mode="json")
+    for k in path.split("."):
+        node = node[int(k)] if isinstance(node, list) else node[k]
+    return node
+
+
+def _run_twice_bad(base: Issue, path: str, bad) -> tuple[Issue, FakeAnthropic]:
+    """Polish where both attempts return the same rejected fix for path."""
+    step = _fixes((path, bad)) if isinstance(bad, str) else bad
+    fake = FakeAnthropic([step, step])
+    return humanize.polish_issue(base, fake), fake
+
+
+# (case id, original text, rejected fix text, guard code)
+LINE_GUARDS = [
+    ("empty", DIRTY, "", "fix_empty"),
+    ("over_limit", DIRTY, "가" * 69 + "해요.", "fix_len"),
+    ("not_haeyo", DIRTY, "multi-view 입력을 써서 영상 내내 대상이 바뀌지 않게 한다.", "fix_tone"),
+    ("url", DIRTY, "https://x.io 처럼 multi-view 입력을 써서 대상이 안 바뀌어요.", "fix_url"),
+    ("emoji", DIRTY, "multi-view 입력 🎉 으로 영상 내내 대상이 바뀌지 않게 해요.", "fix_emoji"),
+    (
+        "authorship",
+        DIRTY,
+        "이 뉴스레터처럼 multi-view 입력을 써서 대상이 안 바뀌어요.",
+        "fix_authorship",
+    ),
+    ("digit", DIRTY, "multi-view 입력 3개를 써서 영상 내내 대상이 바뀌지 않게 해요.", "fix_digit"),
+    (
+        "name",
+        DIRTY,
+        "GPT처럼 multi-view 입력을 써서 영상 내내 대상이 바뀌지 않게 해요.",
+        "fix_name",
+    ),
+    (
+        "rank",
+        "혁신적인 입력 3개를 써서 영상 내내 대상이 바뀌지 않게 해요.",
+        "3위 입력을 써서 영상 내내 대상이 바뀌지 않게 해요.",
+        "fix_rank",
+    ),
+    ("hard_not_lower", DIRTY, "놀라운 multi-view 입력을 써서 대상이 바뀌지 않게 해요.", "fix_lint"),
+    (
+        "weak_higher",
+        DIRTY,
+        "다양한 multi-view 입력을 효과적으로 써서 대상이 바뀌지 않게 해요.",
+        "fix_weak",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "original,bad,code", [c[1:] for c in LINE_GUARDS], ids=[c[0] for c in LINE_GUARDS]
+)
+def test_polish_guard_rejects_and_keeps_original(issue_w44, original, bad, code):
+    base = _patch(_phase3(issue_w44), {LINE_PATH: original})
+    out, fake = _run_twice_bad(base, LINE_PATH, bad)
+    assert _value(out, LINE_PATH) == original
+    assert out == base
+    assert len(fake.calls) == 2
+    retry = fake.user_texts()[1]
+    assert "<previous_output_problems>" in retry
+    assert f"[{code}]" in retry
+    if bad:
+        assert bad not in retry  # attempt 2 carries problem codes, never the model's text
+
+
+def test_polish_guard_rejects_a_repeated_id(issue_w44):
+    base = _dirty_base(issue_w44)
+    out, fake = _run_twice_bad(base, LINE_PATH, _fixes((LINE_PATH, LINE), (LINE_PATH, LINE)))
+    assert out == base
+    assert "[fix_repeat]" in fake.user_texts()[1]
+
+
+def _known_verdicts(issue_w44: Issue) -> Issue:
+    return _patch(
+        _phase3(issue_w44),
+        {
+            "items.1.commercial.verdict": "가능",
+            "items.1.commercial.code_license": {"spdx_id": "MIT", "name": "MIT License"},
+            "items.1.commercial.reason_ko": "MIT 라이선스라 혁신적인 조건 없이 쓸 수 있어요.",
+            "items.1.claude_gpt.verdict": "기법 적용 가능",
+            "items.1.claude_gpt.reason_ko": "혁신적인 질문 방식을 대화에서 따라 해 볼 수 있어요.",
+            "items.1.skill_gpt.fit": "Claude Skill",
+            "items.1.skill_gpt.reason_ko": "혁신적인 요약 규칙을 Claude Skill로 정리해 두면 좋아요.",
+            "trend_ko": "이번 주에는 로봇 연구가 많았어요. 혁신적인 영상 연구도 있었어요.",
+            "highlights.0.why_ko": "혁신적인 요약 규칙을 Skill로 정리해 두면 같은 형식으로 받아요.",
+            "explainer.point_ko": "혁신적인 필요한 부분만 계산해요.",
+        },
+    )
+
+
+STAGE_GUARDS = [
+    ("commercial", "items.1.commercial.reason_ko", "MIT 라이선스지만 상업 사용은 불가해요."),
+    ("claude_gpt", "items.1.claude_gpt.reason_ko", "기법 적용 가능한 질문 방식이에요."),
+    ("skill_gpt", "items.1.skill_gpt.reason_ko", "요약 규칙을 Claude Skill로 정리해요."),
+    ("trend", "trend_ko", "이번 주에는 로봇 연구와 영상 연구가 많았어요."),
+    (
+        "highlight",
+        "highlights.0.why_ko",
+        "첫째 요약 규칙을 Skill로 정리해 두면 같은 형식으로 받아요.",
+    ),
+    ("explainer", "explainer.point_ko", "필요한 부분만 계산해요. 그래서 빨라요."),
+]
+
+
+@pytest.mark.parametrize(
+    "path,bad", [c[1:] for c in STAGE_GUARDS], ids=[c[0] for c in STAGE_GUARDS]
+)
+def test_polish_guard_reruns_the_stage_check(issue_w44, path, bad):
+    base = _known_verdicts(issue_w44)
+    original = _value(base, path)
+
+    def script(kw):
+        good = default_polish(kw)
+        return make_parsed(
+            PolishLLM(
+                fixes=[
+                    PolishFixLLM(id=f.id, text=bad if f.id == path else f.text) for f in good.fixes
+                ]
+            )
+        )
+
+    fake = FakeAnthropic([script, script])
+    out = humanize.polish_issue(base, fake)
+    assert _value(out, path) == original
+    assert "[fix_stage]" in fake.user_texts()[1]
+    # Every other flagged field was fixed on attempt 1 and is not resent.
+    assert fake.user_texts()[1].count("id: ") == 1
+    for other, *_ in (s[1:] for s in STAGE_GUARDS):
+        if other != path:
+            assert "혁신적인" not in _value(out, other)
+
+
+def test_polish_never_sends_unknown_reason(issue_w44):
+    base = _patch(
+        _dirty_base(issue_w44),
+        {
+            "items.0.commercial.reason_ko": notes.UNKNOWN_REASON,
+            "items.0.poc.reason_ko": notes.UNKNOWN_REASON,
+        },
+    )
+    fake = FakeAnthropic()
+    out = humanize.polish_issue(base, fake)
+    assert len(fake.calls) == 1
+    assert notes.UNKNOWN_REASON not in fake.user_texts()[0]
+    assert out.items[0].commercial.reason_ko == notes.UNKNOWN_REASON
+    assert out.items[0].poc.reason_ko == notes.UNKNOWN_REASON
+
+
+def test_polish_second_attempt_resends_only_failed_ids(issue_w44):
+    idea = "items.1.use_idea_ko"
+    base = _patch(_dirty_base(issue_w44), {idea: "혁신적인 360도 영상에 쓸 수 있어요."})
+    first = _fixes((LINE_PATH, LINE), (idea, "360도 영상 7개에 쓸 수 있어요."))
+    fake = FakeAnthropic([first])
+    out = humanize.polish_issue(base, fake)
+    assert len(fake.calls) == 2
+    retry = fake.user_texts()[1]
+    assert retry.count("id: ") == 1 and f"id: {idea}\n" in retry
+    assert "[fix_digit]" in retry and "7개" not in retry
+    assert _value(out, LINE_PATH) == LINE
+    assert _value(out, idea) == "360도 영상에 쓸 수 있어요."
+
+
+def test_polish_makes_at_most_two_calls_and_warns(issue_w44, caplog):
+    base = _dirty_base(issue_w44)
+    bad = _fixes((LINE_PATH, "놀라운 " + LINE))
+    fake = FakeAnthropic([bad, bad, bad])
+    with caplog.at_level(logging.INFO, logger="newsletter.stages.humanize"):
+        out = humanize.polish_issue(base, fake)
+    assert len(fake.calls) == 2
+    assert out == base
+    msgs = [r.getMessage() for r in caplog.records]
+    assert "humanizer=unfixed fields=1 codes=hype" in msgs
+
+
+def test_polish_api_error_keeps_originals(issue_w44):
+    import anthropic
+    import httpx
+
+    base = _dirty_base(issue_w44)
+    req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    fake = FakeAnthropic([anthropic.APIConnectionError(request=req)])
+    assert humanize.polish_issue(base, fake) == base
+    assert len(fake.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "step",
+    [
+        make_parsed(None, stop_reason="refusal"),
+        make_parsed(None, stop_reason="max_tokens"),
+        ValueError("schema"),
+        make_parsed(None),
+    ],
+    ids=["refusal", "max_tokens", "schema", "no_output"],
+)
+def test_polish_bad_response_keeps_originals(issue_w44, step):
+    base = _dirty_base(issue_w44)
+    fake = FakeAnthropic([step, step])
+    assert humanize.polish_issue(base, fake) == base
+    assert len(fake.calls) == 2
+
+
+def test_default_fake_texts_are_lint_clean():
+    """Pitfall 9: every conftest default is lint-clean, so a normal build makes 0
+    polish calls."""
+    kw = {"messages": [{"content": "<items>\nrank: 1\nrank: 2\n</items>\ntitle: X"}]}
+    a = default_analysis(kw)
+    n = default_notes(kw).notes[0]
+    h = default_highlights(kw).picks[0]
+    ex = default_explainer(kw)
+    texts = [
+        a.summary_ko, a.does_ko, a.new_ko, a.result_ko, a.use_idea_ko,
+        a.claude_gpt_reason_ko, a.skill_gpt_reason_ko,
+        n.commercial_reason_ko, n.poc_reason_ko,
+        DEFAULT_TREND, h.why_ko, h.how_ko,
+        ex.point_ko, ex.body_ko, ex.example_ko,
+    ]  # fmt: skip
+    for text in texts:
+        assert not humanize.needs_polish(humanize.lint(text)), humanize.lint(text)
