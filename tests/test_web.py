@@ -47,8 +47,9 @@ def test_publish_writes_data_and_both_pages(site, issue_w44):
     data = site / "data" / "issues" / f"{ISSUE_ID}.json"
     page = site / "docs" / "issues" / ISSUE_ID / "index.html"
     home = site / "docs" / "index.html"
+    unsub = site / "docs" / "unsubscribe" / "index.html"
     assert data.is_file()
-    assert set(written) == {page, home}
+    assert set(written) == {page, home, unsub}
     assert issue_w44.headline_ko in page.read_text(encoding="utf-8")
     assert web.load_issues() == [issue_w44]
 
@@ -86,7 +87,7 @@ def test_cli_send_end_to_end(site, issue_w44, caplog):
     assert render.date_line(issue_w44) in home
     assert f"web=published issue={ISSUE_ID}" in caplog.text
     assert f"web=exists issue={ISSUE_ID}" in caplog.text
-    assert "web=site pages=2" in caplog.text
+    assert "web=site pages=3" in caplog.text
     assert issue_w44.headline_ko not in caplog.text
 
 
@@ -95,7 +96,7 @@ def test_cli_site_regenerates_without_archive(site, issue_w44, caplog):
     with caplog.at_level("INFO"):
         assert main(["site"]) == 0
     assert (site / "docs" / "issues" / ISSUE_ID / "index.html").is_file()
-    assert "web=site pages=2" in caplog.text
+    assert "web=site pages=3" in caplog.text
 
 
 def test_home_lists_newest_first(site, issue_w44):
@@ -127,11 +128,13 @@ def test_generated_pages_carry_no_personal_data(site, issue_w44):
     web.publish(issue_w44)
     web.build_site()
     files = _html_files(site)
-    assert len(files) == 2
+    assert len(files) == 3
     for p in files:
         text = p.read_text(encoding="utf-8")
         assert not _EMAIL_RE.search(text), p
         assert not TOKEN_RE.search(text), p
+        if p.parent.name == "unsubscribe":
+            continue  # the confirm page carries the button and the reply line by design
         assert not re.search(r">\s*구독 해지\s*<", text), p
         assert "수신거부" not in text, p
     page = (site / "docs" / "issues" / ISSUE_ID / "index.html").read_text(encoding="utf-8")
@@ -162,7 +165,9 @@ def test_committed_site_is_fresh(tmp_path, monkeypatch):
     """docs/ must match a regeneration from the committed data/issues (run `site`)."""
     monkeypatch.setenv("NEWSLETTER_ISSUES_DIR", str(REPO / "data" / "issues"))
     monkeypatch.setenv("NEWSLETTER_DOCS_DIR", str(tmp_path / "docs"))
-    for path in web.build_site():
+    written = web.build_site()
+    assert tmp_path / "docs" / "unsubscribe" / "index.html" in written
+    for path in written:
         rel = path.relative_to(tmp_path / "docs")
         assert (REPO / "docs" / rel).read_bytes() == path.read_bytes(), rel
     for p in (REPO / "docs").rglob("*.html"):
@@ -348,7 +353,7 @@ def test_home_footer_is_brand_and_send_note_only(home_html):
 
 
 def test_templates_hold_no_literal_brand():
-    for name in ("_base.html.j2", "home.html.j2"):
+    for name in ("_base.html.j2", "home.html.j2", "unsubscribe.html.j2"):
         text = (store.TEMPLATES_DIR / "web" / name).read_text(encoding="utf-8")
         assert render.BRAND not in text, name
         assert OLD_BRAND not in text, name
@@ -384,3 +389,103 @@ def test_home_sentences_pass_humanizer(text):
 @pytest.mark.parametrize("text", HOME_NAMES)
 def test_home_labels_pass_humanizer(text):
     assert not [c for c in humanize.lint(text, kind="name") if c in humanize.HARD_CODES]
+
+
+# --- 04-06: /unsubscribe/ confirm page (D-12) ---
+
+ENDPOINT = "https://script.google.com/macros/s/X/exec"
+UNSUB_HEADING = "구독을 해지할까요?"
+UNSUB_SENTENCES = [
+    "버튼을 누르면 다음 주부터 메일이 가지 않아요.",
+    "링크가 올바르지 않아요. 받으신 메일의 링크를 다시 눌러 주세요.",
+    "메일에 '수신거부'라고 회신해 주세요.",
+]
+
+
+def _unsub(site, monkeypatch, endpoint: str | None) -> str:
+    monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", endpoint)
+    web.build_site()
+    return (site / "docs" / "unsubscribe" / "index.html").read_text(encoding="utf-8")
+
+
+def _script(html: str) -> str:
+    start = html.index("<script>")
+    return html[start : html.index("</script>", start)]
+
+
+def test_unsubscribe_page_written_every_run(site, monkeypatch):
+    path = site / "docs" / "unsubscribe" / "index.html"
+    assert path in web.build_site()
+    path.unlink()
+    web.build_site()
+    assert path.is_file()
+
+
+def test_unsubscribe_page_with_endpoint_posts_only_from_button(site, monkeypatch):
+    html = _unsub(site, monkeypatch, ENDPOINT)
+    assert html.count("<form") == 1
+    form = html[html.index("<form") : html.index("</form>")]
+    assert 'method="post"' in form
+    assert f'action="{ENDPOINT}"' in form
+    assert f'data-endpoint="{ENDPOINT}"' in form
+    assert re.search(r'<input type="hidden" name="t"', form)
+    assert re.search(r"<button[^>]*>구독 해지</button>", form)
+    assert " hidden" in form[: form.index(">")]  # revealed by JS only
+    assert UNSUB_HEADING in html
+    assert UNSUB_SENTENCES[0] in html
+    js = _script(html)
+    assert "^[0-9a-f]{%d}$" % web.unsubscribe.TOKEN_LEN in js
+    assert ".value" in js
+    assert "innerHTML" not in js
+    assert ".submit(" not in html
+    assert '"?t=" + t' in js
+    assert ENDPOINT not in js  # endpoint only via the autoescaped data- attribute
+
+
+def test_unsubscribe_page_bad_link_and_noscript_lines(site, monkeypatch):
+    html = _unsub(site, monkeypatch, ENDPOINT)
+    assert UNSUB_SENTENCES[1] in html
+    bad = html[html.index('id="unsub-bad"') - 20 :]
+    assert " hidden" in bad[: bad.index(">")]
+    noscript = html[html.index("<noscript>") : html.index("</noscript>")]
+    assert "수신거부" in noscript
+    assert UNSUB_SENTENCES[2] in noscript
+
+
+def test_unsubscribe_page_without_endpoint_shows_reply_only(site, monkeypatch):
+    html = _unsub(site, monkeypatch, None)
+    assert "<form" not in html
+    assert "<script" not in html.lower()
+    assert ">구독 해지<" not in html
+    assert UNSUB_SENTENCES[2] in html
+    assert "<noscript>" not in html
+
+
+def test_unsubscribe_endpoint_is_autoescaped(site, monkeypatch):
+    html = _unsub(site, monkeypatch, 'https://x.example/"><script>alert(1)</script>')
+    assert "<script>alert(1)" not in html
+    assert "&#34;&gt;&lt;script&gt;" in html
+
+
+@pytest.mark.parametrize("endpoint", [ENDPOINT, None])
+def test_unsubscribe_page_carries_no_personal_data(site, monkeypatch, endpoint):
+    html = _unsub(site, monkeypatch, endpoint)
+    assert not re.search(r"[0-9a-f]{32}", html)
+    assert not _EMAIL_RE.search(html)
+    assert "LIST_KEY" not in html
+    assert "mailto:" not in html
+    assert render.BRAND in html
+    assert OLD_BRAND not in html
+    assert '<meta name="robots" content="noindex">' in html
+    assert 'href="../"' in html  # logo goes home from /unsubscribe/
+    assert f'href="../{render.ARCHIVE_ANCHOR}"' in html
+    assert "무료로 구독하기" not in html
+
+
+@pytest.mark.parametrize("text", UNSUB_SENTENCES)
+def test_unsubscribe_sentences_pass_humanizer(text):
+    assert not [c for c in humanize.lint(text) if c in humanize.HARD_CODES]
+
+
+def test_unsubscribe_heading_passes_humanizer():
+    assert not [c for c in humanize.lint(UNSUB_HEADING, kind="name") if c in humanize.HARD_CODES]
