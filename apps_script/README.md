@@ -94,10 +94,10 @@ read -rs SEND_LIST_KEY            # SEND_LIST_KEY를 붙여 넣고 Enter
    ```
 
    `302`가 나오고, 시트의 `unsubscribes` 탭에 `82a671b5104273fe07992f40d81000c8` 행이 생기면 돼요. 확인한 뒤 그 테스트 행을 지워요. 첫 줄(`id | at | via`)은 지우지 않아요.
-4. 사이트 폼이 결과를 읽을 수 있는지(CORS) 확인해요. `website` 칸을 채워 보내는 요청이라 시트에는 아무것도 적히지 않아요.
+4. 사이트 폼이 결과를 읽을 수 있는지(CORS) 확인해요. 숨은 칸(`hp_note`)을 채워 보내는 요청이라 시트에는 아무것도 적히지 않아요.
 
    ```
-   curl -sL -D - -o /dev/null -H "Origin: https://silber60.github.io" -d "action=subscribe&fmt=json&website=x" "$URL" | grep -i "access-control-allow-origin"
+   curl -sL -D - -o /dev/null -H "Origin: https://silber60.github.io" -d "action=subscribe&fmt=json&hp_note=x" "$URL" | grep -i "access-control-allow-origin"
    ```
 
    `access-control-allow-origin`이 들어간 줄이 하나 나와야 해요. 아무것도 안 나오면 그대로 Claude에게 알려 주세요.

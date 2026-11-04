@@ -174,14 +174,14 @@ def test_subscribe_guards():
     ):
         assert s in src, s
     body = _body("subscribe_")
-    assert "p.website" in body  # honeypot
+    assert "p.hp_note" in body and "p.website" in body  # honeypot, new and legacy names
     assert "normEmail_(" in body and "CONSENT_VERSIONS.indexOf(" in body
     assert "p.consent !== 'yes'" in body
     assert "'rl:all" in body and "'rl:' + t" in body
     assert "GLOBAL_HOURLY_LIMIT" in body and "PER_ID_LIMIT" in body
     assert "LockService" in body and "releaseLock" in body
     # The order of checks: honeypot, email, consent, global limit, per-id limit, lock.
-    at = [body.index(s) for s in ("p.website", "normEmail_(", "p.consent", "rl:all", "'rl:' + t")]
+    at = [body.index(s) for s in ("p.hp_note", "normEmail_(", "p.consent", "rl:all", "'rl:' + t")]
     assert at == sorted(at)
     assert at[-1] < body.index("LockService")
     upsert = _body("upsert_")

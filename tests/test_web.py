@@ -547,7 +547,9 @@ def test_forms_post_every_field_to_the_endpoint(site, issue_w44, monkeypatch):
         hp = form[form.index('<div class="hp"') :]
         hp = hp[: hp.index("</div>")]
         assert 'aria-hidden="true"' in hp
-        assert re.search(r'<input type="text" name="website" tabindex="-1" autocomplete="off">', hp)
+        # Owner bug 2026-11-04: autofill filled name="website" and real sign-ups were dropped.
+        assert re.search(r'<input type="text" name="hp_note" tabindex="-1" autocomplete="off"', hp)
+        assert "website" not in hp and "웹사이트" not in hp
         assert re.search(r'<p class="msg" role="status" aria-live="polite"></p>', form)
         assert FORM_SENTENCES[0] in form
     assert home.count("<script>") == 1
@@ -589,7 +591,7 @@ def test_endpoint_none_gates_css_and_script(site, issue_w44, monkeypatch):
     assert ".hp" not in home
     assert ".msg" not in home
     assert "<script" not in home.lower()
-    assert 'name="website"' not in home
+    assert 'name="hp_note"' not in home
     assert ">구독하기<" not in home
 
 
@@ -605,7 +607,7 @@ def test_form_contract_matches_code_gs():
     versions = re.search(r"const CONSENT_VERSIONS = \[([^\]]*)\]", gs).group(1)
     assert f"'{web.CONSENT_VERSION}'" in versions
     assert web.CONSENT_VERSION == "2026-11-04"
-    assert "p.website" in gs
+    assert "p.hp_note" in gs
     for code, msg in FORM_MSG.items():
         assert f"{code}: '{msg}'" in gs, code
     reply = gs[gs.index("const REPLY = {") :]

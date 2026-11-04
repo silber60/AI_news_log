@@ -227,7 +227,10 @@ function import_(key, rowsJson) {
 // is queued and the 1-minute trigger sends it, so the reply time says nothing
 // about the address either.
 function subscribe_(p) {
-  if (String(p.website || '') !== '') return reply_(p.fmt, 'ok');  // honeypot: silent
+  // Honeypot: silent. hp_note is the field name since 2026-11-04, because browser
+  // autofill filled the old name "website" and dropped real sign-ups. The old
+  // name stays checked for pages cached before the change.
+  if (String(p.hp_note || '') !== '' || String(p.website || '') !== '') return reply_(p.fmt, 'ok');
   const email = normEmail_(p.email);
   if (!email) return reply_(p.fmt, 'invalid');
   const cv = String(p.cv || '');
