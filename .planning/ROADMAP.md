@@ -13,6 +13,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 - [x] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
 - [ ] **Phase 4.1: Public Subscribe & Instant Welcome Issue** (INSERTED) - Anyone can subscribe from a web page, lands on the subscriber list, and immediately receives the latest issue
+- [ ] **Phase 4.2: Domain Sending via Resend** (INSERTED) - Mail goes out from newsletter@modaklog.characterplanner.co.kr with SPF/DKIM/DMARC instead of a personal Gmail
 - [ ] **Phase 5: Scheduled Automation & Hardening** - Mail arrives every Monday 08:00 KST unattended, re-runs never double-send, and the owner gets a run report
 
 ## Phase Details
@@ -166,6 +167,12 @@ Plans:
 - [ ] 04.1-05-PLAN.md — Owner Google + GitHub setup (first 새 배포), cut-over commit, import run, phone round trip sign-up → welcome → unsubscribe → re-subscribe; closes 04-04 Task 3 and D-10/D-12 (wave 3)
 - [ ] 04.1-06-PLAN.md — Cleanup after one live-list send: remove the CSV path and import job; owner deletes SUBSCRIBERS_CSV (wave 4)
 
+### Phase 4.2: Domain Sending via Resend (INSERTED)
+**Goal**: Weekly, test, failure and welcome mails come from the owner's domain so they stop landing in spam.
+**Depends on**: Phase 4.1
+**Success Criteria**: (1) send.py and the Apps Script welcome send through Resend from newsletter@modaklog.characterplanner.co.kr with the owner's Gmail as Reply-To; (2) DKIM/SPF/DMARC records live; (3) an owner mode=test lands in the inbox with SPF, DKIM and DMARC PASS
+**Plans**: 1 quick plan, done as code (commit cd3f780); owner steps pending. See .planning/phases/04.2-domain-sending-resend/04.2-01-SUMMARY.md
+
 ### Phase 5: Scheduled Automation & Hardening
 **Goal**: The newsletter reaches subscribers every Monday 08:00 KST with nobody touching it, re-runs are safe, and the owner learns about every outcome.
 **Mode:** mvp
@@ -176,7 +183,14 @@ Plans:
   2. Re-running a week reuses stage checkpoints (no re-fetch, no new Claude billing) unless `--force-stage` is given, and the committed hash ledger stops any duplicate send to the same person
   3. A late or stale run refuses to mail an old week; runs never overlap (concurrency group), actions are SHA-pinned, and `archive/` is committed back even after a partial failure
   4. The owner gets a run-report email each week with success counts or the failure, and the weekly archive commit keeps the schedule clear of the 60-day auto-disable
-**Plans**: TBD
+**Plans**: 5 plans (runs after Phase 4.2, which owns send.py connection code)
+
+Plans:
+- [ ] 05-01-PLAN.md — Tracer: 06:00/08:00 Asia/Seoul crons, fail-safe MODE mapping, SEND_PAUSED pause and KST stale guard (--allow-stale), deliver outcome output, queue: max, tip checkouts, always() archive/ledger commit job, outcome-gated publish (wave 1)
+- [ ] 05-02-PLAN.md — Per-stage checkpoints in archive/<week>/, lazy Claude client, --force-stage + dispatch input, archive leak scan (wave 2)
+- [ ] 05-03-PLAN.md — Send ledger data/ledger/<week>.json, HMAC-SHA256 keys (owner A1), per-message write via on_sent, re-run skip (wave 2)
+- [ ] 05-04-PLAN.md — Weekly run report: report command (notify-failure alias), decision table, 해요체 lint-clean copy, always() Report step (wave 3)
+- [ ] 05-05-PLAN.md — Owner live proof: push, SEND_PAUSED variable, twice-run test reuse, refused W44 send, first unattended Monday 2026-11-09 (wave 4, checkpoints)
 
 ## Progress
 
