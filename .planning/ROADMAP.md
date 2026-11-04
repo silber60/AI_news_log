@@ -140,7 +140,7 @@ Plans:
 - [x] 04-02-PLAN.md — Web issue: code-built 판정 근거 rows (reasons, code vs weights license, HF/GitHub evidence, 해당 없음 hidden), responsive web page, owner preview (wave 2)
 - [x] 04-03-PLAN.md — Home page per Figma 25:356 with 지난 호 cards newest first, subscribe forms hidden by SUBSCRIBE_URL = None, owner preview (checkpoint B) (wave 2)
 - [ ] 04-04-PLAN.md — Unsubscribe backend: owner approves token scheme; HMAC token + fail-closed list fetch, apps_script/Code.gs + Korean setup guide; owner Google setup and /exec URL (checkpoint C) (wave 2)
-- [ ] 04-05-PLAN.md — Delivery: per-recipient 구독 해지 link, List-Unsubscribe (+Post) headers with the folding fix, send-mode filter that fails closed, new secrets in Deliver only (wave 3)
+- [x] 04-05-PLAN.md — Delivery: per-recipient 구독 해지 link, List-Unsubscribe (+Post) headers with the folding fix, send-mode filter that fails closed, new secrets in Deliver only (wave 3)
 - [x] 04-06-PLAN.md — Pages confirm page /unsubscribe/ (button-only POST, token regex, noscript fallback), committed and freshness-guarded (wave 3)
 - [ ] 04-07-PLAN.md — DSGN-01 recorded as met (frame 7:22, rebrand banner 34:711), DSGN-02 / SC1 wording amended to the Phase 2 D-13 order, color-scheme metas, owner mode=test inbox check light/dark Gmail + Naver (checkpoint D), owner's own send proves the live issue page (wave 4)
 **UI hint**: yes
