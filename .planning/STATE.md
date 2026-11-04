@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 ## Current Position
 
 Phase: 4 of 5 (in progress); Phases 1, 1.1, 1.2, 2, 3 complete
-Plan: 04-01 of 7 (Tasks 1-3 done; Task 4 owner checkpoint pending)
-Status: 04-01 at checkpoint A: owner must push, switch Pages source to GitHub Actions, run pages.yml
-Last activity: 2026-11-04 - 04-01 Tasks 1-3 executed (918cb87, 139eb53); stopped at Task 4 (owner)
+Plan: 04-07 of 7 (Task 1 done; Task 2 owner inbox check pending; 04-04 Task 3 Google setup pending)
+Status: 04-07 at checkpoint D: owner mode=test send, Gmail/Naver web+app, light/dark; Phase 4 verification-pending
+Last activity: 2026-11-04 - 04-07 Task 1 executed (d85b72b: color-scheme metas, DSGN-02 amended to Phase 2 D-13 order); stopped at Task 2 (owner)
 
 Progress: [░░░░░░░░░░] 0%
 
