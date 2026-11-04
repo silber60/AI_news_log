@@ -434,7 +434,7 @@ def test_unsubscribe_page_with_endpoint_posts_only_from_button(site, monkeypatch
     assert UNSUB_HEADING in html
     assert UNSUB_SENTENCES[0] in html
     js = _script(html)
-    assert "^[0-9a-f]{%d}$" % web.unsubscribe.TOKEN_LEN in js
+    assert f"^[0-9a-f]{{{web.unsubscribe.TOKEN_LEN}}}$" in js
     assert ".value" in js
     assert "innerHTML" not in js
     assert ".submit(" not in html
@@ -445,7 +445,7 @@ def test_unsubscribe_page_with_endpoint_posts_only_from_button(site, monkeypatch
 def test_unsubscribe_page_bad_link_and_noscript_lines(site, monkeypatch):
     html = _unsub(site, monkeypatch, ENDPOINT)
     assert UNSUB_SENTENCES[1] in html
-    bad = html[html.index('id="unsub-bad"') - 20 :]
+    bad = html[html.index('<p id="unsub-bad"') :]
     assert " hidden" in bad[: bad.index(">")]
     noscript = html[html.index("<noscript>") : html.index("</noscript>")]
     assert "수신거부" in noscript

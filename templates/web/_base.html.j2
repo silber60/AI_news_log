@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 {#- Shared shell for the web pages (04-03): head, nav, footer. The brand name always comes
-    from the context (render.BRAND); never write it here. No JavaScript, no contact
-    address (D-15). Subscribe and privacy slots render only when their URLs are set (D-09). #}
+    from the context (render.BRAND); never write it here. No JavaScript here (only the
+    /unsubscribe/ page adds its own small script), no contact address (D-15). Subscribe and
+    privacy slots render only when their URLs are set (D-09). home_href defaults to "./";
+    pages one level down pass "../" and a matching archive_href. #}
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ brand }}{% endblock %}</title>
+{%- block head %}{% endblock %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{{ web_font_url }}">
 <style>
@@ -47,7 +50,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <body>
 <header class="nav" data-section="nav">
 <div class="wrap">
-<a class="logo" href="./"><img src="{{ asset }}/otter-tool.png" width="36" height="36" alt="">{{ brand }}</a>
+<a class="logo" href="{{ home_href | default("./") }}"><img src="{{ asset }}/otter-tool.png" width="36" height="36" alt="">{{ brand }}</a>
 <nav class="nav-links">
 <a href="{{ archive_href }}">지난 호</a>
 {%- if subscribe_url %}

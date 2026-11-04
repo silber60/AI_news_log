@@ -1,0 +1,57 @@
+{% extends "_base.html.j2" %}
+{#- /unsubscribe/?t=<token> confirm page (04-06, D-12). Loading it writes nothing: only the
+    구독 해지 button POSTs to the Apps Script endpoint. The script accepts t only when it
+    fullmatches the token regex, sets it with .value, puts it in the action query (the
+    endpoint reads the query, not the body) and never submits on its own. The endpoint
+    reaches the script through the autoescaped data-endpoint attribute. While the endpoint
+    is None the page shows only the reply instruction. No token, address or key here. #}
+
+{% block title %}구독 해지 · {{ brand }}{% endblock %}
+
+{% block head %}
+<meta name="robots" content="noindex">
+{%- endblock %}
+
+{% block style %}
+.unsub { padding: 80px 0 96px; }
+.unsub .form-card { max-width: 440px; margin: 0 auto; text-align: center; }
+.unsub h1 { font-size: 24px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; }
+.unsub p { font-size: 15px; color: #444444; }
+@media (max-width: 767px) {
+  .unsub { padding: 48px 0 64px; }
+}
+{% endblock %}
+
+{% block content %}
+<main class="unsub" data-section="unsubscribe">
+<div class="wrap">
+<div class="form-card">
+{%- if endpoint %}
+<form id="unsub" method="post" action="{{ endpoint }}" data-endpoint="{{ endpoint }}" hidden>
+<h1>구독을 해지할까요?</h1>
+<p>버튼을 누르면 다음 주부터 메일이 가지 않아요.</p>
+<input type="hidden" name="t" value="">
+<button type="submit">구독 해지</button>
+</form>
+<p id="unsub-bad" hidden>링크가 올바르지 않아요. 받으신 메일의 링크를 다시 눌러 주세요.</p>
+<noscript><p>메일에 '수신거부'라고 회신해 주세요.</p></noscript>
+<script>
+(function () {
+  var f = document.getElementById("unsub");
+  var t = (new URLSearchParams(location.search).get("t") || "").toLowerCase();
+  if (/^[0-9a-f]{{ '{' }}{{ token_len }}{{ '}' }}$/.test(t)) {
+    f.elements.t.value = t;
+    f.action = f.getAttribute("data-endpoint") + "?t=" + t;
+    f.hidden = false;
+  } else {
+    document.getElementById("unsub-bad").hidden = false;
+  }
+})();
+</script>
+{%- else %}
+<p>메일에 '수신거부'라고 회신해 주세요.</p>
+{%- endif %}
+</div>
+</div>
+</main>
+{% endblock %}
