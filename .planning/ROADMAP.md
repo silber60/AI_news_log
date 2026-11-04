@@ -137,8 +137,8 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Tracer: owner fixes the 지난 호 anchor; SITE_URL/issue_url, render_web_issue, `publish`/`site` CLI writing data/issues + docs/, merged publish + deploy-pages jobs, pages.yml, live footer links; owner switches Pages to GitHub Actions (checkpoint A) (wave 1) — done (918cb87, 139eb53; Pages run 41759646720)
-- [ ] 04-02-PLAN.md — Web issue: code-built 판정 근거 rows (reasons, code vs weights license, HF/GitHub evidence, 해당 없음 hidden), responsive web page, owner preview (wave 2)
-- [ ] 04-03-PLAN.md — Home page per Figma 25:356 with 지난 호 cards newest first, subscribe forms hidden by SUBSCRIBE_URL = None, owner preview (checkpoint B) (wave 2)
+- [x] 04-02-PLAN.md — Web issue: code-built 판정 근거 rows (reasons, code vs weights license, HF/GitHub evidence, 해당 없음 hidden), responsive web page, owner preview (wave 2)
+- [x] 04-03-PLAN.md — Home page per Figma 25:356 with 지난 호 cards newest first, subscribe forms hidden by SUBSCRIBE_URL = None, owner preview (checkpoint B) (wave 2)
 - [ ] 04-04-PLAN.md — Unsubscribe backend: owner approves token scheme; HMAC token + fail-closed list fetch, apps_script/Code.gs + Korean setup guide; owner Google setup and /exec URL (checkpoint C) (wave 2)
 - [ ] 04-05-PLAN.md — Delivery: per-recipient 구독 해지 link, List-Unsubscribe (+Post) headers with the folding fix, send-mode filter that fails closed, new secrets in Deliver only (wave 3)
 - [ ] 04-06-PLAN.md — Pages confirm page /unsubscribe/ (button-only POST, token regex, noscript fallback), committed and freshness-guarded (wave 3)
