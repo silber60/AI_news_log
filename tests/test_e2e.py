@@ -7,6 +7,7 @@ import httpx2
 import respx
 from conftest import (
     DEFAULT_CLAUDE_GPT_REASON,
+    DEFAULT_EXPLAINER_TOPIC,
     DEFAULT_HIGHLIGHT_HOW,
     DEFAULT_HIGHLIGHT_WHY,
     DEFAULT_SKILL_GPT_REASON,
@@ -60,9 +61,15 @@ def _build(hf_pages, fake: FakeAnthropic) -> Issue:
     return issue
 
 
-def test_run_build_writes_archive(hf_pages, archive_tmp):
+def test_run_build_writes_archive(hf_pages, archive_tmp, monkeypatch):
+    from newsletter import topics
+
+    monkeypatch.delenv("NEWSLETTER_TOPICS_PATH", raising=False)
+    topics_before = topics.topics_path().read_bytes()
     fake = FakeAnthropic()
     issue = _build(hf_pages, fake)
+    # D-06: the build only reads the committed topic record.
+    assert topics.topics_path().read_bytes() == topics_before
 
     week = archive_tmp / "archive" / ISSUE_ID
     for name in WEEK_FILES:
@@ -82,7 +89,10 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert all(it.github_stars is not None for it in stored.items)
     assert all(it.use_idea_ko for it in stored.items)
 
-    assert stored.explainer is None
+    # EXPL-01, D-04: one explainer tied to this week's items.
+    assert stored.explainer is not None
+    assert stored.explainer.topic == DEFAULT_EXPLAINER_TOPIC
+    assert stored.explainer.related_ranks == [1, 2]
     # HILT-01..03, D-11: Claude's fit label per item, three picks, tags copied by code.
     assert [h.rank for h in stored.highlights] == [1, 2, 3]
     assert all(h.tag == "Claude Skill" for h in stored.highlights)
@@ -145,16 +155,17 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
     assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
-    # 10 analysis calls, then notes, trend, highlight and headline (one call each).
-    assert len(fake.calls) == 14
+    # 10 analysis calls, then notes, trend, highlight, explainer and headline (one call each).
+    assert len(fake.calls) == 15
     texts = fake.user_texts()
     for text in texts[:10]:
         assert "http" not in text
         assert text.startswith("<paper>")
     assert "skill_gpt_fit: Claude Skill" in texts[12]
-    for text in texts[10:14]:
+    for text in texts[10:15]:
         assert text.startswith("<items>")
         assert "http" not in text
+    assert "<past_topics>" in texts[13]
 
     # ANLY-04, D-14: Claude reasons for known verdicts, the code reason otherwise.
     note = default_notes({"messages": [{"content": "rank: 1"}]}).notes[0]
@@ -203,6 +214,10 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         assert stored.items[h.rank - 1].title_ko in hl_html
     assert hl_html.count(DEFAULT_HIGHLIGHT_WHY) == 3
     assert "이번 주는 해당 항목 없음" not in html
+    # D-04: the explainer sits between the top 3 and the rest.
+    ex_pos = html.index('data-section="explainer"')
+    assert top3 < ex_pos < html.index('data-section="rest"')
+    assert DEFAULT_EXPLAINER_TOPIC in html[ex_pos:]
     assert "IBM Plex Sans KR" in html
     cards = html.split("data-card=")[1:]
     assert "🧪 코드만 공개됐어요" in cards[0]

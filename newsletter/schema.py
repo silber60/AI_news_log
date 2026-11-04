@@ -290,6 +290,15 @@ class HighlightsLLM(BaseModel):  # HILT-02/03, D-02: 0-3 picks from the candidat
     picks: list[HighlightPickLLM]
 
 
+class ExplainerLLM(BaseModel):  # EXPL-01/02, D-04, D-10: code copies the image
+    model_config = ConfigDict(extra="forbid")
+    topic: str  # "<technique>: <Korean gloss>", noun phrase <= 40 chars (checked in code)
+    point_ko: str  # 오늘의 포인트: 1 해요체 sentence, <= 40 chars (checked in code)
+    body_ko: str  # 3-4 해요체 sentences, <= 360 chars (checked in code)
+    example_ko: str  # 예를 들어: 1-2 해요체 sentences, <= 140 chars (checked in code)
+    related_ranks: list[int]  # 1-3 unique ranks of this week (checked in code)
+
+
 class VerdictNoteLLM(BaseModel):  # ANLY-04, D-14 (plan 02-03): one item's reasons
     model_config = ConfigDict(extra="forbid")
     rank: int

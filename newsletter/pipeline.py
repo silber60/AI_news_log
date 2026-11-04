@@ -1,14 +1,15 @@
 """Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> notes -> trend
--> highlight -> headline -> Issue -> render -> archive."""
+-> highlight -> explainer -> headline -> Issue -> render -> archive."""
 
 import logging
 from datetime import datetime
 
-from newsletter import store
+from newsletter import store, topics
 from newsletter.schema import Issue
 from newsletter.stages import (
     analyze,
     enrich,
+    explainer,
     fetch,
     headline,
     highlight,
@@ -79,6 +80,8 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
     trend_ko = trend.write_trend(items, client)  # ANLY-05, D-07: None on failure
     # HILT-02/03, D-02: 0-3 picks from the Skill/GPTs candidates; [] on failure.
     highlights = highlight.write_highlights(items, client)
+    # EXPL-01/02, D-05, D-06: reads the committed topic record, never writes it; None on failure.
+    explainer_ = explainer.write_explainer(items, topics.load_past(), client)
 
     issue = Issue(
         issue_id=issue_id,
@@ -90,6 +93,7 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         items=items,
         trend_ko=trend_ko,
         highlights=highlights,
+        explainer=explainer_,
         headline_ko=headline.write_headline(items, client),
     )
     store.write_json(out / "issue.json", issue)

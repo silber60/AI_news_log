@@ -89,3 +89,62 @@ def test_record_keeps_korean_unescaped(tmp_path, issue_w44):
     p = tmp_path / "t.json"
     topics.record(_with_explainer(issue_w44, "전문가 혼합"), p)
     assert "전문가 혼합" in p.read_text(encoding="utf-8")
+
+
+# ------------------------------------------------------------ similarity (D-12)
+
+
+def test_normalize_key_uses_text_before_colon_and_aliases():
+    assert topics.normalize_key("Mixture of Experts: 필요한 전문가만") == "moe"
+    assert topics.normalize_key("MoE: 다른 설명") == "moe"
+    assert topics.normalize_key("Mixture of Experts: 필요한 전문가만") == topics.normalize_key(
+        "MoE: 다른 설명"
+    )
+
+
+def test_normalize_key_nfkc_casefold_and_symbols():
+    assert topics.normalize_key("Ｌｏｗ-Rank Adaptation：가볍게 고치기") == "lora"
+    assert topics.normalize_key("  Graph  RAG! ") == "graphrag"
+    assert topics.normalize_key("양자화: 숫자를 줄이기") == "quantization"
+    assert topics.normalize_key("Flow Matching") == "flowmatching"
+
+
+def test_aliases_hold_the_eleven_seed_sets():
+    canon = set(topics.ALIASES.values())
+    assert canon == {
+        "moe", "rag", "cot", "lora", "rlhf", "dpo", "vla", "vlm",
+        "diffusion", "distillation", "quantization",
+    }  # fmt: skip
+    for alias, key in (
+        ("mixtureofexperts", "moe"),
+        ("retrievalaugmentedgeneration", "rag"),
+        ("chainofthought", "cot"),
+        ("lowrankadaptation", "lora"),
+        ("reinforcementlearningfromhumanfeedback", "rlhf"),
+        ("directpreferenceoptimization", "dpo"),
+        ("visionlanguageaction", "vla"),
+        ("visionlanguagemodel", "vlm"),
+        ("diffusionmodel", "diffusion"),
+        ("knowledgedistillation", "distillation"),
+        ("양자화", "quantization"),
+    ):
+        assert topics.ALIASES[alias] == key
+
+
+def test_is_repeat_on_equal_key_or_alias():
+    assert topics.is_repeat("MoE: 새 각도", ["Mixture of Experts: 전문가 구조"])
+    assert topics.is_repeat("LoRA: 가볍게 고치기", ["주제", "lora"])
+    assert not topics.is_repeat("LoRA: 가볍게 고치기", ["RAG: 찾아서 답하기"])
+    assert not topics.is_repeat("LoRA", [])
+
+
+def test_is_repeat_by_containment_needs_four_chars():
+    assert topics.is_repeat("Flow Matching Policy: 설명", ["Flow Matching: 설명"])
+    assert topics.is_repeat("Speculative Decoding", ["Decoding: 설명"])
+    # the shorter key "rag" is 3 chars, so containment does not count
+    assert not topics.is_repeat("Graph RAG: 그래프로 찾기", ["RAG: 찾아서 답하기"])
+    assert not topics.is_repeat("RAG: 찾아서 답하기", ["Graph RAG: 그래프로 찾기"])
+
+
+def test_is_repeat_ignores_empty_keys():
+    assert not topics.is_repeat("!!!: 설명", ["???"])
