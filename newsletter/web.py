@@ -2,11 +2,14 @@
 
 data/issues/<issue_id>.json is the source of truth (first send wins, like
 topics.record). docs/issues/<issue_id>/index.html and docs/index.html are always
-regenerated from it, as is docs/unsubscribe/index.html (the D-12 confirm page), with
-no timestamps, so a re-run changes no byte. Nothing here
+regenerated from it, as is docs/unsubscribe/index.html (the D-12 confirm page) and
+docs/welcome/latest.json (the 04.1 welcome mail payload), with no timestamps, so a
+re-run changes no byte. Nothing here
 writes under docs/assets/ or touches the network.
 """
 
+import json
+import logging
 import os
 from pathlib import Path
 
@@ -15,8 +18,11 @@ from markupsafe import Markup
 
 from newsletter import store
 from newsletter.delivery import unsubscribe
+from newsletter.errors import RenderTooLarge
 from newsletter.schema import Issue
 from newsletter.stages import render
+
+log = logging.getLogger(__name__)
 
 _web_env = Environment(
     loader=FileSystemLoader(store.TEMPLATES_DIR / "web"),
@@ -101,9 +107,38 @@ def _unsubscribe_context() -> dict:
     }
 
 
+def welcome_payload(issues: list[Issue]) -> dict:
+    """D-03, D-04: what Apps Script fills and sends to a new reader (04.1-02 contract).
+
+    Built only from the newest published issue plus constants, never recipient data.
+    With no issue, or when the welcome variant is too large, Apps Script gets
+    issue_id null: it registers the reader and sends no welcome mail."""
+    null = {"version": 1, "issue_id": None}
+    if not issues:
+        return null
+    issue = issues[0]
+    try:
+        mail = render.render_welcome(issue)
+    except RenderTooLarge as e:
+        # The message is "bytes=<n>" and holds only the size.
+        log.info("welcome=too_large bytes=%s", str(e).removeprefix("bytes="))
+        return null
+    return {
+        "version": 1,
+        "issue_id": issue.issue_id,
+        "subject": mail["subject"],
+        "html": mail["html"],
+        "text": mail["text"],
+        "slots": {"greeting": render.GREETING_SLOT, "unsubscribe_url": render.UNSUB_SLOT},
+        "unsubscribe_page": render.SITE_URL + "unsubscribe/?t=",
+        "endpoint": unsubscribe.UNSUBSCRIBE_ENDPOINT,  # read at call time (one switch)
+        "from_name": render.BRAND,
+    }
+
+
 def build_site() -> list[Path]:
-    """Regenerate every issue page, the home page and the unsubscribe confirm page.
-    Returns the written paths."""
+    """Regenerate every issue page, the home page, the unsubscribe confirm page and the
+    welcome payload. Returns the written paths."""
     issues = load_issues()
     docs = docs_dir()
     written: list[Path] = []
@@ -118,5 +153,9 @@ def build_site() -> list[Path]:
     page = _web_env.get_template("unsubscribe.html.j2").render(**_unsubscribe_context())
     path = docs / "unsubscribe" / "index.html"
     store.write_text(path, page)
+    written.append(path)
+    payload = welcome_payload(issues)
+    path = docs / "welcome" / "latest.json"
+    store.write_text(path, json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
     written.append(path)
     return written

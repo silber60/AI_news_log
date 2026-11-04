@@ -26,7 +26,10 @@ arXiv: {{ it.arxiv_url }}
 {% if hashtags %}{{ hashtags|join(" ") }}
 {% endif %}{{ date_line }}
 
-{{ issue.headline_ko }}
+{% if welcome %}구독해 주셔서 고마워요. 매주 월요일 오전 8시에 보내드려요.
+직접 신청하지 않으셨다면 아래 구독 해지를 눌러 주세요.
+
+{% endif %}{{ issue.headline_ko }}
 
 {{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 {{ issue.items|length }}개를 골랐어요!
 {% if issue.trend_ko %}
