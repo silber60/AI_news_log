@@ -49,8 +49,9 @@ def test_publish_writes_data_and_both_pages(site, issue_w44):
     home = site / "docs" / "index.html"
     unsub = site / "docs" / "unsubscribe" / "index.html"
     welcome = site / "docs" / "welcome" / "latest.json"
+    privacy = site / "docs" / "privacy" / "index.html"
     assert data.is_file()
-    assert set(written) == {page, home, unsub, welcome}
+    assert set(written) == {page, home, unsub, privacy, welcome}
     assert issue_w44.headline_ko in page.read_text(encoding="utf-8")
     assert web.load_issues() == [issue_w44]
 
@@ -88,7 +89,7 @@ def test_cli_send_end_to_end(site, issue_w44, caplog):
     assert render.date_line(issue_w44) in home
     assert f"web=published issue={ISSUE_ID}" in caplog.text
     assert f"web=exists issue={ISSUE_ID}" in caplog.text
-    assert "web=site pages=4" in caplog.text
+    assert "web=site pages=5" in caplog.text
     assert issue_w44.headline_ko not in caplog.text
 
 
@@ -97,7 +98,7 @@ def test_cli_site_regenerates_without_archive(site, issue_w44, caplog):
     with caplog.at_level("INFO"):
         assert main(["site"]) == 0
     assert (site / "docs" / "issues" / ISSUE_ID / "index.html").is_file()
-    assert "web=site pages=4" in caplog.text
+    assert "web=site pages=5" in caplog.text
 
 
 def test_home_lists_newest_first(site, issue_w44):
@@ -129,7 +130,8 @@ def test_generated_pages_carry_no_personal_data(site, issue_w44):
     web.publish(issue_w44)
     web.build_site()
     files = _html_files(site)
-    assert len(files) == 3
+    assert len(files) == 4  # issue page, home, unsubscribe, privacy
+    assert site / "docs" / "privacy" / "index.html" in files
     for p in files:
         text = p.read_text(encoding="utf-8")
         assert not _EMAIL_RE.search(text), p
@@ -236,20 +238,20 @@ def test_archive_card_image_only_when_present(site, issue_w44):
 
 def test_subscribe_hidden_while_url_is_none(site, issue_w44):
     assert web.unsubscribe.UNSUBSCRIBE_ENDPOINT is None
-    assert web.PRIVACY_URL is None
+    assert web.PRIVACY_URL == render.SITE_URL + "privacy/"
     web.publish(issue_w44)
     web.build_site()
     home = _home(site)
     assert "<form" not in home
     assert "무료로 구독하기" not in home
     assert "구독하기" not in home
-    assert "개인정보 처리방침" not in home
+    footer = home[home.index('data-section="footer"') :]
+    assert f'<a href="{web.PRIVACY_URL}">개인정보 처리방침</a>' in footer
 
 
 def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
     url = "https://script.google.com/macros/s/example/exec"
     monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", url)
-    monkeypatch.setattr(web, "PRIVACY_URL", "https://example.org/privacy")
     web.publish(issue_w44)
     web.build_site()
     home = _home(site)
@@ -257,7 +259,10 @@ def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
     assert home.count(f'action="{url}"') == 2
     assert home.count("무료로 구독하기") == 2
     assert 'class="nav-cta"' in home
-    assert "개인정보 처리방침" in home
+    for form in _forms(home):
+        consent = form[form.index('class="consent"') :]
+        consent = consent[: consent.index("</label>")]
+        assert f'<a href="{web.PRIVACY_URL}">개인정보 처리방침</a>' in consent
 
 
 def test_archive_empty_state_line(site):
@@ -354,7 +359,7 @@ def test_home_footer_is_brand_and_send_note_only(home_html):
 
 
 def test_templates_hold_no_literal_brand():
-    for name in ("_base.html.j2", "home.html.j2", "unsubscribe.html.j2"):
+    for name in ("_base.html.j2", "home.html.j2", "unsubscribe.html.j2", "privacy.html.j2"):
         text = (store.TEMPLATES_DIR / "web" / name).read_text(encoding="utf-8")
         assert render.BRAND not in text, name
         assert OLD_BRAND not in text, name
@@ -622,3 +627,152 @@ def test_form_messages_pass_humanizer(text):
 @pytest.mark.parametrize("text", FORM_NAMES)
 def test_form_labels_pass_humanizer(text):
     assert not [c for c in humanize.lint(text, kind="name") if c in humanize.HARD_CODES]
+
+
+# --- 04.1-04 Task 2: /privacy/ page, footer link on every page (D-05) ---
+
+PRIVACY_HEADING = "개인정보 처리방침"
+# (heading, paragraph) in page order; the research outline items 1-10.
+PRIVACY_SECTIONS = [
+    (
+        "처리 목적",
+        f"{render.BRAND} 뉴스레터를 보내고 구독 해지 요청을 처리하는 데에만 개인정보를 써요.",
+    ),
+    (
+        "처리 항목",
+        (
+            "이메일은 꼭 받고, 이름은 적어 주실 때만 받아요. 신청할 때 동의한 시각과 동의 문구 "
+            "버전도 함께 기록해요."
+        ),
+    ),
+    (
+        "보유 기간",
+        (
+            "구독 해지 때까지 보관해요. 해지하면 이름과 이메일을 지체 없이 지우고, 같은 주소로 다시 "
+            "보내지 않도록 이메일을 되돌릴 수 없게 바꾼 식별값만 남겨요. 시트의 변경 기록에는 지운 "
+            "내용이 한동안 남아 있을 수 있어요."
+        ),
+    ),
+    ("파기 방법", "구독자 명단이 담긴 Google 시트에서 해당 행을 지워요."),
+    ("제3자 제공", "구독자 정보를 다른 회사나 다른 사람에게 넘기지 않아요."),
+    (
+        "처리를 맡기는 곳과 국외 보관",
+        (
+            "구독자 명단은 Google 시트와 Apps Script에 보관하고, 메일은 Gmail로 보내요. 이 서비스를 "
+            "운영하는 Google의 서버는 국외에 있을 수 있어요."
+        ),
+    ),
+    (
+        "정보주체 권리",
+        (
+            "내 정보의 열람, 정정, 삭제, 처리정지를 언제든 요청할 수 있어요. 받은 메일 아래쪽의 구독 "
+            "해지 링크를 누르거나 받은 메일에 회신해 주세요."
+        ),
+    ),
+    (
+        "안전성 확보",
+        (
+            "구독자 명단은 운영자 한 명만 볼 수 있어요. 공개 저장소와 실행 기록에는 이메일 주소를 "
+            "남기지 않아요."
+        ),
+    ),
+    (
+        "문의",
+        (
+            "개인정보에 관한 문의는 받은 뉴스레터 메일에 회신으로 보내 주세요. 이 사이트에는 연락용 "
+            "주소를 따로 적지 않아요."
+        ),
+    ),
+    ("시행일", f"이 방침은 {web.CONSENT_VERSION}부터 시행해요."),
+]
+
+
+def _privacy(site, monkeypatch, endpoint: str | None = None) -> str:
+    monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", endpoint)
+    web.build_site()
+    return (site / "docs" / "privacy" / "index.html").read_text(encoding="utf-8")
+
+
+def test_privacy_page_has_every_outline_section(site, monkeypatch):
+    html = _privacy(site, monkeypatch)
+    assert f"<h1>{PRIVACY_HEADING}</h1>" in html
+    marks = []
+    for heading, paragraph in PRIVACY_SECTIONS:
+        assert f"<h2>{heading}</h2>" in html, heading
+        assert f"<p>{paragraph}</p>" in html, heading
+        marks.append(html.index(f"<h2>{heading}</h2>"))
+    assert marks == sorted(marks)
+    assert f"<title>{PRIVACY_HEADING} · {render.BRAND}</title>" in html
+
+
+def test_privacy_page_shows_consent_version_as_effective_date(site, monkeypatch):
+    html = _privacy(site, monkeypatch)
+    tail = html[html.index("<h2>시행일</h2>") :]
+    assert web.CONSENT_VERSION in tail[: tail.index("</p>")]
+
+
+@pytest.mark.parametrize("endpoint", [None, ENDPOINT])
+def test_privacy_page_carries_no_address_or_token(site, monkeypatch, endpoint):
+    html = _privacy(site, monkeypatch, endpoint)
+    assert not _EMAIL_RE.search(html)
+    assert not TOKEN_RE.search(html)
+    assert "mailto:" not in html
+    assert "<form" not in html
+    assert "<script" not in html.lower()
+    assert render.BRAND in html
+    assert OLD_BRAND not in html
+
+
+def test_privacy_nav_climbs_one_level(site, monkeypatch):
+    html = _privacy(site, monkeypatch, None)
+    nav = html[: html.index("</header>")]
+    assert 'class="logo" href="../"' in nav
+    assert f'href="../{render.ARCHIVE_ANCHOR}">지난 호<' in nav
+    assert "구독하기" not in nav
+    html = _privacy(site, monkeypatch, ENDPOINT)
+    nav = html[: html.index("</header>")]
+    assert '<a class="nav-cta" href="../#subscribe">구독하기</a>' in nav
+
+
+@pytest.mark.parametrize("endpoint", [None, ENDPOINT])
+def test_every_page_footer_links_privacy(site, issue_w44, monkeypatch, endpoint):
+    monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", endpoint)
+    web.publish(issue_w44)
+    web.build_site()
+    docs = site / "docs"
+    pages = [
+        docs / "index.html",
+        docs / "unsubscribe" / "index.html",
+        docs / "privacy" / "index.html",
+    ]
+    for p in pages:
+        html = p.read_text(encoding="utf-8")
+        footer = html[html.index('data-section="footer"') :]
+        assert f'<a href="{web.PRIVACY_URL}">개인정보 처리방침</a>' in footer, p
+    unsub = pages[1].read_text(encoding="utf-8")
+    assert "구독하기" not in unsub  # no subscribe CTA on the way out
+
+
+def test_committed_privacy_page_exists():
+    html = (REPO / "docs" / "privacy" / "index.html").read_text(encoding="utf-8")
+    assert not _EMAIL_RE.search(html)
+    assert OLD_BRAND not in html
+    for p in ("index.html", "unsubscribe/index.html"):
+        assert web.PRIVACY_URL in (REPO / "docs" / p).read_text(encoding="utf-8"), p
+
+
+def test_privacy_template_holds_no_literal_version():
+    text = (store.TEMPLATES_DIR / "web" / "privacy.html.j2").read_text(encoding="utf-8")
+    assert web.CONSENT_VERSION not in text  # 시행일 comes from web.CONSENT_VERSION
+
+
+@pytest.mark.parametrize("paragraph", [p for _, p in PRIVACY_SECTIONS])
+def test_privacy_paragraphs_pass_humanizer(paragraph):
+    assert not [c for c in humanize.lint(paragraph) if c in humanize.HARD_CODES]
+    for sentence in re.split(r"(?<=[.?!])\s+", paragraph):
+        assert not [c for c in humanize.lint(sentence) if c in humanize.HARD_CODES], sentence
+
+
+@pytest.mark.parametrize("heading", [PRIVACY_HEADING, *(h for h, _ in PRIVACY_SECTIONS)])
+def test_privacy_headings_pass_humanizer(heading):
+    assert not [c for c in humanize.lint(heading, kind="name") if c in humanize.HARD_CODES]

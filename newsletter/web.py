@@ -2,8 +2,8 @@
 
 data/issues/<issue_id>.json is the source of truth (first send wins, like
 topics.record). docs/issues/<issue_id>/index.html and docs/index.html are always
-regenerated from it, as is docs/unsubscribe/index.html (the D-12 confirm page) and
-docs/welcome/latest.json (the 04.1 welcome mail payload), with no timestamps, so a
+regenerated from it, as are docs/unsubscribe/index.html (the D-12 confirm page),
+docs/privacy/index.html (the 04.1 D-05 개인정보 처리방침) and docs/welcome/latest.json (the 04.1 welcome mail payload), with no timestamps, so a
 re-run changes no byte. Nothing here
 writes under docs/assets/ or touches the network.
 """
@@ -34,7 +34,9 @@ _web_env = Environment(
 # D-09, D-10: unsubscribe.UNSUBSCRIBE_ENDPOINT is the one switch. The subscribe forms and
 # the nav 구독하기 button post to that same Apps Script /exec URL and render only once it
 # is set; it is read at render time, never copied here.
-PRIVACY_URL: str | None = None
+# D-05: the privacy page is static and always published. Absolute, so pages one level
+# down need no ../ handling (04.1 research Pattern 1).
+PRIVACY_URL = render.SITE_URL + "privacy/"
 # The consent-text version each form posts as cv. Code.gs CONSENT_VERSIONS must list it,
 # and it is the privacy page 시행일 (04.1-02 contract).
 CONSENT_VERSION = "2026-11-04"
@@ -110,6 +112,17 @@ def _unsubscribe_context() -> dict:
     }
 
 
+def _privacy_context() -> dict:
+    """D-05: /privacy/ lives one level down too. Its nav 구독하기 (only with the endpoint
+    set) goes back to the home form."""
+    return {
+        **_home_context([]),
+        "home_href": "../",
+        "archive_href": "../" + render.ARCHIVE_ANCHOR,
+        "subscribe_href": "../#subscribe",
+    }
+
+
 def welcome_payload(issues: list[Issue]) -> dict:
     """D-03, D-04: what Apps Script fills and sends to a new reader (04.1-02 contract).
 
@@ -140,8 +153,8 @@ def welcome_payload(issues: list[Issue]) -> dict:
 
 
 def build_site() -> list[Path]:
-    """Regenerate every issue page, the home page, the unsubscribe confirm page and the
-    welcome payload. Returns the written paths."""
+    """Regenerate every issue page, the home page, the unsubscribe confirm page, the
+    privacy page and the welcome payload. Returns the written paths."""
     issues = load_issues()
     docs = docs_dir()
     written: list[Path] = []
@@ -155,6 +168,10 @@ def build_site() -> list[Path]:
     written.append(path)
     page = _web_env.get_template("unsubscribe.html.j2").render(**_unsubscribe_context())
     path = docs / "unsubscribe" / "index.html"
+    store.write_text(path, page)
+    written.append(path)
+    page = _web_env.get_template("privacy.html.j2").render(**_privacy_context())
+    path = docs / "privacy" / "index.html"
     store.write_text(path, page)
     written.append(path)
     payload = welcome_payload(issues)

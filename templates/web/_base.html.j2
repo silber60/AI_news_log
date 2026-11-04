@@ -3,8 +3,9 @@
     from the context (render.BRAND); never write it here. No JavaScript here: the home page
     adds the subscribe script only when the endpoint is set, and the /unsubscribe/ page adds
     its own small script. No contact address (D-15). Subscribe and privacy slots render only
-    when their URLs are set (D-09). home_href defaults to "./";
-    pages one level down pass "../" and a matching archive_href. #}
+    when their URLs are set (D-09). home_href defaults to "./" and subscribe_href to
+    "#subscribe"; pages one level down pass "../", a matching archive_href and, when they
+    show the nav 구독하기, subscribe_href "../#subscribe". #}
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -55,7 +56,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <nav class="nav-links">
 <a href="{{ archive_href }}">지난 호</a>
 {%- if subscribe_url %}
-<a class="nav-cta" href="#subscribe">구독하기</a>
+<a class="nav-cta" href="{{ subscribe_href | default("#subscribe") }}">구독하기</a>
 {%- endif %}
 </nav>
 </div>

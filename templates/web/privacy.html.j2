@@ -1,0 +1,49 @@
+{% extends "_base.html.j2" %}
+{#- /privacy/ 개인정보 처리방침 (04.1, D-05). A generic notice in the PIPA Article 30 order,
+    not legal advice. Each paragraph is short 해요체 copy that passes the humanizer lint
+    (tests/test_web.py PRIVACY_SECTIONS). No contact address on the site (Phase 4 D-15): the
+    문의 route is a reply to a received mail. 시행일 is consent_version (web.CONSENT_VERSION,
+    which Code.gs CONSENT_VERSIONS lists). Do not promise erasure from Sheet version
+    history (research Pitfall 11). #}
+
+{% block title %}개인정보 처리방침 · {{ brand }}{% endblock %}
+
+{% block style %}
+.policy { padding: 64px 0 88px; }
+.policy .wrap { max-width: 768px; }
+.policy h1 { font-size: 32px; font-weight: 700; line-height: 1.35; margin-bottom: 32px; }
+.policy h2 { font-size: 18px; font-weight: 700; line-height: 1.45; margin: 32px 0 8px; }
+.policy p { font-size: 15px; line-height: 1.8; color: #444444; }
+@media (max-width: 767px) {
+  .policy { padding: 40px 0 64px; }
+  .policy h1 { font-size: 26px; }
+}
+{% endblock %}
+
+{% block content %}
+<main class="policy" data-section="privacy">
+<div class="wrap">
+<h1>개인정보 처리방침</h1>
+<h2>처리 목적</h2>
+<p>{{ brand }} 뉴스레터를 보내고 구독 해지 요청을 처리하는 데에만 개인정보를 써요.</p>
+<h2>처리 항목</h2>
+<p>이메일은 꼭 받고, 이름은 적어 주실 때만 받아요. 신청할 때 동의한 시각과 동의 문구 버전도 함께 기록해요.</p>
+<h2>보유 기간</h2>
+<p>구독 해지 때까지 보관해요. 해지하면 이름과 이메일을 지체 없이 지우고, 같은 주소로 다시 보내지 않도록 이메일을 되돌릴 수 없게 바꾼 식별값만 남겨요. 시트의 변경 기록에는 지운 내용이 한동안 남아 있을 수 있어요.</p>
+<h2>파기 방법</h2>
+<p>구독자 명단이 담긴 Google 시트에서 해당 행을 지워요.</p>
+<h2>제3자 제공</h2>
+<p>구독자 정보를 다른 회사나 다른 사람에게 넘기지 않아요.</p>
+<h2>처리를 맡기는 곳과 국외 보관</h2>
+<p>구독자 명단은 Google 시트와 Apps Script에 보관하고, 메일은 Gmail로 보내요. 이 서비스를 운영하는 Google의 서버는 국외에 있을 수 있어요.</p>
+<h2>정보주체 권리</h2>
+<p>내 정보의 열람, 정정, 삭제, 처리정지를 언제든 요청할 수 있어요. 받은 메일 아래쪽의 구독 해지 링크를 누르거나 받은 메일에 회신해 주세요.</p>
+<h2>안전성 확보</h2>
+<p>구독자 명단은 운영자 한 명만 볼 수 있어요. 공개 저장소와 실행 기록에는 이메일 주소를 남기지 않아요.</p>
+<h2>문의</h2>
+<p>개인정보에 관한 문의는 받은 뉴스레터 메일에 회신으로 보내 주세요. 이 사이트에는 연락용 주소를 따로 적지 않아요.</p>
+<h2>시행일</h2>
+<p>이 방침은 {{ consent_version }}부터 시행해요.</p>
+</div>
+</main>
+{% endblock %}
