@@ -13,7 +13,7 @@ Vertical MVP. Phase 1 builds a thin pipeline that runs end to end: it resolves l
 - [x] **Phase 3: Humanizer, Highlight & Explainer** - All generated Korean text reads human, a top "이번 주 바로 써볼 만한 것" section promotes Claude Skill / GPTs candidates, and a weekly 기술 해설 코너 explains one technique in plain language
 - [ ] **Phase 4: Figma Design, Email Template & Web Archive** - 640px Figma design implemented as the final email, verified in Naver/Gmail, with a GitHub Pages web version and archive
 - [ ] **Phase 4.1: Public Subscribe & Instant Welcome Issue** (INSERTED) - Anyone can subscribe from a web page, lands on the subscriber list, and immediately receives the latest issue
-- [ ] **Phase 4.2: Domain Sending via Resend** (INSERTED) - Mail goes out from newsletter@modaklog.characterplanner.co.kr with SPF/DKIM/DMARC instead of a personal Gmail
+- [x] **Phase 4.2: Domain Sending via Resend** (INSERTED) - Mail goes out from newsletter@modaklog.characterplanner.co.kr with SPF/DKIM/DMARC instead of a personal Gmail
 - [ ] **Phase 5: Scheduled Automation & Hardening** - Mail arrives every Monday 08:00 KST unattended, re-runs never double-send, and the owner gets a run report
 
 ## Phase Details
