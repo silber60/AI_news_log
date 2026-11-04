@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from newsletter.schema import UNKNOWN, Explainer, HfEntry, Issue, Item, ItemImage, ModelInfo
 
-SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v3.json"
+SNAPSHOT = Path(__file__).resolve().parent.parent / "schema" / "issue.schema.v4.json"
 FIXTURE = Path(__file__).parent / "fixtures" / "issue_w44.json"
 
 
@@ -30,7 +30,7 @@ def _issue_with(n_items: int = 5, **update) -> dict:
 
 
 def test_fixture_issue_validates_with_phase1_defaults(issue_w44):
-    assert issue_w44.schema_version == 3
+    assert issue_w44.schema_version == 4
     assert issue_w44.headline_ko
     assert issue_w44.explainer is None
     assert issue_w44.highlights == []
@@ -135,7 +135,7 @@ def test_v1_ideas_key_rejected():
         Item.model_validate(_item_data(use_ideas_ko=["a"]))
 
 
-@pytest.mark.parametrize("version", [1, 2])
+@pytest.mark.parametrize("version", [1, 2, 3])
 def test_older_issue_versions_rejected(version):
     data = _issue_data()
     data["schema_version"] = version
@@ -255,7 +255,7 @@ def test_schema_snapshot_matches():
     assert SNAPSHOT.is_file(), f"missing {SNAPSHOT}"
     committed = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     assert Issue.model_json_schema() == committed, (
-        "Issue schema drifted from schema/issue.schema.v3.json. The v3 contract is frozen: "
+        "Issue schema drifted from schema/issue.schema.v4.json. The v4 contract is frozen: "
         "change it only in a planned phase and bump schema_version (new snapshot file). "
         "Do not regenerate this snapshot silently."
     )

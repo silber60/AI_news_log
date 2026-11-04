@@ -45,6 +45,7 @@ Recent decisions affecting current work:
 - Roadmap: DLVR-06 (no PII/secrets in logs) lands in Phase 1 because the repo is public from the first run
 - Roadmap: The send ledger (DLVR-05) and checkpoint reuse (AUTO-05) land in Phase 5 with the cron; until then `mode=send` is manual-only to the single subscriber
 - Stack (research): Python 3.14 + uv, httpx/tenacity, anthropic `messages.parse` + Pydantic, Jinja2 + css-inline, stdlib smtplib/email/csv
+- 2026-11-04 (owner, after the Phase 3 live test showed an empty 바로 써볼 만한 것): Issue schema v3 -> v4. Highlight tags add "Claude/GPT 에이전트" (claude_gpt 직접 사용) and "데모" (HF Space); `Highlight.demo_url` is code-owned (Space, else project page). Candidates put demo items first, and an empty pick list with candidates gets one retry. Label 어떻게 만들지 -> 어떻게 써 볼지.
 
 ### Roadmap Evolution
 

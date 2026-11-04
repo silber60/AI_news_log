@@ -427,10 +427,11 @@ def _visible_text(out: str) -> str:
 # sha256 of the visible text (tags stripped, whitespace normalized) rendered with the
 # per-cell font stack, captured at 03-05 Task 1 (commit 4edc407) before the D-14 move.
 # A fixture or copy change moves these on purpose: re-check the text, then recompute.
+# Recomputed for schema v4 (어떻게 만들지 -> 어떻게 써 볼지; the only text change).
 PER_CELL_VISIBLE_SHA256 = {
     "w44": "ceb2b473491a509db496d4f137002c3f453a4c0df222fa60f221fbe1d24c9d09",
-    "full": "5301ebebc770bfea20f617ebca53ed69c86f7d9f69a1dbfdd433f8c40bb4d4ac",
-    "worst": "ee2b1bae23defdab4efaeb35442f5a27cd4a9ab05729089334ef905c164092dd",
+    "full": "810197b69d563a17e7128c00efafeb49f50d5be73feb6d91cf5dbd7a63b31bdb",
+    "worst": "d9c11e8acfd95a68dd15e4772f4276987a0ae790248c564dc49f568addff1036",
 }
 
 
@@ -558,8 +559,29 @@ def test_highlight_pick_content(issue_w44):
     assert ">Claude Skill<" in block
     assert html_lib.escape(issue_w44.items[1].title_ko, quote=False) in block
     assert "왜 좋은지: 왜 좋은지 문장" in block
-    assert "어떻게 만들지: 만드는 법 문장" in block
+    assert "어떻게 써 볼지: 만드는 법 문장" in block
     assert "otter-tool.png" in block
+
+
+def test_highlight_demo_link_v4(issue_w44):
+    space = "https://huggingface.co/spaces/org/demo"
+    page = "https://example.org/project"
+    picks = [
+        Highlight(rank=1, tag="데모", why_ko="왜요.", how_ko="해 봐요.", demo_url=space),
+        Highlight(
+            rank=2, tag="Claude/GPT 에이전트", why_ko="왜요.", how_ko="해 봐요.", demo_url=page
+        ),
+        Highlight(rank=3, tag="GPTs", why_ko="왜요.", how_ko="해 봐요."),
+    ]
+    issue = issue_w44.model_copy(update={"highlights": picks})
+    out = render_html(issue, "구독자님")
+    block = out[_section_pos(out, "highlight") : _section_pos(out, "top3")]
+    assert ">데모<" in block and ">Claude/GPT 에이전트<" in block
+    assert f'href="{space}"' in block and "데모 써보기 →" in block
+    assert f'href="{page}"' in block and "프로젝트 페이지 →" in block
+    assert block.count("→") == 2  # no link row without a demo_url
+    txt = render_text(issue, "구독자님")
+    assert f"데모 써보기: {space}" in txt and f"프로젝트 페이지: {page}" in txt
 
 
 def test_explainer_point_and_example_boxes_only_when_set(issue_w44):
@@ -601,7 +623,7 @@ def test_text_part_phase3_slots(issue_w44):
     for s in (
         "이번 주 바로 써볼 만한 것 ✨",
         "왜 좋은지: 왜 좋은지 문장",
-        "어떻게 만들지: 만드는 법 문장",
+        "어떻게 써 볼지: 만드는 법 문장",
         "이번 주 흐름 한눈에 📈",
         "이번 주 트렌드 문장",
         "AI 기술 쉽게 보기 🔍",

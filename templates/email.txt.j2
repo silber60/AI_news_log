@@ -1,4 +1,4 @@
-{# template-version: 6 #}
+{# template-version: 7 #}
 {%- macro card(it) %}
 ----------------------------------------
 {{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}
@@ -38,8 +38,9 @@ arXiv: {{ it.arxiv_url }}
 {% for h in issue.highlights %}
 [{{ h.tag }}] {{ issue.items[h.rank - 1].title_ko }}
 왜 좋은지: {{ h.why_ko }}
-어떻게 만들지: {{ h.how_ko }}
-{% else %}
+어떻게 써 볼지: {{ h.how_ko }}
+{% if h.demo_url %}{{ demo_label(h.demo_url) }}: {{ h.demo_url }}
+{% endif %}{% else %}
 이번 주는 해당 항목 없음
 {% endfor %}
 ========================================

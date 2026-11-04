@@ -1,11 +1,13 @@
-{# template-version: 7 #}
+{# template-version: 8 #}
 {#- Figma v2 email (Phase 1.1, D-01..D-05). Tables + inline CSS only, 640px.
     One <tr data-section="..."> per section, in Figma order. The trend and explainer
     sections render only when their data exists (D-04). The highlight section always
     renders and shows a fallback line when there is no pick (D-01, HILT-03).
     The <style> block is moved inline by css_inline and then dropped.
     The font stack is also written on every presentation <table> (template-version 7, D-14)
-    for clients that strip styles; cells and spans inherit it from their nearest table. -#}
+    for clients that strip styles; cells and spans inherit it from their nearest table.
+    template-version 8 (schema v4): a highlight pick links its demo (HF Space, else
+    the project page) when code found one. -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
 {%- set img_style = "display: block; border: 0; outline: none; text-decoration: none;" -%}
 {%- set banner_style = img_style ~ " width: 100%; max-width: 640px; height: auto;" -%}
@@ -129,7 +131,10 @@ a { color: #FF6B00; text-decoration: none; }
 <td style="font-size: 15px; font-weight: bold; color: #222222;">{{ issue.items[h.rank - 1].title_ko }}</td>
 </tr></table>
 </td></tr>
-<tr><td style="padding: 8px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">왜 좋은지: {{ h.why_ko }}<br>어떻게 만들지: {{ h.how_ko }}</td></tr>
+<tr><td style="padding: 8px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">왜 좋은지: {{ h.why_ko }}<br>어떻게 써 볼지: {{ h.how_ko }}</td></tr>
+{%- if h.demo_url %}
+<tr><td style="padding: 6px 0 0 0; font-size: 13px; font-weight: 500;"><a href="{{ h.demo_url }}" style="color: #FF6B00; text-decoration: none;">{{ demo_label(h.demo_url) }} →</a></td></tr>
+{%- endif %}
 </table>
 {%- endfor %}
 </td></tr></table>

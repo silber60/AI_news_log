@@ -21,7 +21,7 @@ from conftest import (
 )
 
 from newsletter.schema import UNKNOWN, HfEntry, Issue, TrendLLM
-from newsletter.stages import notes
+from newsletter.stages import highlight, notes
 from newsletter.stages.analyze import strip_urls
 from newsletter.stages.headline import fallback_headline
 from newsletter.stages.render import build_subject
@@ -96,9 +96,15 @@ def test_run_build_writes_archive(hf_pages, archive_tmp, monkeypatch):
     assert stored.explainer is not None
     assert stored.explainer.topic == DEFAULT_EXPLAINER_TOPIC
     assert stored.explainer.related_ranks == [1, 2]
-    # HILT-01..03, D-11: Claude's fit label per item, three picks, tags copied by code.
-    assert [h.rank for h in stored.highlights] == [1, 2, 3]
-    assert all(h.tag == "Claude Skill" for h in stored.highlights)
+    # HILT-01..03, schema v4: demo items lead the candidates; tag and link are code's.
+    cands = highlight.candidates(stored.items)
+    assert [h.rank for h in stored.highlights] == [it.rank for it in cands[:3]]
+    assert [h.rank for h in stored.highlights] == [2, 3, 5]
+    assert all(highlight.space_url(stored.items[h.rank - 1]) for h in stored.highlights)
+    for h in stored.highlights:
+        it = stored.items[h.rank - 1]
+        assert h.tag == highlight.tag_for(it)
+        assert h.demo_url == highlight.demo_url(it)
     assert all(
         (h.why_ko, h.how_ko) == (DEFAULT_HIGHLIGHT_WHY, DEFAULT_HIGHLIGHT_HOW)
         for h in stored.highlights
@@ -152,7 +158,7 @@ def test_run_build_writes_archive(hf_pages, archive_tmp, monkeypatch):
         None
     ] * 5
     assert all(it.poc.has_code for it in stored.items)
-    assert stored.schema_version == 3
+    assert stored.schema_version == 4
     name = stored.items[0].title_ko.split(":", 1)[0].strip()[:20]
     assert stored.headline_ko == "🤖 말하면 로봇이 움직인다? 이번 주 AI 모델 10"
     assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"

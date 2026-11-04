@@ -103,8 +103,8 @@ def test_four_picks_are_cut_to_three_in_claude_order(issue_w44):
     assert [h.rank for h in out] == [5, 3, 1]
 
 
-def test_zero_picks_is_valid(issue_w44):
-    fake = FakeAnthropic([_picks()])
+def test_zero_picks_twice_returns_empty(issue_w44):
+    fake = FakeAnthropic([_picks(), _picks()])
     assert highlight.write_highlights(_items(issue_w44), fake) == []
 
 
@@ -257,10 +257,12 @@ def test_two_failed_attempts_give_empty(issue_w44):
     assert highlight.write_highlights(_items(issue_w44), fake) == []
 
 
-def test_zero_picks_makes_no_retry(issue_w44):
-    fake = FakeAnthropic([_picks()])
-    assert highlight.write_highlights(_items(issue_w44), fake) == []
-    assert len(fake.calls) == 1
+def test_zero_picks_with_candidates_retries_once(issue_w44):
+    fake = FakeAnthropic([_picks(), _picks(2)])
+    out = highlight.write_highlights(_items(issue_w44), fake)
+    assert len(fake.calls) == 2
+    assert [h.rank for h in out] == [2]
+    assert "hl_none" in str(fake.calls[1]["kw"]) or "picks가 비어" in str(fake.calls[1]["kw"])
 
 
 def test_logs_carry_counts_and_codes_only(issue_w44, caplog):
@@ -283,4 +285,66 @@ def test_prompt_holds_the_d03_example_and_data_fence():
     assert "요약 규칙을 Skill로 정리해 두면 매번 같은 형식으로 받을 수 있어요" in text
     assert "<items>" in text and "데이터" in text
     assert "<previous_output_problems>" in text
-    assert "70자" in text and "0-3개" in text
+    assert "70자" in text and "1-3개" in text
+    assert "has_demo" in text and "claude_gpt_use" in text
+
+
+# ------------------------------------- v4: Claude/GPT agents and demo pages
+
+
+SPACE = "https://huggingface.co/spaces/org/demo"
+
+
+def _with(it, *, verdict=None, space=False, project=None):
+    from newsletter.schema import ClaudeGptUse, EvidenceLink, PocReadiness
+
+    upd = {}
+    if verdict:
+        upd["claude_gpt"] = ClaudeGptUse(verdict=verdict)
+    if space:
+        upd["poc"] = PocReadiness(
+            verdict="바로 가능", has_demo=True, evidence=[EvidenceLink(label="HF 데모", url=SPACE)]
+        )
+    if project:
+        upd["project_url"] = project
+    return it.model_copy(update=upd)
+
+
+def test_agents_and_demos_become_candidates_demo_first(issue_w44):
+    items = _items(issue_w44, ["해당 없음"] * 10)
+    items[6] = _with(items[6], verdict="직접 사용")
+    items[8] = _with(items[8], space=True)
+    assert [it.rank for it in highlight.candidates(items)] == [9, 7]
+    assert highlight.tag_for(items[6]) == "Claude/GPT 에이전트"
+    assert highlight.tag_for(items[8]) == "데모"
+    # 기법 적용 가능 alone and a project page alone are not candidates.
+    items[0] = _with(items[0], verdict="기법 적용 가능", project="https://example.org/p")
+    assert highlight.tag_for(items[0]) is None
+
+
+def test_skill_fit_keeps_its_tag_and_gets_the_demo_link(issue_w44):
+    items = _items(issue_w44)
+    items[2] = _with(items[2], verdict="직접 사용", space=True)
+    assert highlight.tag_for(items[2]) == "둘 다"
+    assert [it.rank for it in highlight.candidates(items)] == [3, 1, 2, 5]
+    out = highlight.write_highlights(items, FakeAnthropic())
+    assert [(h.rank, h.tag, h.demo_url) for h in out] == [
+        (3, "둘 다", SPACE),
+        (1, "Claude Skill", items[0].project_url),
+        (2, "GPTs", items[1].project_url),
+    ]
+
+
+def test_demo_url_falls_back_to_the_project_page(issue_w44):
+    it = _with(issue_w44.items[0], verdict="직접 사용", project="https://example.org/p")
+    assert highlight.space_url(it) is None
+    assert highlight.demo_url(it) == "https://example.org/p"
+
+
+def test_block_flags_demo_and_agent_without_urls(issue_w44):
+    items = _items(issue_w44, ["해당 없음"] * 10)
+    items[1] = _with(items[1], verdict="직접 사용", space=True)
+    block = highlight.items_block(highlight.candidates(items))
+    assert "tag: Claude/GPT 에이전트" in block
+    assert "has_demo: yes" in block and "claude_gpt_use: yes" in block
+    assert "http" not in block

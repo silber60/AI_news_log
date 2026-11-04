@@ -14,6 +14,7 @@ from markupsafe import Markup
 
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, Issue, Item
+from newsletter.stages.highlight import SPACE_PREFIX
 from newsletter.stages.verdicts import EVIDENCE_HOSTS, POC_GATED_LABEL
 from newsletter.store import TEMPLATES_DIR
 
@@ -151,6 +152,11 @@ def license_link(it: Item) -> str | None:
     return url
 
 
+def demo_label(url: str) -> str:
+    """Highlight link text (schema v4): an HF Space is a demo, anything else a project page."""
+    return "데모 써보기" if url.startswith(SPACE_PREFIX) else "프로젝트 페이지"
+
+
 def rest_title(n: int) -> str | None:
     """D-04, D-21: the rest section names the real last rank; none when N <= 3."""
     if n <= 3:
@@ -185,6 +191,7 @@ def _context(issue: Issue, greeting: str) -> dict:
         "info_rows": {it.rank: _info_rows(it) for it in issue.items},
         "verdict_lines": {it.rank: verdict_line(it) for it in issue.items},
         "license_links": {it.rank: license_link(it) for it in issue.items},
+        "demo_label": demo_label,
     }
 
 

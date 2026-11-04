@@ -1,13 +1,16 @@
 """이번 주 바로 써볼 만한 것 (HILT-01..03, D-01..D-03, D-11).
 
-The per-paper analyze call labels each item's Skill/GPTs fit. This stage sends
-only the items Claude labelled as fitting (no verdicts, no URLs) to one pick
-call. Code checks every pick: its rank must be a candidate and unique, there are
-at most 3, and 왜 좋은지 / 어떻게 만들지 are 1-2 short 해요체 sentences with no
+Candidates (schema v4, owner request after the Phase 3 live test) are items
+Claude labelled as a Skill/GPTs fit, items code judged usable in Claude/GPT
+(직접 사용), and items with an HF Space demo. Demo items come first. This stage
+sends them (no verdicts, no URLs, only a has_demo flag) to one pick call. Code checks every pick: its rank must be a candidate and unique, there are
+at most 3, and 왜 좋은지 / 어떻게 써 볼지 are 1-2 short 해요체 sentences with no
 step list, URL, hype word or newsletter-authorship wording. A failing pick
 triggers one retry whose feedback names problems only; after it, passing picks
 are kept and failing ones dropped. Code copies the tag from the item's own
-label; Claude never supplies it. No candidate means no call, and any failure
+label (Skill/GPTs fit, else Claude/GPT 에이전트, else 데모) and attaches the
+demo URL (HF Space, else project page); Claude never supplies either. When
+candidates exist, an empty pick list gets one retry. No candidate means no call, and any failure
 returns [], so the section shows its fallback line. Logs carry attempt numbers,
 counts and reason codes only, never pick text or a title.
 """
@@ -17,7 +20,7 @@ import re
 
 import anthropic
 
-from newsletter.schema import Highlight, HighlightPickLLM, HighlightsLLM, Item
+from newsletter.schema import Highlight, HighlightPickLLM, HighlightsLLM, HighlightTag, Item
 from newsletter.stages import analyze, headline
 from newsletter.store import PROMPTS_DIR
 
@@ -25,6 +28,11 @@ log = logging.getLogger(__name__)
 
 MAX_PICKS = 3
 NO_FIT = "해당 없음"
+DIRECT_USE = "직접 사용"
+AGENT_TAG = "Claude/GPT 에이전트"
+DEMO_TAG = "데모"
+DEMO_LABEL = "HF 데모"  # enrich/verdicts label for the first linked HF Space
+SPACE_PREFIX = "https://huggingface.co/spaces/"
 TEXT_LIMIT = 70  # research §3 (A2): two lines at 14px minus the "왜 좋은지: " label
 MIN_SENTENCES, MAX_SENTENCES = 1, 2
 # D-03: a direction, never a step-by-step list.
@@ -38,9 +46,34 @@ def highlight_system_prompt() -> str:
     return head + "\n\n" + humanizer
 
 
+def space_url(it: Item) -> str | None:
+    """The HF Space link code found for the item, if any."""
+    for ev in it.poc.evidence:
+        if ev.label == DEMO_LABEL and ev.url.startswith(SPACE_PREFIX):
+            return ev.url
+    return None
+
+
+def demo_url(it: Item) -> str | None:
+    """Code-owned link shown under a pick: HF Space first, else the project page."""
+    return space_url(it) or it.project_url
+
+
+def tag_for(it: Item) -> HighlightTag | None:
+    """Skill/GPTs fit, else usable in Claude/GPT, else has a demo; None: not a candidate."""
+    if it.skill_gpt.fit != NO_FIT:
+        return it.skill_gpt.fit
+    if it.claude_gpt.verdict == DIRECT_USE:
+        return AGENT_TAG
+    if space_url(it):
+        return DEMO_TAG
+    return None
+
+
 def candidates(items: list[Item]) -> list[Item]:
-    """Items Claude labelled as a Claude Skill / GPTs fit (D-02, D-11)."""
-    return [it for it in items if it.skill_gpt.fit != NO_FIT]
+    """Items with a tag, demo items first, then rank order (owner request, v4)."""
+    cands = [it for it in items if tag_for(it) is not None]
+    return sorted(cands, key=lambda it: (space_url(it) is None, it.rank))
 
 
 def items_block(cands: list[Item]) -> str:
@@ -52,6 +85,9 @@ def items_block(cands: list[Item]) -> str:
             f"ai_type: {it.ai_type}",
             f"summary_ko: {headline._clean(it.summary_ko)}",
             f"does_ko: {headline._clean(it.summary_lines_ko[0])}",
+            f"tag: {tag_for(it)}",
+            f"has_demo: {'yes' if space_url(it) else 'no'}",
+            f"claude_gpt_use: {'yes' if it.claude_gpt.verdict == DIRECT_USE else 'no'}",
             f"skill_gpt_fit: {it.skill_gpt.fit}",
             f"skill_gpt_reason_ko: {headline._clean(it.skill_gpt.reason_ko or '')}",
             "",
@@ -113,13 +149,16 @@ def review(
 
 
 def _to_highlights(picks: list[HighlightPickLLM], items: list[Item]) -> list[Highlight]:
-    # The tag is copied from the item's own label; candidates exclude 해당 없음.
-    return [
-        Highlight(
-            rank=p.rank, tag=items[p.rank - 1].skill_gpt.fit, why_ko=p.why_ko, how_ko=p.how_ko
+    # Tag and link are code-owned; review() keeps only candidate ranks, so tag_for is set.
+    out = []
+    for p in picks:
+        it = items[p.rank - 1]
+        tag = tag_for(it)
+        assert tag is not None
+        out.append(
+            Highlight(rank=p.rank, tag=tag, why_ko=p.why_ko, how_ko=p.how_ko, demo_url=demo_url(it))
         )
-        for p in picks
-    ]
+    return out
 
 
 def _codes(problems: list[tuple[str, str]]) -> str:
@@ -170,14 +209,13 @@ def write_highlights(items: list[Item], client) -> list[Highlight]:
             continue
         best, problems = review(out.picks, ranks)
         best_attempt = attempt
+        if not out.picks:  # candidates exist, so ask once more for at least one
+            problems = [("hl_none", "후보가 있는데 picks가 비어 있음 (1개 이상 골라야 함)")]
         if not problems:
             break
         log.info("highlight attempt=%d reason=%s", attempt, _codes(problems))
     if best:
         log.info("highlight=claude picks=%d attempt=%d", len(best), best_attempt)
         return _to_highlights(best, items)
-    if best_attempt and not problems:  # Claude found nothing that fits: valid
-        log.info("highlight=claude picks=0 attempt=%d", best_attempt)
-    elif problems:
-        log.info("highlight=none reason=%s", _codes(problems))
+    log.info("highlight=none reason=%s", _codes(problems))
     return []

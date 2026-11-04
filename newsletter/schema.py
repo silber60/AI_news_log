@@ -1,9 +1,10 @@
 """Data contracts.
 
-`Issue` (schema_version 3) is FROZEN since Phase 1.2. Later phases fill its
-fields; they do not add or rename them outside a planned phase. The committed
-snapshot `schema/issue.schema.v3.json` guards against drift
-(`schema/issue.schema.v1.json` and `schema/issue.schema.v2.json` are kept as history).
+`Issue` (schema_version 4) is FROZEN. Later phases fill its fields; they do not
+add or rename them outside a planned phase. The committed snapshot
+`schema/issue.schema.v4.json` guards against drift (v1-v3 snapshots are kept as
+history). v4 (owner decision after the Phase 3 live test): highlight tags gained
+"Claude/GPT 에이전트" and "데모", and `Highlight.demo_url` (code-owned).
 
 Code owns ranks, URLs, affiliation and every verdict. Claude only fills
 `ItemAnalysisLLM` (and, in later phases, other small sub-models) which code
@@ -15,7 +16,7 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 UNKNOWN = "확인 필요"
 IMAGE_HOST = "https://cdn-uploads.huggingface.co/"
 # D-09, D-18: only hosts that serve the image directly, without redirects.
@@ -31,6 +32,8 @@ CommercialVerdict = Literal["가능", "조건부", "불가", "확인 필요"]
 PocVerdict = Literal["바로 가능", "코드만", "논문만", "확인 필요"]
 ClaudeGptVerdict = Literal["직접 사용", "기법 적용 가능", "해당 없음", "확인 필요"]
 SkillGptFit = Literal["Claude Skill", "GPTs", "둘 다", "해당 없음"]
+# v4: a highlight is a Skill/GPTs fit, an item usable in Claude/GPT, or one with a demo.
+HighlightTag = Literal["Claude Skill", "GPTs", "둘 다", "Claude/GPT 에이전트", "데모"]
 # EVID-04 does not enumerate labels; confirmed by the owner at the Phase 1 freeze.
 LocalRun = Literal["가능", "제한적", "불가", "확인 필요"]
 
@@ -160,11 +163,12 @@ class Item(Strict):
         return self
 
 
-class Highlight(Strict):  # Phase 3 (HILT-02/03)
+class Highlight(Strict):  # Phase 3 (HILT-02/03), v4 tags + demo link
     rank: int
-    tag: Literal["Claude Skill", "GPTs", "둘 다"]
+    tag: HighlightTag  # code-chosen from the item's labels and evidence
     why_ko: str
     how_ko: str
+    demo_url: HttpsUrl | None = None  # code-owned: HF Space, else the project page
 
 
 class Explainer(Strict):  # Phase 3 (EXPL-01/02, D-16)
@@ -177,7 +181,7 @@ class Explainer(Strict):  # Phase 3 (EXPL-01/02, D-16)
 
 
 class Issue(Strict):
-    schema_version: Literal[3] = 3
+    schema_version: Literal[4] = 4
     issue_id: str
     week_start: date
     week_end: date
