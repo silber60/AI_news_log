@@ -61,7 +61,8 @@ def test_refusal_is_retried_once_and_week_builds(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert len(fake.calls) == 15  # 11 analysis calls + notes + trend + highlight + headline
+    # 11 analysis calls + notes + trend + highlight + explainer + headline
+    assert len(fake.calls) == 16
     assert all(c["ns"] == "beta" for c in fake.calls)
     texts = fake.user_texts()
     assert "previous_output_problems" not in texts[2]
@@ -101,8 +102,9 @@ def test_bad_request_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
+    # 10 analysis calls + notes, trend, highlight, explainer and headline; the downgrade
+    # covers all five.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 15
     for c in fake.calls[1:]:
         assert "fallbacks" not in c["kw"] and "betas" not in c["kw"]
     assert "previous_output_problems" not in fake.user_texts()[1]
@@ -113,8 +115,9 @@ def test_sdk_type_error_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
+    # 10 analysis calls + notes, trend, highlight, explainer and headline; the downgrade
+    # covers all five.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 15
 
 
 def test_downgrade_is_per_client(hf_pages):

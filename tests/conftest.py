@@ -21,6 +21,7 @@ import respx
 from PIL import Image
 
 from newsletter.schema import (
+    ExplainerLLM,
     HeadlineLLM,
     HighlightPickLLM,
     HighlightsLLM,
@@ -355,6 +356,33 @@ def default_highlights(kw: dict) -> HighlightsLLM:
     )
 
 
+DEFAULT_EXPLAINER_TOPIC = "Mixture of Experts: 필요한 전문가만 불러 쓰는 구조"
+DEFAULT_EXPLAINER_POINT = "필요한 부분만 골라 계산하면 큰 모델도 가볍게 돌릴 수 있어요."
+DEFAULT_EXPLAINER_BODY = (
+    "큰 모델이 입력마다 모든 부분을 다 쓰면 계산이 너무 많아져요. "
+    "그래서 여러 expert 네트워크를 나눠 두고 router가 입력마다 몇 개만 골라 써요. "
+    "고른 expert만 계산하니 모델 전체가 커도 한 번에 드는 비용은 줄어들어요."
+)
+DEFAULT_EXPLAINER_EXAMPLE = (
+    "수업 중에 질문이 나오면 그 과목 선생님만 답하고 나머지 선생님은 쉬는 학교와 비슷해요."
+)
+
+
+def default_explainer(kw: dict) -> ExplainerLLM:
+    """A lint-clean, digit-free 해요체 explainer tied to the first two `rank: N`
+    lines inside `<items>` in the user content."""
+    text = _user_text(kw)
+    m = re.search(r"<items>(.*?)</items>", text, re.DOTALL)
+    ranks = [int(r) for r in re.findall(r"^rank: (\d+)$", m.group(1) if m else "", re.MULTILINE)]
+    return ExplainerLLM(
+        topic=DEFAULT_EXPLAINER_TOPIC,
+        point_ko=DEFAULT_EXPLAINER_POINT,
+        body_ko=DEFAULT_EXPLAINER_BODY,
+        example_ko=DEFAULT_EXPLAINER_EXAMPLE,
+        related_ranks=ranks[:2] or [1],
+    )
+
+
 def default_response(kw: dict) -> SimpleNamespace:
     """Valid default for any request type, chosen by the request's output_format."""
     if kw.get("output_format") is HeadlineLLM:
@@ -365,6 +393,8 @@ def default_response(kw: dict) -> SimpleNamespace:
         return make_parsed(default_notes(kw))
     if kw.get("output_format") is HighlightsLLM:
         return make_parsed(default_highlights(kw))
+    if kw.get("output_format") is ExplainerLLM:
+        return make_parsed(default_explainer(kw))
     return make_parsed(default_analysis(kw))
 
 
@@ -387,7 +417,8 @@ class FakeAnthropic:
     When the script is exhausted, calls return a valid default chosen by
     `output_format`: a headline (HeadlineLLM), a trend (TrendLLM), one note per
     input rank (VerdictNotesLLM), picks for the first three input ranks
-    (HighlightsLLM), or else an analysis.
+    (HighlightsLLM), an explainer tied to the first two input ranks
+    (ExplainerLLM), or else an analysis.
     Every call is recorded in `calls` as `{"ns": "messages"|"beta", "kw": kw}`.
     """
 
