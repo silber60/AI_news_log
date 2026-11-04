@@ -2,10 +2,10 @@
 
 data/ledger/<YYYY-Www>.json records who already got that week's issue, so a
 re-run never mails the same person twice. Each entry is
-HMAC-SHA256(unsubscribe token secret, "ledger-v1:" + normalized email) as 64
+HMAC-SHA256(unsubscribe token secret, ledger-v1 prefix + normalized email) as 64
 hex characters; deliver passes the secret in. The key is secret-keyed so
 nobody can test a guessed address against the public repo, and the
-"ledger-v1:" prefix keeps it apart from the unsubscribe token for the same
+ledger-v1 prefix keeps it apart from the unsubscribe token for the same
 address.
 
 The file holds no address, name or timestamp; keys are sorted so the order of
