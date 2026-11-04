@@ -85,15 +85,14 @@ PASSED tests/test_render.py::test_color_scheme_is_light_only[True]
 - `grep -c 'name="color-scheme" content="light"' templates/email.html.j2`: 1 (baseline 0)
 - The `트렌드 총평, 이번 주 바로 써볼 만한 것` grep count is 1 in REQUIREMENTS.md and 1 in ROADMAP.md. `Phase 2 D-13` appears 1 time in REQUIREMENTS.md.
 
-## Task 2: owner inbox check, light/dark (checkpoint D): PENDING
+## Task 2: owner inbox check, light/dark (checkpoint D): done 2026-11-04
 
-Not run. The executor did not push, did not dispatch a workflow and sent no mail.
-
-04-04 Task 3 (owner Google setup) is still pending, and `UNSUBSCRIBE_ENDPOINT = None`. Until it is done:
-- the test mail has no 구독 해지 link and no `<https://` part or `List-Unsubscribe-Post` in its headers; only `<mailto:` is expected;
-- **D-10 and D-12 are verification-pending**, and Phase 4 is not recorded complete.
-
-Still to record: the test run ID, the Deliver line `mode=test recipients=1 sent=1`, the log PII grep, the per-client/per-theme checklist, and the research A4/A5 observations.
+- mode=test run 41762276100 (success, commit 78e3350).
+- The owner checked the inboxes and reported "확인해봤는데 괜찮고": overall OK. No per-client failure was reported, so no v3 dark-mode asset set is needed. The owner gave one overall verdict, not the per-item header details (A4/A5). Those stay unrecorded.
+- 구독 해지 round trip: deferred. The Google setup (04-04 Task 3) is not done, so D-10 and D-12 stay verification-pending.
+- Follow-up changes the owner asked for:
+  - 웹에서 보기 was removed from the email header and footer (commit b3c48dd). Issue pages are still published on send and linked from the archive. WEB-01's "email links to it" now means the archive link (지난 호 보기) leads to every issue page.
+  - The owner wants a subscribe form on the 지난 호 page. That is Phase 4.1 scope (SUBS-01), so the form is not turned on here.
 
 ## Task 3: owner mode=send and live web page: PENDING
 
