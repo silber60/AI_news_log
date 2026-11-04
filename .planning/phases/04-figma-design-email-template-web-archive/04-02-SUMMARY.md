@@ -2,7 +2,7 @@
 phase: 04-figma-design-email-template-web-archive
 plan: 02
 subsystem: web-archive
-status: partial  # Tasks 1-2 complete; Task 3 (owner preview) pending-owner
+status: complete
 tags: [web, render, verdicts, responsive]
 requires: [04-01]
 provides:
@@ -30,7 +30,7 @@ metrics:
   completed: 2026-11-04
 actuals:
   tokens: 4400   # chars/4 over the realized diff (17,592 chars)
-  tasks: 2       # Tasks 1-2; Task 3 pending-owner
+  tasks: 3
   commits: 2
 plan_head_before: 200607f9d02e411e9ad0ff05af1b2422391cac5b
 plan_head_after: 72a52f231a2aec0c1a7d21d7177b19b6ee2c6fe6
@@ -58,13 +58,13 @@ tests/test_web_issue.py has 15 tests. They cover row order and the 확인 필요
 - **Fix:** `{% if web %} class="wrap"{% endif %}`. Acceptance grep still prints 1. The email bytes do not change, so tests/test_render.py needed no edit.
 - **Commit:** 72a52f2
 
-## Task 3: owner preview (pending)
+## Task 3: owner preview (done 2026-11-04)
 
 Previews built (out/ is gitignored, docs/ and data/ untouched):
 - Plan preview (W44 fixture, every verdict 확인 필요): out/web-preview/site/issues/2026-W44/index.html
 - Extra preview with filled verdicts (odd ranks: 가능 + Apache-2.0 code license, 바로 가능, 7B / 17GB, Claude/GPT 해당 없음 hidden; even ranks: Claude/GPT 기법 적용 가능): out/web-preview-verdicts/site/issues/2026-W44/index.html
 
-Owner answers: pending.
+Owner answers: "Both ok" (2026-11-04). The orchestrator also checked the verdict preview at 375px: no sideways overflow, 판정 근거 in each of the 10 cards, the greeting is 구독자님, and there is no address on the page.
 
 ## Self-Check: PASSED
 
