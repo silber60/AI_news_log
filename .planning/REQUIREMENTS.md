@@ -69,7 +69,7 @@
 - [ ] **DLVR-03**: Mail is sent via Gmail SMTP (`SMTP_SSL` 465, personal Gmail with app password from secrets) as one multipart `EmailMessage` per recipient with correct Korean subject encoding
 - [ ] **DLVR-07**: Subject is a headline-style line about the week's top topic (NEWNEEK/어세스타 style), with `[TEST]` prefix in test mode
 - [ ] **DLVR-04**: Footer shows sender info and an unsubscribe line, and messages carry a `List-Unsubscribe: <mailto:>` header
-- [ ] **DLVR-05**: A send ledger keyed by (week, SHA-256 email hash) is committed to the repo so a re-run never sends the same issue twice to the same person
+- [ ] **DLVR-05**: A send ledger keyed by (week, keyed HMAC-SHA256 email hash, owner A1) is committed to the repo so a re-run never sends the same issue twice to the same person
 - [ ] **DLVR-06**: Logs and artifacts never contain addresses, names, or credentials (counts/hashes only, no SMTP debug output) — repo is public
 
 ### Subscribers (SUBS)

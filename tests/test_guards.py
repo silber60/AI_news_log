@@ -60,6 +60,7 @@ def creds(monkeypatch):
     monkeypatch.setenv("SMTP_PASSWORD", "pw")
     monkeypatch.setenv("TEST_RECIPIENT", "owner@example.com")
     monkeypatch.setenv("SUBSCRIBERS_CSV", "email,name\na@example.com,가\nb@example.com,\n")
+    monkeypatch.setenv("UNSUBSCRIBE_TOKEN_SECRET", "guards-token-secret")  # 05-03 ledger key
 
 
 def _report() -> dict:
@@ -91,7 +92,13 @@ def test_other_pause_values_send(value, current_issue, gh_output, creds, fake_sm
 
     monkeypatch.setenv("SEND_PAUSED", value)
     result = run_deliver("send")
-    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 0}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 0,
+        "skipped_ledger": 0,
+        "sent": 2,
+        "skipped_rows": 0,
+    }
     assert gh_output.read_text(encoding="utf-8") == "outcome=sent\n"
 
 
@@ -112,7 +119,13 @@ def test_send_reports_counts_and_outcome(current_issue, gh_output, creds, fake_s
     from newsletter.delivery.deliver import run_deliver
 
     result = run_deliver("send")
-    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 0}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 0,
+        "skipped_ledger": 0,
+        "sent": 2,
+        "skipped_rows": 0,
+    }
     report = _report()
     assert report == {**result, "outcome": "sent", "issue_id": ISSUE_ID}
     raw = (store.out_root() / "report.json").read_text(encoding="utf-8")
