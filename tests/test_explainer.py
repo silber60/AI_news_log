@@ -277,3 +277,28 @@ def test_field_failure_twice_gives_none_and_logs_codes_only(issue_w44, caplog):
     for text in (DEFAULT_EXPLAINER_TOPIC, DEFAULT_EXPLAINER_POINT, "하나예요", "전문가"):
         assert text not in caplog.text
     assert "하나예요" not in fake.user_texts()[1]
+
+
+def test_repeat_then_unusable_retry_keeps_attempt_one(issue_w44, caplog):
+    refusal = make_parsed(None, stop_reason="refusal")
+    fake = FakeAnthropic([_resp(related_ranks=[2, 3]), refusal])
+    with caplog.at_level(logging.INFO):
+        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.related_ranks == [2, 3]
+    assert "explainer=repeat" in caplog.text
+
+
+def test_repeat_then_failing_retry_keeps_attempt_one(issue_w44):
+    bad = _resp(topic="LoRA: 가볍게 고치기", point_ko="계산이 9876배 줄어요.")
+    fake = FakeAnthropic([_resp(related_ranks=[2, 3]), bad])
+    ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.topic == DEFAULT_EXPLAINER_TOPIC
+
+
+def test_repeat_then_api_error_keeps_attempt_one(issue_w44, caplog):
+    req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    fake = FakeAnthropic([_resp(related_ranks=[2]), anthropic.APIConnectionError(request=req)])
+    with caplog.at_level(logging.WARNING):
+        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.related_ranks == [2]
+    assert "explainer=repeat" in caplog.text
