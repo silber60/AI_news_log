@@ -27,7 +27,7 @@ import anthropic
 from pydantic import ValidationError
 
 from newsletter.schema import Issue, PolishLLM
-from newsletter.stages import analyze, notes, trend
+from newsletter.stages import analyze, headline, notes, trend
 from newsletter.store import PROMPTS_DIR
 
 log = logging.getLogger(__name__)
@@ -323,19 +323,91 @@ def fields_block(refs: list[FieldRef], flagged: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
+def _name_tokens(text: str) -> set[str]:
+    toks: set[str] = set()
+    for tok in trend._NAME_RE.findall(text):
+        toks.add(tok.casefold())
+        toks.update(p.casefold() for p in trend._NAME_PART_RE.split(tok) if p)
+    return toks
+
+
+def _labels(text: str, labels: tuple[str, ...], code: str) -> list[tuple[str, str]]:
+    return [(code, "판정 이름을 그대로 씀")] if any(w in text for w in labels) else []
+
+
+def _item_note_errors(name: str, text: str, issue: Issue, i: int) -> list[tuple[str, str]]:
+    it = issue.items[i]
+    verdict = getattr(it, name).verdict
+    forbidden = notes.COMMERCIAL_FORBIDDEN if name == "commercial" else notes.POC_FORBIDDEN
+    return notes._field_errors(
+        f"{name}_reason_ko",
+        text,
+        forbidden.get(verdict, ()),
+        "\n".join(notes.item_lines(it)),
+        it.rank,
+    )
+
+
+def stage_errors(path: str, text: str, issue: Issue) -> list[tuple[str, str]]:
+    """The owning stage's own check for one polished field (D-13 stage re-check)."""
+    from newsletter.stages import explainer, highlight  # explainer imports this module
+
+    keys = path.split(".")
+    if path == "trend_ko":
+        return trend.check_trend(text, issue.items)
+    if keys[0] == "highlights" and keys[-1] in ("why_ko", "how_ko"):
+        return highlight.check_text(keys[-1], text)
+    if keys[0] == "explainer" and keys[-1] in ("point_ko", "body_ko", "example_ko"):
+        return explainer.check_field(keys[-1], text, issue.items)
+    if keys[0] == "items" and keys[-1] == "reason_ko":
+        i, owner = int(keys[1]), keys[2]
+        if owner in ("commercial", "poc"):
+            return _item_note_errors(owner, text, issue, i)
+        if owner == "claude_gpt":
+            return _labels(text, analyze._CG_LABELS, "cg_label_in_reason")
+        if owner == "skill_gpt":
+            return _labels(text, analyze._SG_LABELS, "sg_label_in_reason")
+    return []
+
+
 def fix_errors(ref: FieldRef, text: str, issue: Issue) -> list[tuple[str, str]]:
-    """Guards for one rewritten field. Messages name the id and the rule, never text."""
-    where = ref.path
+    """Per-fix guards (research §2). Messages carry the code, the id and the rule,
+    never the original or the rewritten text."""
+
+    def err(code: str, rule: str) -> tuple[str, str]:
+        return (code, f"[{code}] {ref.path}: {rule}")
+
     if not text.strip():
-        return [("fix_empty", f"{where}의 text가 비어 있음")]
+        return [err("fix_empty", "text가 비어 있음")]
     errs: list[tuple[str, str]] = []
     if ref.limit is not None and len(text) > ref.limit:
-        errs.append(("fix_len", f"{where}가 {len(text)}자로 {ref.limit}자를 넘음"))
+        errs.append(err("fix_len", f"{len(text)}자로 {ref.limit}자를 넘음"))
     if analyze.not_haeyo(text):
-        errs.append(("fix_tone", f"{where}의 문장이 해요체(~요)로 끝나지 않음"))
+        errs.append(err("fix_tone", "문장이 해요체(~요)로 끝나지 않음"))
+    if headline._URL_RE.search(text):
+        errs.append(err("fix_url", "링크가 있음"))
+    if headline._EMOJI_RE.search(text) or _EMOJI_RE.search(text):
+        errs.append(err("fix_emoji", "이모지가 있음"))
+    if headline.WRITTEN_BY_RE.search(text):
+        errs.append(err("fix_authorship", "뉴스레터 작성 방식을 언급함"))
+    # Fact guard: no digit, name or rank the original lacked.
+    if set(trend._NUMBER_RE.findall(text)) - set(trend._NUMBER_RE.findall(ref.text)):
+        errs.append(err("fix_digit", "원문에 없는 숫자가 있음"))
+    allowed = _name_tokens(ref.text) | trend.GENERIC_TERMS
+    names = [t for t in trend._NAME_RE.findall(text) if trend._is_name_like(t)]
+    if any(t.casefold() not in allowed for t in names):
+        errs.append(err("fix_name", "원문에 없는 이름이 있음"))
+    if set(trend._RANK_RE.findall(text)) - set(trend._RANK_RE.findall(ref.text)):
+        errs.append(err("fix_rank", "원문에 없는 순위가 있음"))
     before, after = lint(ref.text), lint(text)
     if _hard(after) >= _hard(before):
-        errs.append(("fix_lint", f"{where}에 고칠 문제가 그대로 남음"))
+        errs.append(err("fix_lint", "고칠 문제가 그대로 남음"))
+    if _weak(after) > _weak(before):
+        errs.append(err("fix_weak", "약한 문체 문제가 늘어남"))
+    stage = stage_errors(ref.path, text, issue)
+    if stage:
+        codes = "+".join(sorted({c for c, _ in stage}))
+        errs.append(err("fix_stage", f"필드 규칙 위반 ({codes})"))
     return errs
 
 
@@ -387,7 +459,7 @@ def _request_fixes(
             n = counts.get(path, 0)
             if n != 1:
                 code = "fix_missing" if n == 0 else "fix_repeat"
-                problems.append((code, f"{path}의 fix가 {n}개임 (1개여야 함)"))
+                problems.append((code, f"[{code}] {path}: fix가 {n}개임 (1개여야 함)"))
                 failed.append(path)
                 continue
             text = cleanup(next(f.text for f in out.fixes if f.id == path))

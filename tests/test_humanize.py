@@ -483,7 +483,7 @@ def _known_verdicts(issue_w44: Issue) -> Issue:
             "items.1.claude_gpt.verdict": "기법 적용 가능",
             "items.1.claude_gpt.reason_ko": "혁신적인 질문 방식을 대화에서 따라 해 볼 수 있어요.",
             "items.1.skill_gpt.fit": "Claude Skill",
-            "items.1.skill_gpt.reason_ko": "혁신적인 요약 규칙을 Claude Skill로 정리해 두면 좋아요.",
+            "items.1.skill_gpt.reason_ko": "혁신적인 요약 규칙을 Skill로 정리해 두면 좋아요.",
             "trend_ko": "이번 주에는 로봇 연구가 많았어요. 혁신적인 영상 연구도 있었어요.",
             "highlights.0.why_ko": "혁신적인 요약 규칙을 Skill로 정리해 두면 같은 형식으로 받아요.",
             "explainer.point_ko": "혁신적인 필요한 부분만 계산해요.",
@@ -494,7 +494,11 @@ def _known_verdicts(issue_w44: Issue) -> Issue:
 STAGE_GUARDS = [
     ("commercial", "items.1.commercial.reason_ko", "MIT 라이선스지만 상업 사용은 불가해요."),
     ("claude_gpt", "items.1.claude_gpt.reason_ko", "기법 적용 가능한 질문 방식이에요."),
-    ("skill_gpt", "items.1.skill_gpt.reason_ko", "요약 규칙을 Claude Skill로 정리해요."),
+    (
+        "skill_gpt",
+        "items.1.skill_gpt.reason_ko",
+        "Skill로 요약 규칙을 정리하면 해당 없음이 줄어요.",
+    ),
     ("trend", "trend_ko", "이번 주에는 로봇 연구와 영상 연구가 많았어요."),
     (
         "highlight",
