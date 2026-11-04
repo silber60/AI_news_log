@@ -25,7 +25,7 @@ The owner asked to skip the two planned `mode=test` runs to save Claude credit (
   - Archive leak scan on origin/main: 0 address matches outside image asset names, and 0 `?t=` tokens.
 - Not run (owner's cost decision):
   - The twice-run test proving checkpoint reuse. The stale run built W44 once, so the first Monday's 08:00 send reusing the 06:00 build is the live reuse proof (Task 3).
-- SEND_PAUSED variable: not yet confirmed by the owner. If the variable is missing, `vars.SEND_PAUSED` is empty and the schedule sends, which is the intended default.
+- SEND_PAUSED: the owner created the repository variable with value `false` (2026-11-04).
 
 ## Task 3: first unattended Monday 2026-11-09 (pending)
 Expected sequence:
