@@ -7,6 +7,10 @@ owner's selfTest run in the Apps Script editor is the runtime check.
 import re
 from pathlib import Path
 
+import pytest
+
+from newsletter.stages import humanize
+
 ROOT = Path(__file__).resolve().parent.parent
 CODE_GS = ROOT / "apps_script" / "Code.gs"
 
@@ -125,3 +129,100 @@ def test_no_new_logging_or_pii_in_replies():
     for fn in ("members_", "import_"):
         body = _body(fn)
         assert "err.message" not in body and "String(err" not in body
+
+
+# ---- Task 3: subscribe, the welcome queue and the trigger ----
+
+REPLY_MESSAGES = {
+    "ok": "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    "invalid": "이메일 주소를 다시 확인해 주세요.",
+    "consent": "개인정보 수집에 동의해야 신청할 수 있어요.",
+    "busy": "잠시 후 다시 신청해 주세요.",
+}
+
+
+def test_subscribe_reply_codes_are_input_only():
+    body = _body("subscribe_")
+    codes = set(re.findall(r"reply_\(p\.fmt, '(\w+)'\)", body))
+    assert codes == {"ok", "invalid", "consent", "busy"}
+    assert "ok_first" not in _src() and "이미 구독" not in _src()
+    for banned in ("Gmail", "UrlFetchApp", "sendWelcome_", "processWelcomeQueue"):
+        assert banned not in body, banned
+    # Every return goes through reply_, so the reply never carries row data.
+    returns = re.findall(r"return ([^;]+);", body)
+    assert returns and all(r.startswith("reply_(p.fmt, '") for r in returns), returns
+
+
+def test_reply_shape():
+    body = _body("reply_")
+    assert "fmt === 'json'" in body
+    assert "json_({ ok: code === 'ok', code: code })" in body
+    assert "done_(" in body
+    src = _src()
+    for code, msg in REPLY_MESSAGES.items():
+        assert f"{code}: '{msg}'" in src, code
+
+
+def test_subscribe_guards():
+    src = _src()
+    for s in (
+        "WELCOME_DAILY_CAP = 50",
+        "PER_ID_LIMIT = 3",
+        "GLOBAL_HOURLY_LIMIT = 30",
+        "21600",
+        "3600",
+    ):
+        assert s in src, s
+    body = _body("subscribe_")
+    assert "p.website" in body  # honeypot
+    assert "normEmail_(" in body and "CONSENT_VERSIONS.indexOf(" in body
+    assert "p.consent !== 'yes'" in body
+    assert "'rl:all" in body and "'rl:' + t" in body
+    assert "GLOBAL_HOURLY_LIMIT" in body and "PER_ID_LIMIT" in body
+    assert "LockService" in body and "releaseLock" in body
+    # The order of checks: honeypot, email, consent, global limit, per-id limit, lock.
+    at = [body.index(s) for s in ("p.website", "normEmail_(", "p.consent", "rl:all", "'rl:' + t")]
+    assert at == sorted(at)
+    assert at[-1] < body.index("LockService")
+    upsert = _body("upsert_")
+    assert "find_(" in upsert and "'active'" in upsert and "'form'" in upsert
+    assert "deleteRow" in upsert  # D-07: re-subscribe clears the opt-out
+    assert upsert.count("enqueueWelcome_(t)") == 2  # new and reactivated only
+
+
+def test_queue_holds_ids_only():
+    body = _body("enqueueWelcome_")
+    for prefix in ("'q_' + t", "'w_' + t", "'wd_' + day"):
+        assert prefix in body, prefix
+    assert "Utilities.formatDate(" in body and "'Asia/Seoul'" in body and "'yyyyMMdd'" in body
+    assert "WELCOME_DAILY_CAP" in body and "WELCOME_GAP_MS" in body
+    assert "email" not in body and "name" not in body
+    assert "deleteProperty" in body  # prunes old w_ and wd_ entries
+    assert "function enqueueWelcome_(t)" in _src()
+
+
+def test_trigger_installed_idempotently():
+    body = _body("installTrigger_")
+    get = body.index("ScriptApp.getProjectTriggers()")
+    new = body.index(
+        "ScriptApp.newTrigger('processWelcomeQueue').timeBased().everyMinutes(1).create()"
+    )
+    assert get < new
+    assert "getHandlerFunction() === 'processWelcomeQueue'" in body
+    assert "installTrigger_()" in _body("setup")
+    assert _src().count("everyMinutes(1)") == 1
+
+
+def test_queue_worker_exists_and_returns_when_idle():
+    body = _body("processWelcomeQueue")
+    assert "'q_'" in body
+    idle = body.index("return;")
+    assert idle < body.index("LockService")
+
+
+@pytest.mark.parametrize("code", sorted(REPLY_MESSAGES))
+def test_new_korean_messages_pass_humanizer(code):
+    sentence = REPLY_MESSAGES[code]
+    assert sentence in _src()
+    codes = humanize.lint(sentence)
+    assert not [c for c in codes if c in humanize.HARD_CODES], codes
