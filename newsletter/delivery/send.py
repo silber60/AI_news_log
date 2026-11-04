@@ -31,7 +31,7 @@ def build_message(
     list_unsubscribe: str | None = None,
     one_click: bool = False,
 ) -> EmailMessage:
-    """D-14: List-Unsubscribe when given; List-Unsubscribe-Post only with an https target
+    """D-14: List-Unsubscribe when given; the one-click Post header only with an https target
     (RFC 8058), which the caller signals with one_click."""
     msg = EmailMessage()
     msg["Subject"] = subject

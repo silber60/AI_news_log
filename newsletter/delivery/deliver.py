@@ -1,8 +1,9 @@
 """Deliver stage. The only package that reads SMTP and recipient secrets.
 
 `test` sends one de-personalized message to TEST_RECIPIENT. `send` sends one
-personalized message per subscriber from the SUBSCRIBERS_CSV secret. Logs carry
-counts only, never addresses or names (DLVR-06).
+personalized message per subscriber from the SUBSCRIBERS_CSV secret, skipping
+anyone whose unsubscribe token is on the Apps Script list (D-13). Logs carry
+counts only, never addresses, names, tokens or keys (DLVR-06).
 """
 
 import logging
@@ -80,23 +81,47 @@ def _run_test(issue: Issue, user: str, password: str) -> dict:
 def _run_send(issue: Issue, user: str, password: str) -> dict:
     subscribers, skipped = parse_subscribers(_env("SUBSCRIBERS_CSV"))
     subject = build_subject(issue, "send")  # D-03: no prefix
+    secret = _token_secret()
+    gone: set[str] = set()
+    endpoint = unsubscribe.UNSUBSCRIBE_ENDPOINT
+    if endpoint is not None:
+        # D-13 fail closed: read the list before any message or SMTP connection. A missing
+        # key or any read problem raises DeliveryError, so nobody is mailed.
+        gone = unsubscribe.fetch_unsubscribed(endpoint, _env("UNSUBSCRIBE_LIST_KEY"))
     messages = []
+    unsubscribed = 0
     for sub in subscribers:
+        t, link, header = _unsubscribe_parts(sub.email, user, secret)
+        if t is not None and t in gone:
+            unsubscribed += 1
+            continue
         greeting = display_name(sub.name)  # body only, never a header
         messages.append(
             build_message(
                 subject=subject,
                 sender_addr=user,
                 to=sub.email,
-                text=render_text(issue, greeting),
-                html=render_html(issue, greeting),  # re-checks size per recipient
+                text=render_text(issue, greeting, unsubscribe_url=link),
+                html=render_html(issue, greeting, unsubscribe_url=link),  # size per recipient
+                list_unsubscribe=header,
+                one_click=t is not None,
             )
         )
-    sent = send_messages(messages, user=user, password=password, pause=SEND_PAUSE_SECONDS)
-    result = {"recipients": len(subscribers), "sent": sent, "skipped_rows": skipped}
+    sent = 0
+    if messages:
+        sent = send_messages(messages, user=user, password=password, pause=SEND_PAUSE_SECONDS)
+    else:
+        log.info("mode=send nothing to send after unsubscribe filter")
+    result = {
+        "recipients": len(subscribers),
+        "unsubscribed": unsubscribed,
+        "sent": sent,
+        "skipped_rows": skipped,
+    }
     log.info(
-        "mode=send recipients=%d sent=%d skipped_rows=%d",
+        "mode=send recipients=%d unsubscribed=%d sent=%d skipped_rows=%d",
         result["recipients"],
+        unsubscribed,
         sent,
         skipped,
     )
