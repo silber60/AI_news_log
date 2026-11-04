@@ -88,6 +88,17 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   .get, .sample, .archive, .cta { padding: 56px 0; }
   .get h2, .sample h2, .archive h2, .cta h2 { font-size: 24px; }
   .preview { justify-self: stretch; width: 100%; }
+  /* Owner 2026-11-04: on phones the section title and both items sit in one box,
+     each item on one line (small otter left, text right). */
+  .get .wrap { border: 1px solid #E6E6E6; border-radius: 16px; padding: 28px 20px 8px; margin: 0 16px; width: auto; }
+  .get .head { margin-bottom: 8px; }
+  .cards { gap: 0; }
+  .get-card, .get-card.blue { display: flex; align-items: center; gap: 14px; text-align: left; border: 0; border-radius: 0; background: none; padding: 16px 0; }
+  .get-card + .get-card { border-top: 1px solid #EEEEEE; }
+  .get-card img { width: 64px; height: 64px; margin: 0; flex: none; }
+  .get-card .txt { min-width: 0; }
+  .get-card h3 { font-size: 16px; margin-bottom: 4px; }
+  .get-card p { font-size: 13px; }
 }
 
 @media (max-width: 767px) {
@@ -131,7 +142,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요. <a href="https://silber60.github.io/AI_news_log/privacy/">개인정보 처리방침</a></span></label>
 <button type="submit">무료로 구독하기</button>
 <p class="msg" role="status" aria-live="polite"></p>
-<p class="note">메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
+<p class="note">신청하면 바로 환영 메일을 보내드려요. 스팸함에 들어갈 수 있으니 확인해 주세요.<br>메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
 </form>
 </div>
 </section>
@@ -145,13 +156,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <div class="cards">
 <div class="get-card" data-card="what-you-get">
 <img src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-magnifier.png" width="140" height="140" alt="">
-<h3>GitHub star Top 10</h3>
-<p>지난주 올라온 모델 중 개발자들이 실제로 관심 갖는 것만 골라요.</p>
+<div class="txt"><h3>GitHub star Top 10</h3>
+<p>지난주 올라온 모델 중 개발자들이 실제로 관심 갖는 것만 골라요.</p></div>
 </div>
 <div class="get-card blue" data-card="what-you-get">
 <img src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-chalkboard.png" width="140" height="140" alt="">
-<h3>AI 기술 쉽게 보기</h3>
-<p>이번 주 새로 나온 기술 하나를 예시와 함께 쉽게 풀어 설명해요.</p>
+<div class="txt"><h3>AI 기술 쉽게 보기</h3>
+<p>이번 주 새로 나온 기술 하나를 예시와 함께 쉽게 풀어 설명해요.</p></div>
 </div>
 </div>
 </div>
@@ -221,14 +232,14 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요. <a href="https://silber60.github.io/AI_news_log/privacy/">개인정보 처리방침</a></span></label>
 <button type="submit">무료로 구독하기</button>
 <p class="msg" role="status" aria-live="polite"></p>
-<p class="note">메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
+<p class="note">신청하면 바로 환영 메일을 보내드려요. 스팸함에 들어갈 수 있으니 확인해 주세요.<br>메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
 </form>
 </div>
 </section>
 <script>
 (function () {
   var MSG = {
-    ok: "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    ok: "신청됐어요. 곧 환영 메일이 가요. 받은편지함에 없으면 스팸함도 확인해 주세요.",
     invalid: "이메일 주소를 다시 확인해 주세요.",
     consent: "개인정보 수집에 동의해야 신청할 수 있어요.",
     busy: "잠시 후 다시 신청해 주세요.",

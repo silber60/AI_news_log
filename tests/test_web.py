@@ -300,6 +300,8 @@ HOME_NAMES = [
 # Only rendered once unsubscribe.UNSUBSCRIBE_ENDPOINT is set (Phase 4.1, D-10).
 FORM_SENTENCES = [
     "이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요.",
+    "신청하면 바로 환영 메일을 보내드려요.",
+    "스팸함에 들어갈 수 있으니 확인해 주세요.",
     "메일 아래쪽 링크로 언제든 해지할 수 있어요.",
 ]
 # Owner-approved copy taken verbatim from Figma 25:356: exempt from the lint (D-04).
@@ -505,7 +507,7 @@ def test_unsubscribe_heading_passes_humanizer():
 CODE_GS = REPO / "apps_script" / "Code.gs"
 # Code.gs REPLY, verbatim (04.1-02 contract). There is no per-address code.
 FORM_MSG = {
-    "ok": "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    "ok": "신청됐어요. 곧 환영 메일이 가요. 받은편지함에 없으면 스팸함도 확인해 주세요.",
     "invalid": "이메일 주소를 다시 확인해 주세요.",
     "consent": "개인정보 수집에 동의해야 신청할 수 있어요.",
     "busy": "잠시 후 다시 신청해 주세요.",

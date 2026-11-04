@@ -52,7 +52,7 @@ const LATEST_URL = SITE + 'welcome/latest.json';
 const BRAND = '모닥로그 AI 리포트';
 const SUB_TITLE = '구독 신청 | 모닥로그 AI 리포트';
 const REPLY = {
-  ok: '신청됐어요. 매주 월요일 아침에 메일을 보내드려요.',
+  ok: '신청됐어요. 곧 환영 메일이 가요. 받은편지함에 없으면 스팸함도 확인해 주세요.',
   invalid: '이메일 주소를 다시 확인해 주세요.',
   consent: '개인정보 수집에 동의해야 신청할 수 있어요.',
   busy: '잠시 후 다시 신청해 주세요.'
