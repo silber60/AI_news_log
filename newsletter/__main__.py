@@ -1,5 +1,6 @@
 """CLI: `python -m newsletter build --week YYYY-Www [--force-stage STAGE]`,
-`deliver --mode test|send [--allow-stale]`, `notify-failure --mode test|send`,
+`deliver --mode test|send [--allow-stale]`, `report --mode test|send` (alias
+`notify-failure`),
 `record-topic --mode preview|test|send`, `publish --mode preview|test|send`, `site`,
 `import-subscribers`.
 
@@ -11,6 +12,11 @@ later one; blank or `none` reuses everything.
 the issue week) with StaleIssueError, before any secret or network use, unless
 `--allow-stale` is given on purpose (D-03). A paused scheduled send (SEND_PAUSED)
 reports `paused` and mails nobody (D-02).
+
+`report` mails the owner the weekly run report (D-06): sent with counts, paused,
+refused as stale, or failed with stage and class. It reads out/report.json and
+out/status.json, never the subscriber list, the ledger or Claude text, and never
+overwrites status.json when it fails itself.
 
 `record-topic` appends the current issue's explainer topic to
 data/explainer_topics.json, only in send mode (D-06, D-15). It logs issue ids
@@ -44,6 +50,7 @@ from newsletter import store
 from newsletter.errors import DeliveryError, PipelineError
 from newsletter.week import KST, previous_iso_week
 
+REPORT = "report"
 NOTIFY = "notify-failure"
 RECORD = "record-topic"
 PUBLISH = "publish"
@@ -86,7 +93,9 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="send even outside the issue's KST send day (deliberate recovery only, D-03)",
     )
-    n = sub.add_parser(NOTIFY, help="mail a failure notice to the owner")
+    rp = sub.add_parser(REPORT, help="mail the weekly run report to the owner")
+    rp.add_argument("--mode", choices=["test", "send"], required=True)
+    n = sub.add_parser(NOTIFY, help="alias of report")
     n.add_argument("--mode", choices=["test", "send"], required=True)
     r = sub.add_parser(RECORD, help="append the sent issue's explainer topic to the record")
     r.add_argument("--mode", choices=["preview", "test", "send"], required=True)
@@ -162,10 +171,10 @@ def _run(args: argparse.Namespace) -> None:
         from newsletter.delivery.deliver import run_deliver
 
         run_deliver(args.mode, allow_stale=args.allow_stale)
-    elif args.command == NOTIFY:
-        from newsletter.delivery.notify import send_failure_notice
+    elif args.command in (REPORT, NOTIFY):
+        from newsletter.delivery.notify import send_report
 
-        send_failure_notice(args.mode)
+        send_report(args.mode)
     elif args.command == RECORD:
         _record_topic(args.mode)
     elif args.command == PUBLISH:
@@ -180,7 +189,7 @@ _EMAIL_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")
 
 
 def _report(command: str, exc: BaseException) -> None:
-    if command in (NOTIFY, IMPORT):
+    if command in (REPORT, NOTIFY, IMPORT):
         stage = command
     elif isinstance(exc, PipelineError):
         stage = exc.stage
@@ -193,7 +202,7 @@ def _report(command: str, exc: BaseException) -> None:
     if isinstance(exc, DeliveryError):
         # DeliveryError text is built from env var names or SMTP class + code only.
         print(f"detail={_EMAIL_RE.sub('<redacted>', str(exc))[:200]}", file=sys.stderr)
-    if command == NOTIFY:
+    if command in (REPORT, NOTIFY):
         return  # keep the original failure's status.json for the workflow
     try:
         store.write_json(

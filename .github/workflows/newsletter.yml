@@ -125,13 +125,15 @@ jobs:
           if-no-files-found: ignore
           overwrite: true
           retention-days: 14
-      - name: Failure notice (test/send only, D-13)
-        if: ${{ failure() && inputs.mode != 'preview' }}
+      # One owner mail a week (D-06): sent with counts, paused, refused as stale, or failed.
+      # Runs whatever happened before it; a successful test run mails nothing extra.
+      - name: Report (test/send, D-06)
+        if: ${{ always() && env.MODE != 'preview' }}
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           TEST_RECIPIENT: ${{ secrets.TEST_RECIPIENT }}
-        run: uv run python -m newsletter notify-failure --mode "$MODE"
+        run: uv run python -m newsletter report --mode "$MODE"
 
   publish:
     needs: run

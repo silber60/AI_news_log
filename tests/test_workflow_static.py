@@ -98,11 +98,11 @@ def _run_lines(text: str) -> list[str]:
     return out
 
 
-def test_delivery_secrets_only_in_deliver_and_failure_notice():
+def test_delivery_secrets_only_in_deliver_and_report():
     header, blocks = _split(_text(NEWSLETTER))
     for name in DELIVERY_SECRETS:
         assert name not in header, f"{name} leaks into job/workflow level"
-    allowed = {_named(blocks, "Deliver"), _named(blocks, "Failure notice")}
+    allowed = {_named(blocks, "Deliver"), _named(blocks, "Report")}
     for block in blocks:
         if block in allowed:
             continue
@@ -127,15 +127,29 @@ def test_delivery_secret_values_are_mode_gated():
     assert "env.MODE == 'send' && secrets.SUBSCRIBERS_CSV || ''" in deliver
     assert "if: ${{ env.MODE == 'test' || env.MODE == 'send' }}" in deliver
     assert "inputs.mode" not in deliver
-    notice = _named(blocks, "Failure notice")
-    assert "failure() && inputs.mode != 'preview'" in notice
-    assert "SUBSCRIBERS_CSV" not in notice
-    assert 'notify-failure --mode "$MODE"' in notice
+    report = _named(blocks, "Report")
+    assert "if: ${{ always() && env.MODE != 'preview' }}" in report
+    assert "SUBSCRIBERS_CSV" not in report
+    assert "SUBSCRIBER_LIST_KEY" not in report
+    assert 'uv run python -m newsletter report --mode "$MODE"' in report
+    # owner-notice credentials and TEST_RECIPIENT only (T-05-17)
+    assert sorted(re.findall(r"secrets\.(\w+)", report)) == [
+        "SMTP_PASSWORD",
+        "SMTP_USER",
+        "TEST_RECIPIENT",
+    ]
+
+
+def test_no_failure_notice_step_remains():
+    text = _text(NEWSLETTER)
+    _, blocks = _split(text)
+    assert not any(b.startswith(f"{STEP_PREFIX}name: Failure notice") for b in blocks)
+    assert "notify-failure" not in "\n".join(_code(text))
 
 
 def test_unsubscribe_secrets_only_in_deliver():
     # 04-05 (D-13, T-04-15): the token secret serves test and send; the list key is
-    # send-only. Neither reaches the Failure notice, Build, publish or deploy jobs.
+    # send-only. Neither reaches the Report, Build, publish or deploy jobs.
     text = _text(NEWSLETTER)
     _, blocks = _split(text)
     deliver = _named(blocks, "Deliver")
@@ -144,9 +158,9 @@ def test_unsubscribe_secrets_only_in_deliver():
         "UNSUBSCRIBE_LIST_KEY: ${{ env.MODE == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}"
         in deliver
     )
-    notice = _named(blocks, "Failure notice")
+    report = _named(blocks, "Report")
     for name in UNSUBSCRIBE_SECRETS:
-        assert name not in notice
+        assert name not in report
         assert text.count(name) == deliver.count(name), f"{name} appears outside Deliver"
     assert text.count("UNSUBSCRIBE_") == 2 + 2  # two env lines, name and secrets.<name> each
 
