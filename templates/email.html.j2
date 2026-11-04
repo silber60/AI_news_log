@@ -236,7 +236,7 @@ a { color: #FF6B00; text-decoration: none; }
 <tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
 {%- else %}
 <tr><td style="font-size: 12px; color: #808080;">더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.</td></tr>
-<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a>{% if unsubscribe_url %} · <a href="{{ unsubscribe_url }}" style="color: #FF6B00;">구독 해지</a>{% endif %}</td></tr>
+<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a>{% if subscribe_url %} · <a href="{{ subscribe_url }}" style="color: #FF6B00;">구독하기</a>{% endif %}{% if unsubscribe_url %} · <a href="{{ unsubscribe_url }}" style="color: #FF6B00;">구독 해지</a>{% endif %}</td></tr>
 {%- endif %}
 </table>
 </td></tr>

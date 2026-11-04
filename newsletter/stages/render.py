@@ -12,6 +12,7 @@ import css_inline
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup
 
+from newsletter.delivery import unsubscribe
 from newsletter.delivery.subscribers import DEFAULT_GREETING
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, EvidenceLink, Issue, Item, LicenseInfo
@@ -273,6 +274,13 @@ def _context(
         "welcome": welcome and not web,
         # D-11: per-recipient link, email only; the web copy always passes None (D-06).
         "unsubscribe_url": None if web else unsubscribe_url,
+        # D-09: the email footer 구독하기 link for forwarded mail, only once the Apps Script
+        # endpoint is live. Read at call time, so setting the endpoint turns it on.
+        "subscribe_url": (
+            SITE_URL + "#subscribe"
+            if unsubscribe.UNSUBSCRIBE_ENDPOINT is not None and not web
+            else None
+        ),
         "greeting": greeting,
         "brand": BRAND,
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
