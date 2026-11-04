@@ -61,7 +61,7 @@ def build_notice_text(mode: str, issue_id: str, status: dict) -> str:
     stage = str(status.get("stage") or UNKNOWN)
     error_class = str(status.get("error_class") or UNKNOWN)
     return (
-        f"{SENDER_NAME} {issue_id} 실행이 실패했습니다.\n\n"
+        f"{SENDER_NAME} {issue_id} 실행이 실패했어요.\n\n"
         f"mode: {mode}\n"
         f"stage: {stage}\n"
         f"error_class: {error_class}\n"
@@ -84,10 +84,37 @@ def _sent_text(issue_id: str, report: dict) -> str:
     return f"{SENDER_NAME} {issue_id} 호를 보냈어요.\n\n{counts}web: {issue_url(issue_id)}\n"
 
 
+PAUSED_TEXT = "이번 주 발송은 멈춰 두었어요. 아무에게도 보내지 않았어요.\n"
+STALE_CLASS = "StaleIssueError"
+
+
+def _stale_text(issue_id: str, status: dict) -> str:
+    stage = str(status.get("stage") or UNKNOWN)
+    return (
+        f"발송 기한(월요일 23:59)이 지나서 {issue_id} 호를 보내지 않았어요.\n"
+        "다시 보내려면 Actions에서 mode=send로 직접 실행해 주세요.\n\n"
+        f"stage: {stage}\n"
+        f"error_class: {STALE_CLASS}\n"
+    )
+
+
 def build_report(mode: str, issue_id: str, status: dict, report: dict) -> tuple[str, str] | None:
-    """(subject, text) for the owner, or None when no mail is due (research Pattern 7)."""
-    if not status and mode == "send" and report.get("outcome") == "sent":
+    """(subject, text) for the owner, or None when no mail is due (research Pattern 7).
+
+    status.json wins over report.json. A successful test run mails nothing: the [TEST]
+    mail is the 06:00 signal, so the owner gets one report a week. Neither file (a
+    cancelled or timed-out run) is a failure with stage unknown.
+    """
+    outcome = report.get("outcome")
+    if status:
+        if mode == "send" and status.get("error_class") == STALE_CLASS:
+            return f"[발송 거부] {SENDER_NAME} {issue_id}", _stale_text(issue_id, status)
+    elif mode == "test" and outcome == "tested":
+        return None
+    elif mode == "send" and outcome == "sent":
         return f"[발송 완료] {SENDER_NAME} {issue_id}", _sent_text(issue_id, report)
+    elif mode == "send" and outcome == "paused":
+        return f"[일시정지] {SENDER_NAME} {issue_id}", PAUSED_TEXT
     return f"[실패] {SENDER_NAME} {issue_id}", build_notice_text(mode, issue_id, status)
 
 
