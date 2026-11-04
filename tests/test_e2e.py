@@ -7,6 +7,9 @@ import httpx2
 import respx
 from conftest import (
     DEFAULT_CLAUDE_GPT_REASON,
+    DEFAULT_HIGHLIGHT_HOW,
+    DEFAULT_HIGHLIGHT_WHY,
+    DEFAULT_SKILL_GPT_REASON,
     DEFAULT_TREND,
     FakeAnthropic,
     default_notes,
@@ -80,7 +83,13 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert all(it.use_idea_ko for it in stored.items)
 
     assert stored.explainer is None
-    assert stored.highlights == []
+    # HILT-01..03, D-11: Claude's fit label per item, three picks, tags copied by code.
+    assert [h.rank for h in stored.highlights] == [1, 2, 3]
+    assert all(h.tag == "Claude Skill" for h in stored.highlights)
+    assert all(
+        (h.why_ko, h.how_ko) == (DEFAULT_HIGHLIGHT_WHY, DEFAULT_HIGHLIGHT_HOW)
+        for h in stored.highlights
+    )
     # ANLY-05, D-07: the trend call's default text.
     assert stored.trend_ko == DEFAULT_TREND
     # EVID-03: PoC decided by code from the HF paper capture.
@@ -96,6 +105,8 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
         # ANLY-02, D-06: Claude's label and reason from the analyze call.
         assert it.claude_gpt.verdict == "기법 적용 가능"
         assert it.claude_gpt.reason_ko == DEFAULT_CLAUDE_GPT_REASON
+        assert it.skill_gpt.fit == "Claude Skill"
+        assert it.skill_gpt.reason_ko == DEFAULT_SKILL_GPT_REASON
         assert len(it.summary_lines_ko) == 3
         assert all(line.strip() for line in it.summary_lines_ko)
         assert it.poc.has_weights in (True, None)
@@ -134,13 +145,14 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     assert fallback_headline(stored.items) == f"🧠 {name} 등 이번 주 AI 모델 10"
     assert fallback_headline(stored.items[:1]) == f"🧠 {name} 이번 주 AI 모델 1"
 
-    # 10 analysis calls, then notes, trend and headline (one call each).
-    assert len(fake.calls) == 13
+    # 10 analysis calls, then notes, trend, highlight and headline (one call each).
+    assert len(fake.calls) == 14
     texts = fake.user_texts()
     for text in texts[:10]:
         assert "http" not in text
         assert text.startswith("<paper>")
-    for text in texts[10:13]:
+    assert "skill_gpt_fit: Claude Skill" in texts[12]
+    for text in texts[10:14]:
         assert text.startswith("<items>")
         assert "http" not in text
 
@@ -183,6 +195,14 @@ def test_run_build_writes_archive(hf_pages, archive_tmp):
     )
     assert greeting < trend_pos < top3
     assert greeting < html.index(DEFAULT_TREND) < top3
+    # D-01, HILT-02: the highlight section sits below the trend and above the top 3.
+    hl = html.index('data-section="highlight"')
+    assert trend_pos < hl < top3
+    hl_html = html[hl:top3]
+    for h in stored.highlights:
+        assert stored.items[h.rank - 1].title_ko in hl_html
+    assert hl_html.count(DEFAULT_HIGHLIGHT_WHY) == 3
+    assert "이번 주는 해당 항목 없음" not in html
     assert "IBM Plex Sans KR" in html
     cards = html.split("data-card=")[1:]
     assert "🧪 코드만 공개됐어요" in cards[0]
@@ -249,6 +269,8 @@ def test_claude_output_model_has_no_code_owned_fields():
         "use_idea_ko",
         "claude_gpt",
         "claude_gpt_reason_ko",
+        "skill_gpt_fit",
+        "skill_gpt_reason_ko",
     }
     for name in fields:
         assert "url" not in name and "rank" not in name and "verdict" not in name

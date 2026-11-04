@@ -55,7 +55,7 @@ def test_system_carries_rules_and_ai_types(hf_pages):
     assert "<paper>" in text
     for word in ("혁신적", "획기적", "게임 체인저", "단순히", "—"):
         assert word in text
-    assert text.splitlines()[0] == "<!-- prompt-version: 5 -->"
+    assert text.splitlines()[0] == "<!-- prompt-version: 6 -->"
 
 
 def test_prompt_claude_gpt_section(hf_pages):
@@ -70,7 +70,20 @@ def test_prompt_claude_gpt_section(hf_pages):
     for term in ("MCP server", "plugin", "Skill", "API"):
         assert term in text, term
     assert "60자" in paper
-    assert "열한 필드" in paper and "`claude_gpt_reason_ko`)" in paper
+    assert "열세 필드" in paper and "`skill_gpt_reason_ko`)" in paper
+
+
+def test_prompt_skill_gpt_section(hf_pages):
+    """HILT-01, D-02, D-11: four fit labels, base rate, grounded in the abstract."""
+    text = _call(hf_pages)["system"][0]["text"]
+    paper = (PROMPTS_DIR / "analyze_paper.md").read_text(encoding="utf-8")
+    assert "### `skill_gpt_fit`" in paper and "### `skill_gpt_reason_ko`" in paper
+    for label in ("Claude Skill", "GPTs", "둘 다", "해당 없음"):
+        assert f"`{label}`" in text, label
+    assert "대부분의 논문은 `해당 없음`이에요." in text
+    assert "초록이 설명하는 내용에서만" in text
+    section = paper.split("### `skill_gpt_reason_ko`")[1]
+    assert "60자" in section
 
 
 def test_tone_rule_is_haeyo_in_both_prompts():
@@ -102,7 +115,7 @@ def test_system_names_v3_fields_and_one_idea(hf_pages):
     # D-13: exactly one idea line, never the old two-idea list
     assert "use_ideas" not in text
     assert "### `use_idea_ko`" in text
-    assert "열한 필드" in text and "아홉 필드" not in text and "여덟 필드" not in text
+    assert "열세 필드" in text and "열한 필드" not in text and "아홉 필드" not in text
     for two in ("두 개", "2개", "두 가지", "0..2"):
         assert two not in text, two
     # T-01.2-07: facts stay code-owned

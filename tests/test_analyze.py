@@ -61,7 +61,7 @@ def test_refusal_is_retried_once_and_week_builds(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    assert len(fake.calls) == 14  # 11 analysis calls + notes + trend + headline
+    assert len(fake.calls) == 15  # 11 analysis calls + notes + trend + highlight + headline
     assert all(c["ns"] == "beta" for c in fake.calls)
     texts = fake.user_texts()
     assert "previous_output_problems" not in texts[2]
@@ -101,8 +101,8 @@ def test_bad_request_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend and headline; the downgrade covers all three.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 13
+    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
     for c in fake.calls[1:]:
         assert "fallbacks" not in c["kw"] and "betas" not in c["kw"]
     assert "previous_output_problems" not in fake.user_texts()[1]
@@ -113,8 +113,8 @@ def test_sdk_type_error_downgrades_to_plain_parse(hf_pages, archive_tmp):
     issue = _build(hf_pages, fake)
 
     assert len(issue.items) == 10
-    # 10 analysis calls + notes, trend and headline; the downgrade covers all three.
-    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 13
+    # 10 analysis calls + notes, trend, highlight and headline; the downgrade covers all four.
+    assert [c["ns"] for c in fake.calls] == ["beta"] + ["messages"] * 14
 
 
 def test_downgrade_is_per_client(hf_pages):
@@ -166,6 +166,8 @@ VALID = {
     "use_idea_ko": "긴 회의 영상과 자료를 함께 요약할 때 쓸 수 있어요.",
     "claude_gpt": "기법 적용 가능",
     "claude_gpt_reason_ko": "긴 자료를 나눠 읽고 묻는 흐름을 대화에서 따라 할 수 있어요.",
+    "skill_gpt_fit": "GPTs",
+    "skill_gpt_reason_ko": "긴 자료를 읽는 순서를 지시문으로 정리해 둘 수 있어요.",
 }
 
 
@@ -725,3 +727,95 @@ def test_claude_gpt_is_copied_to_item(hf_pages):
     item = analyze.to_item(1, _entry(hf_pages), _analysis())
     assert item.claude_gpt.verdict == VALID["claude_gpt"]
     assert item.claude_gpt.reason_ko == VALID["claude_gpt_reason_ko"]
+
+
+# ---------------------------------------------- skill_gpt / HILT-01, D-11
+
+SG_LABELS = ("Claude Skill", "GPTs", "해당 없음")
+
+
+def test_sg_reason_limit_is_60():
+    assert analyze.SKILL_GPT_REASON_LIMIT == 60
+    assert analyze.check(_analysis(skill_gpt_reason_ko="가" * 59 + "요")) == []
+
+
+@pytest.mark.parametrize(
+    ("reason", "codes"),
+    [
+        ("", ["sg_reason_empty"]),
+        ("  ", ["sg_reason_empty"]),
+        ("가" * 60 + "요", ["sg_reason_len"]),
+        ("지시문으로 정리해 둘 수 있다.", ["tone"]),
+    ],
+)
+def test_sg_reason_check_codes(reason, codes):
+    assert [c for c, _ in analyze.check(_analysis(skill_gpt_reason_ko=reason))] == codes
+
+
+def test_sg_no_fit_may_leave_the_reason_empty(hf_pages):
+    a = _analysis(skill_gpt_fit="해당 없음", skill_gpt_reason_ko="")
+    assert analyze.check(a) == []
+    item = analyze.to_item(1, _entry(hf_pages), a)
+    assert (item.skill_gpt.fit, item.skill_gpt.reason_ko) == ("해당 없음", None)
+
+
+@pytest.mark.parametrize("label", SG_LABELS)
+def test_sg_label_in_reason_is_flagged(label):
+    reason = f"초록 기준으로 {label}에 가까워요."
+    codes = [c for c, _ in analyze.check(_analysis(skill_gpt_reason_ko=reason))]
+    assert codes == ["sg_label_in_reason"]
+
+
+def test_sg_both_is_ordinary_korean():
+    reason = "규칙과 예시 둘 다 지시문에 넣어 둘 수 있어요."
+    assert analyze.check(_analysis(skill_gpt_fit="둘 다", skill_gpt_reason_ko=reason)) == []
+
+
+def test_sg_check_messages_carry_no_model_text():
+    reason = "비밀문장 GPTs로 만들 수 있어요."
+    msgs = [m for _, m in analyze.check(_analysis(skill_gpt_reason_ko=reason))]
+    assert msgs and all("skill_gpt_reason_ko" in m and "비밀문장" not in m for m in msgs)
+
+
+def test_sg_reason_overrun_is_retried_then_trimmed(hf_pages, caplog):
+    long = "가" * 70 + "요."
+    fake = FakeAnthropic([_parsed(skill_gpt_reason_ko=long), _parsed(skill_gpt_reason_ko=long)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert len(fake.calls) == 2
+    assert "skill_gpt_reason_ko" in fake.user_texts()[1]
+    assert len(result.skill_gpt_reason_ko) <= 60
+    assert result.skill_gpt_reason_ko.endswith("…")
+    assert result.skill_gpt_fit == VALID["skill_gpt_fit"]
+    assert "trimmed=skill_gpt_reason_ko rank=2" in caplog.text
+
+
+@pytest.mark.parametrize("reason", ["", "GPTs로 바로 만들 수 있어요.", "Claude Skill에 맞아요."])
+def test_sg_bad_reason_twice_downgrades_and_keeps_the_build(hf_pages, caplog, reason):
+    over = {"skill_gpt_fit": "Claude Skill", "skill_gpt_reason_ko": reason}
+    fake = FakeAnthropic([_parsed(**over), _parsed(**over)])
+    with caplog.at_level("INFO", logger="newsletter"):
+        result = analyze.analyze_one(fake, _entry(hf_pages), rank=4)
+    assert len(fake.calls) == 2
+    assert (result.skill_gpt_fit, result.skill_gpt_reason_ko) == ("해당 없음", "")
+    assert result.claude_gpt == VALID["claude_gpt"]
+    item = analyze.to_item(4, _entry(hf_pages), result)
+    assert (item.skill_gpt.fit, item.skill_gpt.reason_ko) == ("해당 없음", None)
+    warn = [r.getMessage() for r in caplog.records if "skill_gpt=downgraded" in r.getMessage()]
+    assert len(warn) == 1 and warn[0].startswith("skill_gpt=downgraded rank=4 codes=sg_")
+    if reason:
+        assert reason not in caplog.text
+
+
+def test_sg_bad_reason_with_fatal_error_still_fails(hf_pages):
+    bad = {"skill_gpt_reason_ko": "", "title_ko": " "}
+    fake = FakeAnthropic([_parsed(**bad), _parsed(**bad)])
+    with pytest.raises(AnalysisInvalid) as exc:
+        analyze.analyze_one(fake, _entry(hf_pages), rank=2)
+    assert "title_empty" in str(exc.value)
+
+
+def test_skill_gpt_is_copied_to_item(hf_pages):
+    item = analyze.to_item(1, _entry(hf_pages), _analysis())
+    assert item.skill_gpt.fit == VALID["skill_gpt_fit"]
+    assert item.skill_gpt.reason_ko == VALID["skill_gpt_reason_ko"]

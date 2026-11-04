@@ -110,17 +110,45 @@ def _full_issue(issue):
 
 
 def test_w44_sections_in_figma_order_without_phase3_slots(issue_w44):
+    """W44 has no trend or explainer. The highlight section always renders (D-01)."""
     out = render_html(issue_w44, "구독자님")
     assert _sections(out) == [
         "banner",
         "header",
         "hero",
         "greeting",
+        "highlight",
         "top3",
         "rest",
         "closing",
         "footer",
     ]
+
+
+def test_empty_highlights_render_the_fallback_line(issue_w44):
+    """HILT-03, D-01: no pick (none fit, or the call failed) still shows the section
+    with exactly one fallback line and no tag pill, in both parts."""
+    issue = issue_w44.model_copy(update={"highlights": []})
+    out = render_html(issue, "구독자님")
+    section = out[_section_pos(out, "highlight") : _section_pos(out, "top3")]
+    assert "이번 주 바로 써볼 만한 것 ✨" in section
+    assert section.count("이번 주는 해당 항목 없음") == 1
+    for tag in ("Claude Skill", "GPTs", "둘 다"):
+        assert tag not in section
+    assert "왜 좋은지" not in section and "<span" not in section
+    txt = render_text(issue, "구독자님")
+    head, rest = txt.split("이번 주 바로 써볼 만한 것 ✨", 1)
+    block = rest.split("이것만 보면 끝!", 1)[0]
+    assert block.count("이번 주는 해당 항목 없음") == 1
+    assert "[" not in block and "왜 좋은지" not in block
+    assert "안녕하세요" in head  # the section sits below the greeting
+
+
+def test_filled_highlights_hide_the_fallback_line(issue_w44):
+    full = _full_issue(issue_w44)
+    assert full.highlights
+    for part in (render_html(full, "구독자님"), render_text(full, "구독자님")):
+        assert "이번 주는 해당 항목 없음" not in part
 
 
 def test_all_eleven_sections_render_in_order_when_filled(issue_w44):
@@ -840,7 +868,12 @@ def _otters(imgs: list[dict]) -> set[str]:
 
 def test_w44_images_are_hosted_with_alt_and_size(issue_w44):
     imgs = _check_imgs(render_html(issue_w44, "구독자님"))
-    assert _otters(imgs) == {"otter-banner.jpg", "otter-magnifier.png", "otter-wave.jpg"}
+    assert _otters(imgs) == {
+        "otter-banner.jpg",
+        "otter-magnifier.png",
+        "otter-wave.jpg",
+        "otter-tool.png",  # D-01: the highlight section always renders
+    }
     assert ASSET_BASE_URL.startswith("https://")
 
 
@@ -873,7 +906,8 @@ def test_email_reads_with_images_blocked(issue_w44, variant):
         variant
     ]
     text = _strip_imgs(render_html(issue, "구독자님"))
-    titles = SECTION_TITLES if full else SECTION_TITLES[2:3] + SECTION_TITLES[4:]
+    # W44 has no trend or explainer; the highlight section always renders (D-01).
+    titles = SECTION_TITLES if full else (SECTION_TITLES[0], SECTION_TITLES[2], *SECTION_TITLES[4:])
     for t in titles:
         assert t in text, t
     assert issue.headline_ko in text

@@ -260,6 +260,8 @@ class ItemAnalysisLLM(BaseModel):
     use_idea_ko: str  # ANLY-10: 활용 아이디어, one 해요체 line, <= 50 (checked in analyze)
     claude_gpt: ClaudeGptVerdict  # ANLY-02, D-06: closed enum; code guards 직접 사용 (D-11)
     claude_gpt_reason_ko: str  # one 해요체 sentence, <= 60 chars (checked in analyze)
+    skill_gpt_fit: SkillGptFit  # HILT-01, D-11: closed enum; bad reason -> 해당 없음
+    skill_gpt_reason_ko: str  # one 해요체 sentence, <= 60 chars (checked in analyze)
 
 
 HeadlineEmoji = Literal["🤖", "💬", "👀", "🎬", "🎙️", "🧠", "🛠️", "🔍", "📈", "⚡️"]
@@ -274,6 +276,18 @@ class HeadlineLLM(BaseModel):  # DLVR-07 (plan 03 calls Claude with it)
 class TrendLLM(BaseModel):  # ANLY-05, D-07 (plan 02-03): 이번 주 트렌드 총평
     model_config = ConfigDict(extra="forbid")
     trend_ko: str  # 2-3 해요체 sentences, <= 300 chars (checked in code)
+
+
+class HighlightPickLLM(BaseModel):  # HILT-02, D-03: one pick; code copies the tag
+    model_config = ConfigDict(extra="forbid")
+    rank: int
+    why_ko: str  # 1-2 해요체 sentences, <= 70 chars (checked in code)
+    how_ko: str  # 1-2 해요체 sentences, <= 70 chars (checked in code)
+
+
+class HighlightsLLM(BaseModel):  # HILT-02/03, D-02: 0-3 picks from the candidates
+    model_config = ConfigDict(extra="forbid")
+    picks: list[HighlightPickLLM]
 
 
 class VerdictNoteLLM(BaseModel):  # ANLY-04, D-14 (plan 02-03): one item's reasons

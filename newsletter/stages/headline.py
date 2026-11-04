@@ -41,6 +41,17 @@ _ITEMS_TAG_RE = re.compile(r"</?items>", re.IGNORECASE)
 HYPE_WORDS = ("혁신적", "획기적", "게임 체인저", "놀라운", "강력한", "압도적")
 CLICKBAIT_WORDS = ("충격", "역대급", "최초", "최고")
 AUTHORSHIP_RE = re.compile(r"AI가|자동|claude", re.IGNORECASE)
+# Newsletter-authorship phrases only. Unlike AUTHORSHIP_RE (headline, trend) it
+# allows "Claude", "GPTs" and a plain "자동", because a highlight may say
+# "Claude Skill로 정리해 두면". "이 메일" needs the space so "이메일" passes, and
+# "이번 호" skips words such as 호출 / 호환 / 호스팅.
+WRITTEN_BY_RE = re.compile(
+    r"자동\s*(?:으로\s*)?(?:생성|작성)"
+    r"|AI가\s*(?:쓴|작성|만든|생성)"
+    r"|이\s+뉴스레터|이\s+메일"
+    r"|이번\s*호(?!출|환|스)",
+    re.IGNORECASE,
+)
 
 
 def fallback_headline(items: list[Item]) -> str:
