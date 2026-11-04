@@ -186,7 +186,7 @@ Plans:
 **Plans**: 5 plans (runs after Phase 4.2, which owns send.py connection code)
 
 Plans:
-- [ ] 05-01-PLAN.md — Tracer: 06:00/08:00 Asia/Seoul crons, fail-safe MODE mapping, SEND_PAUSED pause and KST stale guard (--allow-stale), deliver outcome output, queue: max, tip checkouts, always() archive/ledger commit job, outcome-gated publish (wave 1)
+- [x] 05-01-PLAN.md — Tracer: 06:00/08:00 Asia/Seoul crons, fail-safe MODE mapping, SEND_PAUSED pause and KST stale guard (--allow-stale), deliver outcome output, queue: max, tip checkouts, always() archive/ledger commit job, outcome-gated publish (wave 1)
 - [ ] 05-02-PLAN.md — Per-stage checkpoints in archive/<week>/, lazy Claude client, --force-stage + dispatch input, archive leak scan (wave 2)
 - [ ] 05-03-PLAN.md — Send ledger data/ledger/<week>.json, HMAC-SHA256 keys (owner A1), per-message write via on_sent, re-run skip (wave 2)
 - [ ] 05-04-PLAN.md — Weekly run report: report command (notify-failure alias), decision table, 해요체 lint-clean copy, always() Report step (wave 3)
