@@ -163,7 +163,7 @@ def test_code_gs_holds_no_secrets_and_quotes_the_token():
     found = re.findall(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}", src)
     assert found and all(a.lower().endswith("@example.com") for a in found), found
     header = src.split("const SHEET")[0]
-    for name in ("SHEET_ID", "TOKEN_SECRET", "LIST_KEY"):
+    for name in ("SHEET_ID", "TOKEN_SECRET", "LIST_KEY", "SEND_LIST_KEY", "ADMIN_KEY"):
         assert name in header
     for name in ("SHEET_ID", "LIST_KEY"):
         assert f"prop_('{name}')" in src
