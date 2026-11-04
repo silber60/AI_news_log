@@ -115,7 +115,8 @@ def test_build_step_gets_only_anthropic_key():
     build = _named(blocks, "Build")
     assert "ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}" in build
     assert build.count("secrets.") == 1
-    assert 'python -m newsletter build --week "$WEEK_INPUT"' in build
+    assert 'python -m newsletter build --week "$WEEK_INPUT" --force-stage "$FORCE_STAGE"' in build
+    assert "${{" not in build.split("run:", 1)[1]  # no expression in the run line (T-05-09)
 
 
 def test_delivery_secret_values_are_mode_gated():
@@ -318,6 +319,22 @@ def test_dispatch_inputs():
     assert "        type: boolean\n        default: false" in block
     assert text.count("inputs.allow_stale") == 1
     assert "ALLOW_STALE: ${{ inputs.allow_stale }}" in text
+
+
+def test_force_stage_input_reaches_build_via_env_only():
+    """05-02, D-04: a dispatch choice, default none; a schedule passes '' (reuse all)."""
+    from newsletter.pipeline import STAGES
+
+    text = _text(NEWSLETTER)
+    block = text.split("      force_stage:\n", 1)[1].split("\n\n", 1)[0]
+    assert block.startswith("        description: ")
+    assert "        type: choice\n" in block
+    assert f"        options: [{', '.join(('none', *STAGES))}]\n" in block
+    assert "        default: none" in block
+    assert text.count("inputs.force_stage") == 1
+    run_header, _ = _jobs(text)["run"]
+    assert "FORCE_STAGE: ${{ inputs.force_stage }}" in run_header
+    assert text.count('--force-stage "$FORCE_STAGE"') == 1
 
 
 def test_artifact_uploads_archive_only():

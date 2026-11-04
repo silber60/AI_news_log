@@ -259,11 +259,14 @@ def _dump(issue: Issue) -> dict:
     return data
 
 
-def test_flagged_line_gets_one_polish_call(hf_pages, archive_tmp):
+def test_flagged_line_gets_one_polish_call(hf_pages, archive_tmp, monkeypatch):
     """HUMN-03, D-08, D-13: one AI-tell sentence is rewritten by a 16th call before
     anything is written; every other leaf equals the clean build."""
+    monkeypatch.setenv("NEWSLETTER_ARCHIVE_DIR", str(archive_tmp / "clean"))
     clean = _build(hf_pages, FakeAnthropic())
 
+    # 05-02, D-04: a fresh archive, so the dirty build cannot reuse the clean checkpoints.
+    monkeypatch.setenv("NEWSLETTER_ARCHIVE_DIR", str(archive_tmp / "archive"))
     fake = FakeAnthropic([default_response, _dirty_rank2])
     issue = _build(hf_pages, fake)
     assert len(fake.calls) == 16

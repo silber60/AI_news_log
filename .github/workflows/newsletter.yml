@@ -27,6 +27,11 @@ on:
         description: "send even outside the issue's Monday send day in KST (deliberate recovery only)"
         type: boolean
         default: false
+      force_stage:
+        description: "recompute this build stage and every later one (none = reuse every checkpoint)"
+        type: choice
+        options: [none, fetch, analyze, enrich, notes, trend, highlight, explainer, headline, polish]
+        default: none
 
 # The default token is read-only. Only the publish job gets contents: write: after a send
 # it commits the explainer topic record (D-06, D-15) and the web pages (D-03) in one push,
@@ -54,6 +59,7 @@ jobs:
       MODE: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}
       WEEK_INPUT: ${{ inputs.week }}  # reaches the shell via env only; validated in Python
       ALLOW_STALE: ${{ inputs.allow_stale }}  # '' on a schedule; only the literal true counts
+      FORCE_STAGE: ${{ inputs.force_stage }}  # '' on a schedule = reuse every checkpoint (D-04)
       CLAUDE_MODEL: claude-sonnet-5-5
       PYTHONUNBUFFERED: "1"
     outputs:
@@ -79,7 +85,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # D-09: read-only job token for the GitHub license API (contents: read).
           GITHUB_TOKEN: ${{ github.token }}
-        run: uv run python -m newsletter build --week "$WEEK_INPUT"
+        run: uv run python -m newsletter build --week "$WEEK_INPUT" --force-stage "$FORCE_STAGE"
       - name: Upload de-personalized preview
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2

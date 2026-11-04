@@ -10,6 +10,8 @@ from pydantic import BaseModel
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = REPO_ROOT / "templates"
 PROMPTS_DIR = REPO_ROOT / "prompts"
+# D-04: bump when a checkpoint payload changes shape; a mismatch means recompute.
+CHECKPOINT_VERSION = 1
 
 
 def archive_root() -> Path:
@@ -34,10 +36,29 @@ def _to_jsonable(obj: Any) -> Any:
     return obj
 
 
+def _json_text(obj: Any) -> str:
+    return json.dumps(_to_jsonable(obj), ensure_ascii=False, indent=2) + "\n"
+
+
 def write_json(path: Path, obj: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(_to_jsonable(obj), ensure_ascii=False, indent=2)
-    path.write_text(text + "\n", encoding="utf-8")
+    path.write_text(_json_text(obj), encoding="utf-8")
+
+
+def write_json_atomic(path: Path, obj: Any) -> None:
+    """Same JSON as write_json, written to a sibling .tmp file and moved into place with
+    os.replace, so a crash never leaves a half-written checkpoint."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    try:
+        tmp.write_text(_json_text(obj), encoding="utf-8")
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def checkpoint_path(issue_id: str, stage: str) -> Path:
+    return week_dir(issue_id) / "checkpoints" / f"{stage}.json"
 
 
 def read_json(path: Path) -> Any:
