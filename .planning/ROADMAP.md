@@ -161,7 +161,7 @@ Plans:
 Plans:
 - [x] 04.1-01-PLAN.md — Tracer: welcome payload docs/welcome/latest.json from render.py (welcome row, [환영] subject, slots, size gate), email-footer 구독하기 link gated on the endpoint, weekly-bytes pin (wave 1)
 - [x] 04.1-02-PLAN.md — Apps Script: schema/key-name decision checkpoint, subscribe/members/import routes, re-subscribe and D-05 delete, oracle-free replies with a welcome queue drained by a 1-minute trigger, Gmail advanced-service welcome sender, appsscript.json, combined Korean README (wave 1)
-- [ ] 04.1-03-PLAN.md — Live list: fetch_subscribers (fail closed, dedupe, D-13 filter), deliver switch, import-subscribers command + workflow, send-gated SUBSCRIBER_LIST_KEY (wave 2)
+- [x] 04.1-03-PLAN.md — Live list: fetch_subscribers (fail closed, dedupe, D-13 filter), deliver switch, import-subscribers command + workflow, send-gated SUBSCRIBER_LIST_KEY (wave 2)
 - [x] 04.1-04-PLAN.md — Site: live forms behind the endpoint switch (fetch + no-JS fallback, honeypot, consent line), /privacy/ page, footer and sub-page nav (wave 2)
 - [ ] 04.1-05-PLAN.md — Owner Google + GitHub setup (first 새 배포), cut-over commit, import run, phone round trip sign-up → welcome → unsubscribe → re-subscribe; closes 04-04 Task 3 and D-10/D-12 (wave 3)
 - [ ] 04.1-06-PLAN.md — Cleanup after one live-list send: remove the CSV path and import job; owner deletes SUBSCRIBERS_CSV (wave 4)
