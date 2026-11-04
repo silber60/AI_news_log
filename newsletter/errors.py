@@ -36,3 +36,9 @@ class NoSubscribersError(PipelineError):
 
 class DeliveryError(PipelineError):
     stage = "deliver"
+
+
+class StaleIssueError(PipelineError):
+    """A send outside the issue's KST send day, refused before any network call (D-03)."""
+
+    stage = "deliver"

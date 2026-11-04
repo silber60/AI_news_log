@@ -11,12 +11,13 @@ tokens or keys (DLVR-06).
 
 import logging
 import os
+from datetime import datetime
 
-from newsletter import store
+from newsletter import store, week
 from newsletter.delivery import members, unsubscribe
 from newsletter.delivery.send import build_message, send_messages
 from newsletter.delivery.subscribers import DEFAULT_GREETING, display_name, parse_subscribers
-from newsletter.errors import DeliveryError
+from newsletter.errors import DeliveryError, StaleIssueError
 from newsletter.schema import Issue
 from newsletter.stages.render import SITE_URL, build_subject, render_html, render_text
 
@@ -136,6 +137,10 @@ def _run_send(issue: Issue, user: str, password: str) -> dict:
     return result
 
 
+def _now() -> datetime:
+    return datetime.now(week.KST)
+
+
 def _paused() -> bool:
     """D-02: SEND_PAUSED reaches only scheduled runs (the workflow passes '' on dispatch)."""
     return os.environ.get("SEND_PAUSED", "").strip().lower() == "true"
@@ -151,14 +156,18 @@ def _finish(report: dict) -> dict:
     return report
 
 
-def run_deliver(mode: str) -> dict:
-    """Order in send mode: pause, then secrets, then the lists, then SMTP (research Pattern 2)."""
+def run_deliver(mode: str, *, allow_stale: bool = False) -> dict:
+    """Order in send mode: pause, then stale, then secrets, then the lists, then SMTP
+    (research Pattern 2). `allow_stale` comes only from the deliberate --allow-stale flag."""
     if mode not in ("test", "send"):
         raise DeliveryError(f"unsupported mode {mode}")
     issue = load_current_issue()
     if mode == "send" and _paused():
         log.info("mode=send outcome=paused issue=%s", issue.issue_id)
         return _finish({"outcome": "paused", "issue_id": issue.issue_id})
+    if mode == "send" and not allow_stale and not week.is_sendable(issue.issue_id, _now()):
+        log.info("mode=send outcome=stale issue=%s", issue.issue_id)
+        raise StaleIssueError("issue outside its send day")
     user = _env("SMTP_USER")
     password = _env("SMTP_PASSWORD")
     if mode == "test":

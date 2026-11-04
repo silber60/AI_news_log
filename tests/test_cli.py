@@ -73,7 +73,7 @@ def test_unexpected_error_in_deliver_uses_subcommand_stage(archive_tmp, capsys, 
     from newsletter.__main__ import main
     from newsletter.delivery import deliver
 
-    def boom(mode):
+    def boom(mode, **k):
         raise RuntimeError("nope")
 
     monkeypatch.setattr(deliver, "run_deliver", boom)

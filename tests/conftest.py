@@ -11,10 +11,12 @@ import functools
 import io
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, ClassVar
 from urllib.parse import parse_qs
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -567,6 +569,23 @@ def pytest_configure(config):
         "markers",
         "live_endpoint: keep the committed UNSUBSCRIBE_ENDPOINT instead of forcing it to None",
     )
+    config.addinivalue_line(
+        "markers",
+        "real_clock: keep deliver._now unpatched (the test sets its own clock)",
+    )
+
+
+W44_SEND_TIME = datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+
+
+@pytest.fixture(autouse=True)
+def w44_send_day(request, monkeypatch):
+    """05-01: deliver's clock reads 2026-11-02 09:00 KST (W44's send day) unless the test
+    is marked real_clock, so the W44 send tests keep their meaning under the stale guard."""
+    if request.node.get_closest_marker("real_clock") is None:
+        from newsletter.delivery import deliver
+
+        monkeypatch.setattr(deliver, "_now", lambda: W44_SEND_TIME)
 
 
 @pytest.fixture(autouse=True)

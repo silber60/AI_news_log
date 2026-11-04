@@ -1,6 +1,12 @@
-"""CLI: `python -m newsletter build --week YYYY-Www`, `deliver --mode test|send`,
-`notify-failure --mode test|send`, `record-topic --mode preview|test|send`,
-`publish --mode preview|test|send`, `site`, `import-subscribers`.
+"""CLI: `python -m newsletter build --week YYYY-Www`,
+`deliver --mode test|send [--allow-stale]`, `notify-failure --mode test|send`,
+`record-topic --mode preview|test|send`, `publish --mode preview|test|send`, `site`,
+`import-subscribers`.
+
+`deliver --mode send` refuses an issue outside its KST send day (the Monday after
+the issue week) with StaleIssueError, before any secret or network use, unless
+`--allow-stale` is given on purpose (D-03). A paused scheduled send (SEND_PAUSED)
+reports `paused` and mails nobody (D-02).
 
 `record-topic` appends the current issue's explainer topic to
 data/explainer_topics.json, only in send mode (D-06, D-15). It logs issue ids
@@ -50,6 +56,11 @@ def _parser() -> argparse.ArgumentParser:
     b.add_argument("--week", default="", help="ISO week YYYY-Www (blank: previous week in KST)")
     d = sub.add_parser("deliver", help="send the current issue")
     d.add_argument("--mode", choices=["test", "send"], required=True)
+    d.add_argument(
+        "--allow-stale",
+        action="store_true",
+        help="send even outside the issue's KST send day (deliberate recovery only, D-03)",
+    )
     n = sub.add_parser(NOTIFY, help="mail a failure notice to the owner")
     n.add_argument("--mode", choices=["test", "send"], required=True)
     r = sub.add_parser(RECORD, help="append the sent issue's explainer topic to the record")
@@ -125,7 +136,7 @@ def _run(args: argparse.Namespace) -> None:
     elif args.command == "deliver":
         from newsletter.delivery.deliver import run_deliver
 
-        run_deliver(args.mode)
+        run_deliver(args.mode, allow_stale=args.allow_stale)
     elif args.command == NOTIFY:
         from newsletter.delivery.notify import send_failure_notice
 

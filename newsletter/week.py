@@ -31,6 +31,19 @@ def parse_week(s: str) -> tuple[date, date]:
     return mon, mon + timedelta(days=6)
 
 
+def send_day(issue_id: str) -> date:
+    """The KST Monday after the issue week's Sunday: the only day the week may be sent (D-03)."""
+    _, sun = parse_week(issue_id)
+    return sun + timedelta(days=1)
+
+
+def is_sendable(issue_id: str, now: datetime) -> bool:
+    """True from 00:00:00 to 23:59:59 KST on the send day. `now` must be tz-aware."""
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    return now.astimezone(KST).date() == send_day(issue_id)
+
+
 def week_label(mon: date, sun: date) -> str:
     """Header label such as "10/26(월) ~ 11/1(일)"."""
 
