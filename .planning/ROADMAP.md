@@ -156,7 +156,15 @@ Plans:
   2. Within minutes of confirming, the new subscriber receives the latest published issue with a personalized greeting
   3. The weekly send reads the live subscriber list, skips unsubscribed or unconfirmed rows, and never sends twice to the same address
   4. Unsubscribing removes the reader from future sends; no address or name appears in the public repo, Actions logs or artifacts
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 04.1-01-PLAN.md — Tracer: welcome payload docs/welcome/latest.json from render.py (welcome row, [환영] subject, slots, size gate), email-footer 구독하기 link gated on the endpoint, weekly-bytes pin (wave 1)
+- [ ] 04.1-02-PLAN.md — Apps Script: schema/key-name decision checkpoint, subscribe/members/import routes, re-subscribe and D-05 delete, oracle-free replies with a welcome queue drained by a 1-minute trigger, Gmail advanced-service welcome sender, appsscript.json, combined Korean README (wave 1)
+- [ ] 04.1-03-PLAN.md — Live list: fetch_subscribers (fail closed, dedupe, D-13 filter), deliver switch, import-subscribers command + workflow, send-gated SUBSCRIBER_LIST_KEY (wave 2)
+- [ ] 04.1-04-PLAN.md — Site: live forms behind the endpoint switch (fetch + no-JS fallback, honeypot, consent line), /privacy/ page, footer and sub-page nav (wave 2)
+- [ ] 04.1-05-PLAN.md — Owner Google + GitHub setup (first 새 배포), cut-over commit, import run, phone round trip sign-up → welcome → unsubscribe → re-subscribe; closes 04-04 Task 3 and D-10/D-12 (wave 3)
+- [ ] 04.1-06-PLAN.md — Cleanup after one live-list send: remove the CSV path and import job; owner deletes SUBSCRIBERS_CSV (wave 4)
 
 ### Phase 5: Scheduled Automation & Hardening
 **Goal**: The newsletter reaches subscribers every Monday 08:00 KST with nobody touching it, re-runs are safe, and the owner learns about every outcome.
