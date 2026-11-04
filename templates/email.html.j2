@@ -8,7 +8,8 @@
     for clients that strip styles; cells and spans inherit it from their nearest table.
     template-version 8 (schema v4): a highlight pick links its demo (HF Space, else
     the project page) when code found one.
-    template-version 9 (04-01): 웹에서 보기 / 지난 호 보기 link the Pages site; web=True renders
+    template-version 9 (04-01): 지난 호 보기 links the Pages site (웹에서 보기 removed by the owner
+    on 2026-11-04; issue pages are still published and linked from the archive); web=True renders
     the public copy (no reply line, no recipient data; D-06, D-15).
     04-02 (still v9): web=True adds the 판정 근거 block under every card (code-built rows from
     render.basis_rows), the headline page title, the 680px phone rule and the 지난 호 전체 보기 link;
@@ -126,7 +127,7 @@ a { color: #FF6B00; text-decoration: none; }
 {%- if hashtags %}
 <tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 0 0 6px 0;">{{ hashtags|join(" ") }}</td></tr>
 {%- endif %}
-<tr><td style="font-size: 12px; color: #A3A3A3;">{{ date_line }}{% if not web %} ㅣ <a href="{{ issue_url }}" style="color: #A3A3A3;">웹에서 보기</a>{% endif %}</td></tr>
+<tr><td style="font-size: 12px; color: #A3A3A3;">{{ date_line }}</td></tr>
 <tr><td style="padding: 16px 0 2px 0; font-size: 24px; font-weight: 900; color: #222222;">{{ brand }}</td></tr>
 <tr><td style="font-size: 13px; color: #808080;">매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요</td></tr>
 </table>
@@ -233,7 +234,7 @@ a { color: #FF6B00; text-decoration: none; }
 <tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
 {%- else %}
 <tr><td style="font-size: 12px; color: #808080;">더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.</td></tr>
-<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ issue_url }}" style="color: #FF6B00;">웹에서 보기</a> · <a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a>{% if unsubscribe_url %} · <a href="{{ unsubscribe_url }}" style="color: #FF6B00;">구독 해지</a>{% endif %}</td></tr>
+<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a>{% if unsubscribe_url %} · <a href="{{ unsubscribe_url }}" style="color: #FF6B00;">구독 해지</a>{% endif %}</td></tr>
 {%- endif %}
 </table>
 </td></tr>

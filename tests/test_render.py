@@ -430,10 +430,11 @@ def _visible_text(out: str) -> str:
 # Recomputed for schema v4 (어떻게 만들지 -> 어떻게 써 볼지; the only text change).
 # Recomputed for the brand rename (모닥로그 AI 리포트, 이번 주 리포트는; the only text change).
 # Recomputed for the 04-01 web links (웹에서 보기 / 지난 호 보기; the only text change).
+# Recomputed after the owner removed 웹에서 보기 (header and footer; the only text change).
 PER_CELL_VISIBLE_SHA256 = {
-    "w44": "7bb412bd66232ab29e43ae1e308be9bc6ed5984a7e33c7adc30e45e69bb54a1a",
-    "full": "5328a72ff996f3564e4824120fd1e581120897fcd13a2c3d60f34804774676b3",
-    "worst": "33251e0d2905470578c21a5ab894bec998df0cd0ed4c869d336ff71374fc4520",
+    "w44": "d648ac4eb899bed7b39ac0be88a4626ac7761e14aa349eb52c750249a8545e05",
+    "full": "3437f9db9defb7a89d29e97cd1adea6436d91fbbcaa0c386db0dac52e62b0c64",
+    "worst": "7bfd63b0427fd9e21e02298b477bf8fd7ae97b565f3c9c3ff81f0b16b8f78139",
 }
 
 
@@ -1111,18 +1112,17 @@ def test_site_urls_are_fixed():
     assert render_mod.archive_url() == ARCHIVE_URL
 
 
-def test_email_footer_has_web_links_and_keeps_reply_line(issue_w44):
+def test_email_footer_has_archive_link_and_keeps_reply_line(issue_w44):
+    # Owner 2026-11-04: 웹에서 보기 removed from the email (header and footer).
     out = render_html(issue_w44, "구독자님")
     footer = out[_section_pos(out, "footer") :]
     assert "출처: Hugging Face Papers" in footer
     assert "수신거부" in footer
-    assert re.search(rf'href="{re.escape(ISSUE_URL)}"[^>]*>웹에서 보기<', footer)
     assert re.search(rf'href="{re.escape(ARCHIVE_URL)}"[^>]*>지난 호 보기<', footer)
-    header = out[_section_pos(out, "header") : _section_pos(out, "hero")]
-    assert re.search(rf'href="{re.escape(ISSUE_URL)}"[^>]*>웹에서 보기<', header)
+    assert "웹에서 보기" not in out and ISSUE_URL not in out
     txt = render_text(issue_w44, "구독자님")
     assert "출처: Hugging Face Papers" in txt and "수신거부" in txt
-    assert f"웹에서 보기: {ISSUE_URL}" in txt
+    assert "웹에서 보기" not in txt and ISSUE_URL not in txt
     assert f"지난 호 보기: {ARCHIVE_URL}" in txt
 
 
@@ -1147,7 +1147,7 @@ def test_email_footer_has_personal_unsubscribe_link(issue_w44):
     assert len(re.findall(rf'<a href="{re.escape(UNSUB_URL)}"[^>]*>구독 해지</a>', footer)) == 1
     assert out.count(UNSUB_URL) == 1
     assert "수신거부" in footer  # D-14: the reply line stays as a fallback
-    assert _ordered(footer, ["웹에서 보기", "지난 호 보기", "구독 해지"])
+    assert _ordered(footer, ["지난 호 보기", "구독 해지"])
     txt = render_text(issue_w44, "구독자님", unsubscribe_url=UNSUB_URL)
     assert f"구독 해지: {UNSUB_URL}" in txt
     assert "수신거부" in txt
