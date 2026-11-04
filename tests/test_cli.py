@@ -12,7 +12,14 @@ from newsletter import store
 
 REPO = Path(__file__).parent.parent
 ISSUE_ID = "2026-W44"
-DELIVERY_SECRETS = ("SMTP_USER", "SMTP_PASSWORD", "SUBSCRIBERS_CSV", "TEST_RECIPIENT")
+DELIVERY_SECRETS = (
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+    "SUBSCRIBERS_CSV",
+    "TEST_RECIPIENT",
+    "UNSUBSCRIBE_TOKEN_SECRET",
+    "UNSUBSCRIBE_LIST_KEY",
+)
 
 
 def _status(root: Path) -> dict:

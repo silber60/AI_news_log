@@ -21,15 +21,34 @@ SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 
 
-def build_message(*, subject: str, sender_addr: str, to: str, text: str, html: str) -> EmailMessage:
+def build_message(
+    *,
+    subject: str,
+    sender_addr: str,
+    to: str,
+    text: str,
+    html: str,
+    list_unsubscribe: str | None = None,
+    one_click: bool = False,
+) -> EmailMessage:
+    """D-14: List-Unsubscribe when given; the one-click Post header only with an https target
+    (RFC 8058), which the caller signals with one_click."""
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = formataddr((SENDER_NAME, sender_addr))
     msg["To"] = to
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain="gmail.com")
+    if list_unsubscribe:
+        # Header injection guard: no CR/LF may reach the header.
+        msg["List-Unsubscribe"] = list_unsubscribe.replace("\r", "").replace("\n", "")
+        if one_click:
+            msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
+    # policy.default folds a long List-Unsubscribe into RFC 2047 encoded-words, which breaks
+    # the URLs for receivers (research Pitfall 3). Body encodings stay as set above.
+    msg.policy = msg.policy.clone(max_line_length=998)
     return msg
 
 

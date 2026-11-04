@@ -13,7 +13,14 @@ PAGES = WORKFLOWS / "pages.yml"
 DEPLOY_PAGES_PIN = "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346"
 UPLOAD_PAGES_PIN = "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9"
 
-DELIVERY_SECRETS = ("SMTP_USER", "SMTP_PASSWORD", "TEST_RECIPIENT", "SUBSCRIBERS_CSV")
+UNSUBSCRIBE_SECRETS = ("UNSUBSCRIBE_TOKEN_SECRET", "UNSUBSCRIBE_LIST_KEY")
+DELIVERY_SECRETS = (
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+    "TEST_RECIPIENT",
+    "SUBSCRIBERS_CSV",
+    *UNSUBSCRIBE_SECRETS,
+)
 STEP_PREFIX = "      - "
 SHA_PIN = re.compile(r"uses:\s*[\w.-]+/[\w.-]+@[0-9a-f]{40}\b")
 
@@ -119,6 +126,24 @@ def test_delivery_secret_values_are_mode_gated():
     assert "failure() && inputs.mode != 'preview'" in notice
     assert "SUBSCRIBERS_CSV" not in notice
     assert 'notify-failure --mode "$MODE"' in notice
+
+
+def test_unsubscribe_secrets_only_in_deliver():
+    # 04-05 (D-13, T-04-15): the token secret serves test and send; the list key is
+    # send-only. Neither reaches the Failure notice, Build, publish or deploy jobs.
+    text = _text(NEWSLETTER)
+    _, blocks = _split(text)
+    deliver = _named(blocks, "Deliver")
+    assert "UNSUBSCRIBE_TOKEN_SECRET: ${{ secrets.UNSUBSCRIBE_TOKEN_SECRET }}" in deliver
+    assert (
+        "UNSUBSCRIBE_LIST_KEY: ${{ inputs.mode == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}"
+        in deliver
+    )
+    notice = _named(blocks, "Failure notice")
+    for name in UNSUBSCRIBE_SECRETS:
+        assert name not in notice
+        assert text.count(name) == deliver.count(name), f"{name} appears outside Deliver"
+    assert text.count("UNSUBSCRIBE_") == 2 + 2  # two env lines, name and secrets.<name> each
 
 
 def test_anthropic_key_only_in_build():

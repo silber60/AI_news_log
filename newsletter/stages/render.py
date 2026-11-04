@@ -251,10 +251,14 @@ def archive_url() -> str:
     return SITE_URL + ARCHIVE_ANCHOR
 
 
-def _context(issue: Issue, greeting: str, *, web: bool = False) -> dict:
+def _context(
+    issue: Issue, greeting: str, *, web: bool = False, unsubscribe_url: str | None = None
+) -> dict:
     return {
         "issue": issue,
         "web": web,
+        # D-11: per-recipient link, email only; the web copy always passes None (D-06).
+        "unsubscribe_url": None if web else unsubscribe_url,
         "greeting": greeting,
         "brand": BRAND,
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
@@ -279,8 +283,10 @@ def _context(issue: Issue, greeting: str, *, web: bool = False) -> dict:
     }
 
 
-def render_html(issue: Issue, greeting: str) -> str:
-    html = _html_env.get_template("email.html.j2").render(**_context(issue, greeting))
+def render_html(issue: Issue, greeting: str, *, unsubscribe_url: str | None = None) -> str:
+    html = _html_env.get_template("email.html.j2").render(
+        **_context(issue, greeting, unsubscribe_url=unsubscribe_url)
+    )
     html = _INLINER.inline(html)
     n = len(html.encode("utf-8"))
     if n >= MAX_EMAIL_BYTES:
@@ -293,12 +299,14 @@ def render_web_issue(issue: Issue) -> str:
     """D-06: the public web copy of an issue. Fixed greeting, no reply or unsubscribe line,
     no recipient data. Not inlined and not size-gated (research Pattern 2)."""
     return _html_env.get_template("email.html.j2").render(
-        **_context(issue, DEFAULT_GREETING, web=True)
+        **_context(issue, DEFAULT_GREETING, web=True, unsubscribe_url=None)
     )
 
 
-def render_text(issue: Issue, greeting: str) -> str:
-    return _text_env.get_template("email.txt.j2").render(**_context(issue, greeting))
+def render_text(issue: Issue, greeting: str, *, unsubscribe_url: str | None = None) -> str:
+    return _text_env.get_template("email.txt.j2").render(
+        **_context(issue, greeting, unsubscribe_url=unsubscribe_url)
+    )
 
 
 def build_subject(issue: Issue, mode: Literal["preview", "test", "send"]) -> str:

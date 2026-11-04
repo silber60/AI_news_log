@@ -70,6 +70,8 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           TEST_RECIPIENT: ${{ inputs.mode == 'test' && secrets.TEST_RECIPIENT || '' }}
           SUBSCRIBERS_CSV: ${{ inputs.mode == 'send' && secrets.SUBSCRIBERS_CSV || '' }}
+          UNSUBSCRIBE_TOKEN_SECRET: ${{ secrets.UNSUBSCRIBE_TOKEN_SECRET }}
+          UNSUBSCRIBE_LIST_KEY: ${{ inputs.mode == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}
         run: uv run python -m newsletter deliver --mode "$MODE"
       - name: Failure notice (test/send only, D-13)
         if: ${{ failure() && inputs.mode != 'preview' }}
