@@ -2,7 +2,7 @@
 phase: 04-figma-design-email-template-web-archive
 plan: 01
 subsystem: web-archive
-status: partial  # Tasks 1-3 complete; Task 4 (owner push + Pages source switch) pending-owner
+status: complete
 tags: [web, github-pages, archive, render, workflow, tracer]
 requires: [03-07]
 provides:
@@ -41,7 +41,7 @@ metrics:
   completed: 2026-11-04
 actuals:
   tokens: 9500   # chars/4 over the realized diff (37,959 chars)
-  tasks: 3       # Tasks 1-3; Task 4 pending-owner
+  tasks: 4
   commits: 2
 plan_head_before: 08988e25930cfd84ac0d553979b2567fe9234c5a
 plan_head_after: 139eb53f9c393208db302c67bceb8ed17116e4b5
@@ -85,9 +85,16 @@ No other text moved. New digests: w44 `7bb412bd…54a1a`, full `5328a72f…676b3
 - 918cb87 feat(04-01): publish issues to the Pages archive and link them from every email
 - 139eb53 ci(04-01): publish job commits pages and deploys them to GitHub Pages
 
-## Task 4: pending-owner
+## Task 4: owner checkpoint A (done 2026-11-04)
 
-Not executed (owner checkpoint). Needed: `git push origin main` with CI green, Settings → Pages → Source "GitHub Actions", immediate `pages` workflow_dispatch, then 200 on home, `assets/email/v1/otter-tool.png` and `assets/email/v2/otter-banner.jpg`. To record here afterwards: pages run ID, the three status lines, and whether main has branch protection.
+- The orchestrator pushed main at 200607f (CI run 41759646619 green). Main has no branch protection; the public API reported protected=False in Phase 3.
+- The owner switched Settings → Pages → Source to "GitHub Actions" and ran `pages` (run 41759646720, success, 200607f).
+- The orchestrator's curl checks after the switch:
+  - `/` → HTTP/2 200
+  - `/assets/email/v1/otter-tool.png` → HTTP/2 200
+  - `/assets/email/v2/otter-banner.jpg` → HTTP/2 200
+  - The live home has `id="archive"` exactly once.
+- Issue page 200 is still proved by the owner's first mode=send in 04-07.
 
 ## Deviations from Plan
 
