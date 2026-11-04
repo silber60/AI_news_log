@@ -76,6 +76,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .cta h2 { font-size: 28px; font-weight: 700; color: #303A83; margin-top: 24px; }
 .cta.solo .row { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
 .cta.solo .row > div { width: 100%; max-width: 544px; }
+.form-card .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.form-card .msg { font-size: 13px; font-weight: 500; color: #303A83; margin-top: 12px; }
+.form-card .msg:empty { display: none; }
+.form-card .consent a { color: #737373; }
+.form-card button:disabled { opacity: 0.6; cursor: default; }
 @media (max-width: 767px) {
   .hero { padding: 40px 0 48px; }
   .hero h1 { font-size: 30px; }
@@ -98,19 +103,36 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <a class="logo" href="./"><img src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-tool.png" width="36" height="36" alt="">모닥로그 AI 리포트</a>
 <nav class="nav-links">
 <a href="#archive">지난 호</a>
+<a class="nav-cta" href="#subscribe">구독하기</a>
 </nav>
 </div>
 </header>
 
 <main>
-<section class="hero solo" data-section="hero">
+<section class="hero" data-section="hero">
 <div class="wrap row">
 <div class="hero-copy">
 <p class="tags">#매주 월요일 #GitHub star Top 10 #쉽게 풀어 씀</p>
 <h1>이번 주 꼭 알아야 할<br>AI 모델, 해달이 골라 드려요</h1>
 <p class="body">Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 것만 골라, 무엇을 하는 모델인지 비전공자도 이해하게 풀어 써요. 상업적으로 써도 되는지, 바로 돌려볼 수 있는지도 함께 알려 드려요.</p>
-</div>
 <img class="art" src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-banner.jpg" width="544" height="306" alt="모닥불 앞에 앉은 해달">
+</div>
+
+<form class="form-card" id="subscribe" method="post" action="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec" data-endpoint="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec">
+<h2>매주 월요일 아침, 메일함으로 받아보세요</h2>
+<input type="hidden" name="action" value="subscribe">
+<input type="hidden" name="fmt" value="html">
+<input type="hidden" name="cv" value="2026-11-04">
+<label for="subscribe-name">이름</label>
+<input type="text" id="subscribe-name" name="name" placeholder="홍길동" autocomplete="name">
+<label for="subscribe-email">이메일</label>
+<input type="email" id="subscribe-email" name="email" placeholder="이메일 주소" autocomplete="email" required>
+<div class="hp" aria-hidden="true"><label>웹사이트<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+<label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요. <a href="https://silber60.github.io/AI_news_log/privacy/">개인정보 처리방침</a></span></label>
+<button type="submit">무료로 구독하기</button>
+<p class="msg" role="status" aria-live="polite"></p>
+<p class="note">메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
+</form>
 </div>
 </section>
 
@@ -161,14 +183,61 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 </div>
 </section>
 
-<section class="cta solo" data-section="cta">
+<section class="cta" data-section="cta">
 <div class="wrap row">
 <div>
 <img class="art" src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-wave.jpg" width="544" height="306" alt="손을 흔드는 해달">
 <h2>다음 주 월요일, 해달이 기다릴게요 👋</h2>
 </div>
+
+<form class="form-card" id="subscribe-bottom" method="post" action="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec" data-endpoint="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec">
+<h2>매주 월요일 아침, 메일함으로 받아보세요</h2>
+<input type="hidden" name="action" value="subscribe">
+<input type="hidden" name="fmt" value="html">
+<input type="hidden" name="cv" value="2026-11-04">
+<label for="subscribe-bottom-name">이름</label>
+<input type="text" id="subscribe-bottom-name" name="name" placeholder="홍길동" autocomplete="name">
+<label for="subscribe-bottom-email">이메일</label>
+<input type="email" id="subscribe-bottom-email" name="email" placeholder="이메일 주소" autocomplete="email" required>
+<div class="hp" aria-hidden="true"><label>웹사이트<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+<label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요. <a href="https://silber60.github.io/AI_news_log/privacy/">개인정보 처리방침</a></span></label>
+<button type="submit">무료로 구독하기</button>
+<p class="msg" role="status" aria-live="polite"></p>
+<p class="note">메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
+</form>
 </div>
 </section>
+<script>
+(function () {
+  var MSG = {
+    ok: "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    invalid: "이메일 주소를 다시 확인해 주세요.",
+    consent: "개인정보 수집에 동의해야 신청할 수 있어요.",
+    busy: "잠시 후 다시 신청해 주세요.",
+    unknown: "신청 결과를 확인하지 못했어요. 몇 분 뒤에도 메일이 없으면 한 번 더 신청해 주세요."
+  };
+  document.querySelectorAll("form[data-endpoint]").forEach(function (f) {
+    f.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var b = f.querySelector("button"), m = f.querySelector(".msg");
+      var body = new URLSearchParams(new FormData(f));
+      body.set("fmt", "json");
+      b.disabled = true;
+      m.textContent = "보내는 중이에요.";
+      fetch(f.getAttribute("data-endpoint"), { method: "POST", body: body, redirect: "follow" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var code = "busy";
+          if (d && typeof d.code === "string" && d.code !== "unknown" && Object.prototype.hasOwnProperty.call(MSG, d.code)) code = d.code;
+          m.textContent = MSG[code];
+          if (d && d.ok === true) f.reset();
+        })
+        .catch(function () { m.textContent = MSG.unknown; })
+        .finally(function () { b.disabled = false; });
+    });
+  });
+})();
+</script>
 </main>
 
 <footer class="footer" data-section="footer">

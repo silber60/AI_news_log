@@ -63,7 +63,27 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <main class="unsub" data-section="unsubscribe">
 <div class="wrap">
 <div class="form-card">
-<p>메일에 '수신거부'라고 회신해 주세요.</p>
+<form id="unsub" method="post" action="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec" data-endpoint="https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec" hidden>
+<h1>구독을 해지할까요?</h1>
+<p>버튼을 누르면 다음 주부터 메일이 가지 않아요.</p>
+<input type="hidden" name="t" value="">
+<button type="submit">구독 해지</button>
+</form>
+<p id="unsub-bad" hidden>링크가 올바르지 않아요. 받으신 메일의 링크를 다시 눌러 주세요.</p>
+<noscript><p>메일에 '수신거부'라고 회신해 주세요.</p></noscript>
+<script>
+(function () {
+  var f = document.getElementById("unsub");
+  var t = (new URLSearchParams(location.search).get("t") || "").toLowerCase();
+  if (/^[0-9a-f]{32}$/.test(t)) {
+    f.elements.t.value = t;
+    f.action = f.getAttribute("data-endpoint") + "?t=" + t;
+    f.hidden = false;
+  } else {
+    document.getElementById("unsub-bad").hidden = false;
+  }
+})();
+</script>
 </div>
 </div>
 </main>

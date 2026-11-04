@@ -164,6 +164,7 @@ def test_web_footer_copy_passes_humanizer():
     assert not [c for c in humanize.lint(WEB_FOOTER) if c in humanize.HARD_CODES]
 
 
+@pytest.mark.live_endpoint
 def test_committed_site_is_fresh(tmp_path, monkeypatch):
     """docs/ must match a regeneration from the committed data/issues (run `site`)."""
     monkeypatch.setenv("NEWSLETTER_ISSUES_DIR", str(REPO / "data" / "issues"))

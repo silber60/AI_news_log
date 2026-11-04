@@ -45,8 +45,14 @@ def test_token_re_rejects_bad_ids():
     assert TOKEN_RE.fullmatch(VECTOR + "0") is None
 
 
-def test_endpoint_is_none_until_owner_deploys():
-    assert unsubscribe.UNSUBSCRIBE_ENDPOINT is None
+@pytest.mark.live_endpoint
+def test_endpoint_is_the_deployed_exec_url():
+    """T-04.1-17: the constant is one Apps Script /exec URL (04.1-05)."""
+    assert isinstance(unsubscribe.UNSUBSCRIBE_ENDPOINT, str)
+    assert re.fullmatch(
+        r"https://script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec",
+        unsubscribe.UNSUBSCRIBE_ENDPOINT,
+    )
 
 
 def _client() -> httpx.Client:

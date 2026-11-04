@@ -23,9 +23,12 @@ TOKEN_LEN = 32
 TOKEN_RE = re.compile(rf"[0-9a-f]{{{TOKEN_LEN}}}")
 
 # The /exec URL of the one Apps Script deployment. Not a secret: it appears in
-# every List-Unsubscribe header. None until the owner deploys; after that it
-# only changes via 배포 관리 → 새 버전, never 새 배포 (the URL would change).
-UNSUBSCRIBE_ENDPOINT: str | None = None
+# every List-Unsubscribe header. Deployed by the owner on 2026-11-04 (04.1-05).
+# Change the script only via 배포 관리 → 수정 → 새 버전, never 새 배포 (the URL
+# would change and every sent List-Unsubscribe link would break).
+UNSUBSCRIBE_ENDPOINT: str | None = (
+    "https://script.google.com/macros/s/AKfycbwE-1PysSDJn_tkkinRVATaeCqnsm2wOwFCXy0fSrobig7Sb03AEx-ei0so6ueILzRetw/exec"
+)
 
 LIST_TIMEOUT = 20
 

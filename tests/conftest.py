@@ -562,6 +562,26 @@ class FakeSMTP:
 # ------------------------------------------------------------------- fixtures
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "live_endpoint: keep the committed UNSUBSCRIBE_ENDPOINT instead of forcing it to None",
+    )
+
+
+@pytest.fixture(autouse=True)
+def endpoint_neutral(request, monkeypatch):
+    """04.1-05: tests run with UNSUBSCRIBE_ENDPOINT = None unless marked live_endpoint.
+
+    The committed constant is the live /exec URL. Tests that need an endpoint
+    set their own with monkeypatch, which still wins over this default.
+    """
+    if request.node.get_closest_marker("live_endpoint") is None:
+        from newsletter.delivery import unsubscribe
+
+        monkeypatch.setattr(unsubscribe, "UNSUBSCRIBE_ENDPOINT", None)
+
+
 @pytest.fixture(autouse=True)
 def no_github_token(monkeypatch):
     """T-02-16: a token in the local shell must never reach a test request."""
