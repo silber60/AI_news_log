@@ -751,6 +751,14 @@ def _raw_image_url(rank: int) -> str:
     return url
 
 
+def _raw_explainer_url() -> str:
+    """The explainer's code-copied image at the 300-char cap, distinct from every card URL."""
+    head = "https://raw.githubusercontent.com/some-organization/some-explainer-repo/main/"
+    url = head + "e" * (IMAGE_URL_MAX - len(head) - len(".png")) + ".png"
+    assert len(url) == IMAGE_URL_MAX == 300
+    return url
+
+
 def _license_url(rank: int) -> str:
     head = f"https://huggingface.co/some-organization/some-long-model-name-{rank:02d}/blob/main/"
     url = head + "L" * (EVIDENCE_LINK_MAX - len(head) - len(".md")) + ".md"
@@ -839,6 +847,7 @@ def _worst_case(issue):
                 related_ranks=[1, 2],
                 point_ko="포" * 120,
                 example_ko="예" * 200,
+                image=ItemImage(url=_raw_explainer_url(), width=576, height=260),
             ),
         }
     )
@@ -886,13 +895,52 @@ def test_worst_case_images_and_phase3_otters(issue_w44):
         "otter-tool.png",
         "otter-chalkboard.png",
     }
-    # 10 card images (D-08) and none in the hero (D-07)
+    # 10 card images (D-08) + the explainer image (D-04), none in the hero (D-07)
     raw = [i for i in imgs if i["src"].startswith("https://raw.githubusercontent.com/")]
-    assert len(raw) == 10
+    assert len(raw) == 11
     assert all(len(i["src"]) == 300 for i in raw)
     out = render_html(_worst_case(issue_w44), "구독자님")
     assert "<img" not in out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
     assert all(c.count("<img") == 1 for c in _cards(out))
+    ex_imgs = _imgs(out[_section_pos(out, "explainer") : _section_pos(out, "rest")])
+    assert [i["src"].rsplit("/", 1)[1] for i in ex_imgs if "otter-" in i["src"]] == [
+        "otter-chalkboard.png"
+    ]
+    pics = [i for i in ex_imgs if "otter-" not in i["src"]]
+    assert len(pics) == 1
+    assert pics[0]["src"].startswith(EXPLAINER_IMAGE_HOSTS), pics[0]["src"]
+    assert pics[0]["src"] == _raw_explainer_url()
+    assert pics[0]["alt"] == "주" * 40 + " 관련 그림"
+    assert (pics[0]["width"], pics[0]["height"]) == ("576", "260")
+
+
+EXPLAINER_IMAGE_HOSTS = (
+    "https://raw.githubusercontent.com/",
+    "https://cdn-uploads.huggingface.co/",
+    "https://arxiv.org/html/",
+)
+
+
+def test_explainer_without_image_has_only_the_otter(issue_w44):
+    out = render_html(_full_issue(issue_w44), "구독자님")
+    assert _full_issue(issue_w44).explainer.image is None
+    block = out[_section_pos(out, "explainer") : _section_pos(out, "rest")]
+    imgs = _imgs(block)
+    assert [i for i in imgs if "otter-" not in i["src"]] == []
+    assert [i["src"].rsplit("/", 1)[1] for i in imgs] == ["otter-chalkboard.png"]
+    assert "관련 그림" not in block
+
+
+def test_explainer_image_sits_after_body_before_example(issue_w44):
+    full = _full_issue(issue_w44)
+    url = _raw_explainer_url()
+    ex = full.explainer.model_copy(update={"image": ItemImage(url=url, width=576, height=260)})
+    out = render_html(full.model_copy(update={"explainer": ex}), "구독자님")
+    block = out[_section_pos(out, "explainer") : _section_pos(out, "rest")]
+    assert _ordered(block, ["전문가 혼합 설명", f'src="{url}"', "예를 들어"])
+    assert 'alt="MoE 해설 관련 그림"' in block
+    txt = render_text(full.model_copy(update={"explainer": ex}), "구독자님")
+    assert "관련 그림" not in txt and url not in txt
 
 
 def _strip_imgs(out: str) -> str:

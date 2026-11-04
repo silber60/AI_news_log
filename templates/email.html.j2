@@ -154,6 +154,9 @@ a { color: #FF6B00; text-decoration: none; }
 {%- endif %}
 <tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #222222;">{{ ex.topic }}</td></tr>
 <tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 15px; line-height: 180%; color: #222222;">{{ ex.body_ko }}</td></tr>
+{%- if ex.image %}
+<tr><td style="padding: 14px 0 0 0;"><img src="{{ ex.image.url }}" width="{{ ex.image.width }}" height="{{ ex.image.height }}" alt="{{ ex.topic }} 관련 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
+{%- endif %}
 {%- if ex.example_ko %}
 <tr><td style="padding: 14px 0 0 0;">{{ box_cell("예를 들어", ex.example_ko) }}</td></tr>
 {%- endif %}
