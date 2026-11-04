@@ -20,8 +20,9 @@ from newsletter.store import TEMPLATES_DIR
 BRAND = "AI 주간 해달 브리프"
 # Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
 MAX_EMAIL_BYTES = 90 * 1024
-# Written on every text cell (~23 per card), so each byte counts ~230 times
-# (research Pitfall 6): the Korean-named duplicate of Malgun Gothic is dropped.
+# Written on every presentation <table> (D-14, template-version 7), and cells inherit it,
+# so each byte counts once per table (~50 in the worst case, not ~215 cells as before).
+# The Korean-named duplicate of Malgun Gothic stays dropped (research Pitfall 6).
 FONT_STACK = "'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif"
 # Loaded only by clients that honor <link> web fonts (Apple Mail, iOS Mail); Gmail and
 # Naver strip it and fall back to the system Korean fonts in FONT_STACK.
