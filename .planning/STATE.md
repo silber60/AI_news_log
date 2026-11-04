@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 ## Current Position
 
-Phase: 4 of 5 (next); Phases 1, 1.1, 1.2, 2, 3 complete
-Plan: 0 of TBD in current phase
-Status: Phase 3 complete (7/7 plans; live run #19 on a895af6 green, owner approved highlight and fonts)
-Last activity: 2026-11-04 - Phase 4 context gathered (04-CONTEXT.md)
+Phase: 4 of 5 (in progress); Phases 1, 1.1, 1.2, 2, 3 complete
+Plan: 04-01 of 7 (Tasks 1-3 done; Task 4 owner checkpoint pending)
+Status: 04-01 at checkpoint A: owner must push, switch Pages source to GitHub Actions, run pages.yml
+Last activity: 2026-11-04 - 04-01 Tasks 1-3 executed (918cb87, 139eb53); stopped at Task 4 (owner)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -46,6 +46,7 @@ Recent decisions affecting current work:
 - Roadmap: The send ledger (DLVR-05) and checkpoint reuse (AUTO-05) land in Phase 5 with the cron; until then `mode=send` is manual-only to the single subscriber
 - Stack (research): Python 3.14 + uv, httpx/tenacity, anthropic `messages.parse` + Pydantic, Jinja2 + css-inline, stdlib smtplib/email/csv
 - 2026-11-04 (owner, after the Phase 3 live test showed an empty 바로 써볼 만한 것): Issue schema v3 -> v4. Highlight tags add "Claude/GPT 에이전트" (claude_gpt 직접 사용) and "데모" (HF Space); `Highlight.demo_url` is code-owned (Space, else project page). Candidates put demo items first, and an empty pick list with candidates gets one retry. Label 어떻게 만들지 -> 어떻게 써 볼지.
+- 2026-11-04 (owner, 04-01 Task 1): 지난 호 보기 -> https://silber60.github.io/AI_news_log/#archive (anchor); id="archive" stays on the home page forever
 
 ### Roadmap Evolution
 
