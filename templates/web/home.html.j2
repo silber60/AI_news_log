@@ -1,25 +1,39 @@
 <!DOCTYPE html>
-{#- Minimal home page (04-01 tracer). 04-03 replaces it with the Figma 25:356 design.
-    id="archive" is permanent: every sent email's 지난 호 보기 links to it (04-01 Task 1). #}
+{#- Home page. id="archive" is permanent: every sent email's 지난 호 보기 links to it
+    (04-01 Task 1). Subscribe slots render only when subscribe_url is set (D-09). #}
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ brand }}</title>
 </head>
-<body style="margin: 0; padding: 24px; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #222222;">
+<body style="margin: 0; padding: 24px; font-family: {{ font }}; color: #222222;">
 <h1>{{ brand }}</h1>
-<section id="archive">
+{%- if subscribe_url %}
+<a class="nav-cta" href="#subscribe">구독하기</a>
+<form method="post" action="{{ subscribe_url }}"><button type="submit">무료로 구독하기</button></form>
+{%- endif %}
+<section id="{{ archive_id }}">
 <h2>지난 호</h2>
 {%- if cards %}
 <ul>
 {%- for c in cards %}
-<li><a href="{{ c.href }}">{{ c.date }} ㅣ {{ c.headline }}</a></li>
+<li><a href="{{ c.url }}">
+{%- if c.image %}<img src="{{ c.image.url }}" alt="{{ c.image_alt }}">{% endif -%}
+{{ c.date }} ㅣ {{ c.headline }}
+{%- for t in c.top3 %} · {{ t }}{% endfor -%}
+</a></li>
 {%- endfor %}
 </ul>
 {%- else %}
 <p>아직 발행된 호가 없어요.</p>
 {%- endif %}
 </section>
+{%- if subscribe_url %}
+<form method="post" action="{{ subscribe_url }}"><button type="submit">무료로 구독하기</button></form>
+{%- endif %}
+{%- if privacy_url %}
+<a href="{{ privacy_url }}">개인정보 처리방침</a>
+{%- endif %}
 </body>
 </html>

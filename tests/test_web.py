@@ -168,3 +168,92 @@ def test_committed_site_is_fresh(tmp_path, monkeypatch):
     for p in (REPO / "docs").rglob("*.html"):
         text = p.read_text(encoding="utf-8")
         assert OLD_BRAND not in text, p
+
+
+# --- 04-03 Task 1: archive cards and hidden subscribe slots (D-07, D-08, D-09) ---
+
+
+def _two_issues(issue):
+    older = issue.model_copy(update={"issue_id": "2026-W43", "headline_ko": "지난주 제목"})
+    return issue, older
+
+
+def _home(site) -> str:
+    return (site / "docs" / "index.html").read_text(encoding="utf-8")
+
+
+def _archive(home: str) -> str:
+    start = home.index('id="archive"')
+    return home[start : home.index("</section>", start)]
+
+
+def test_card_holds_date_headline_top3_and_image(issue_w44):
+    c = web.card(issue_w44)
+    assert c["url"] == f"issues/{ISSUE_ID}/"
+    assert c["date"] == render.date_line(issue_w44)
+    assert c["headline"] == issue_w44.headline_ko
+    assert c["top3"] == [it.title_ko for it in issue_w44.items[:3]]
+    assert c["image"] == issue_w44.items[0].image
+
+
+def test_archive_cards_newest_first_with_top3(site, issue_w44):
+    for i in _two_issues(issue_w44):
+        web.publish(i)
+    web.build_site()
+    archive = _archive(_home(site))
+    assert archive.index('href="issues/2026-W44/"') < archive.index('href="issues/2026-W43/"')
+    assert archive.index(issue_w44.headline_ko) < archive.index("지난주 제목")
+    for it in issue_w44.items[:3]:
+        assert it.title_ko in archive
+    assert render.date_line(issue_w44) in archive
+
+
+def test_archive_card_image_only_when_present(site, issue_w44):
+    first = issue_w44.items[0]
+    assert first.image is not None
+    no_image = issue_w44.model_copy(
+        update={
+            "issue_id": "2026-W43",
+            "items": [first.model_copy(update={"image": None}), *issue_w44.items[1:]],
+        }
+    )
+    web.publish(issue_w44)
+    web.publish(no_image)
+    web.build_site()
+    archive = _archive(_home(site))
+    w44, w43 = archive.split('href="issues/2026-W43/"', 1)
+    assert w44.count("<img") == 1
+    assert f'src="{first.image.url}"' in w44
+    assert f'alt="{first.title_ko}"' in w44
+    assert "<img" not in w43
+
+
+def test_subscribe_hidden_while_url_is_none(site, issue_w44):
+    assert web.SUBSCRIBE_URL is None
+    assert web.PRIVACY_URL is None
+    web.publish(issue_w44)
+    web.build_site()
+    home = _home(site)
+    assert "<form" not in home
+    assert "무료로 구독하기" not in home
+    assert "구독하기" not in home
+    assert "개인정보 처리방침" not in home
+
+
+def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
+    url = "https://script.google.com/macros/s/example/exec"
+    monkeypatch.setattr(web, "SUBSCRIBE_URL", url)
+    monkeypatch.setattr(web, "PRIVACY_URL", "https://example.org/privacy")
+    web.publish(issue_w44)
+    web.build_site()
+    home = _home(site)
+    assert home.count("<form") == 2
+    assert home.count(f'action="{url}"') == 2
+    assert home.count("무료로 구독하기") == 2
+    assert 'class="nav-cta"' in home
+    assert "개인정보 처리방침" in home
+
+
+def test_archive_empty_state_line(site):
+    web.build_site()
+    assert "아직 발행된 호가 없어요." in _archive(_home(site))
