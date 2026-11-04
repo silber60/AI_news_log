@@ -281,8 +281,8 @@ HOME_SENTENCES = [
         "모델인지 비전공자도 이해하게 풀어 써요. 상업적으로 써도 되는지, 바로 돌려볼 수 "
         "있는지도 함께 알려 드려요."
     ),
-    "지난주 올라온 모델 중 개발자들이 실제로 관심 갖는 것만 골라요.",
-    "이번 주 새로 나온 기술 하나를 예시와 함께 쉽게 풀어 설명해요.",
+    "지난주 올라온 모델을 GitHub star 순으로 최대 10개 골라요.",
+    "이번 주 모델에 쓰인 기술 하나를 예시와 함께 풀어 설명해요.",
     (
         "카드마다 한 줄 요약, 쉬운 설명 세 줄, 모델 정보와 활용 아이디어가 들어가요. 스크롤 몇 "
         "번이면 이번 주 Top 10을 다 볼 수 있어요."
@@ -306,8 +306,8 @@ FORM_SENTENCES = [
 ]
 # Owner-approved copy taken verbatim from Figma 25:356: exempt from the lint (D-04).
 OWNER_FIGMA_COPY = [
-    "AI 모델, 해달이 골라 드려요",  # hero title, second line
-    "다음 주 월요일, 해달이 기다릴게요 👋",  # bottom CTA, same emoji as the email closing
+    "AI 모델, 모닥로그가 골라 드려요",  # hero title, second line
+    "다음 주 월요일, 모닥로그가 기다릴게요 👋",  # bottom CTA, same emoji as the email closing
 ]
 
 
