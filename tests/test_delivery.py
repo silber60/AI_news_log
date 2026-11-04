@@ -1,9 +1,11 @@
 """Send mode: SUBSCRIBERS_CSV secret -> personalized render -> one message per recipient."""
 
+import re
 import shutil
 from pathlib import Path
 
 import pytest
+import respx
 
 from newsletter import store
 from newsletter.schema import Issue
@@ -67,3 +69,133 @@ def test_send_mode_one_message_per_recipient(current_issue, send_env, fake_smtp,
     assert [m["To"] for m in sent] == ["a@example.com", "b@example.com"]
     assert "가님" in sent[0].get_body(preferencelist=("plain",)).get_content()
     assert "구독자님" in sent[1].get_body(preferencelist=("plain",)).get_content()
+
+
+# ------------------------------------------------- List-Unsubscribe (04-05, D-14)
+
+LONG_ENDPOINT = "https://script.google.com/macros/s/AKfycb" + "x" * 72 + "/exec"
+TOKEN_SECRET = "test-token-secret"
+OWNER = "owner@example.com"
+
+
+def _raw_header_lines(msg, name: str) -> list[str]:
+    """Header lines as they go over the wire. A folded header shows up as a
+    continuation line, so it is returned joined with its continuations (Pitfall 3)."""
+    head = re.split(rb"\r?\n\r?\n", msg.as_bytes(), maxsplit=1)[0]
+    lines = head.decode("ascii").splitlines()
+    found = []
+    for i, line in enumerate(lines):
+        if line.lower().startswith(name.lower() + ":"):
+            j = i + 1
+            while j < len(lines) and lines[j][:1] in (" ", "\t"):
+                j += 1
+            found.append("\n".join(lines[i:j]))
+    return found
+
+
+def _cte(msg, subtype: str) -> str:
+    return msg.get_body(preferencelist=(subtype,))["Content-Transfer-Encoding"]
+
+
+@pytest.fixture
+def test_env(monkeypatch):
+    monkeypatch.setenv("SMTP_USER", OWNER)
+    monkeypatch.setenv("SMTP_PASSWORD", "abcd efgh")
+    monkeypatch.setenv("TEST_RECIPIENT", OWNER)
+
+
+@pytest.fixture
+def endpoint(monkeypatch):
+    from newsletter.delivery import unsubscribe
+
+    monkeypatch.setattr(unsubscribe, "UNSUBSCRIBE_ENDPOINT", LONG_ENDPOINT)
+    return LONG_ENDPOINT
+
+
+def test_header_mailto_only_without_endpoint(current_issue, test_env, fake_smtp):
+    from newsletter.delivery import unsubscribe
+    from newsletter.delivery.deliver import run_deliver
+
+    assert unsubscribe.UNSUBSCRIBE_ENDPOINT is None
+    with respx.mock(assert_all_mocked=True) as router:
+        run_deliver("test")
+        assert router.calls.call_count == 0
+    msg = fake_smtp.instances[0].sent[0]
+    assert _raw_header_lines(msg, "List-Unsubscribe") == [
+        f"List-Unsubscribe: <mailto:{OWNER}?subject=unsubscribe>"
+    ]
+    assert _raw_header_lines(msg, "List-Unsubscribe-Post") == []
+    for subtype in ("html", "plain"):
+        body = msg.get_body(preferencelist=(subtype,)).get_content()
+        assert "구독 해지" not in body and "unsubscribe/?t=" not in body
+        assert "수신거부" in body
+
+
+def test_test_send_gets_owner_token_and_unfolded_headers(
+    current_issue, test_env, endpoint, fake_smtp, monkeypatch
+):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.delivery.unsubscribe import token
+    from newsletter.stages.render import SITE_URL
+
+    monkeypatch.setenv("UNSUBSCRIBE_TOKEN_SECRET", TOKEN_SECRET)
+    t = token(OWNER, TOKEN_SECRET)
+    with respx.mock(assert_all_mocked=True) as router:
+        run_deliver("test")  # test mode never fetches the list
+        assert router.calls.call_count == 0
+    msg = fake_smtp.instances[0].sent[0]
+    lines = _raw_header_lines(msg, "List-Unsubscribe")
+    assert lines == [f"List-Unsubscribe: <mailto:{OWNER}?subject=unsubscribe>, <{endpoint}?t={t}>"]
+    assert "\n" not in lines[0] and "=?utf-8?" not in lines[0].lower()
+    assert b"=?utf-8?q?=3C" not in msg.as_bytes()
+    assert _raw_header_lines(msg, "List-Unsubscribe-Post") == [
+        "List-Unsubscribe-Post: List-Unsubscribe=One-Click"
+    ]
+    link = f"{SITE_URL}unsubscribe/?t={t}"
+    html = msg.get_body(preferencelist=("html",)).get_content()
+    text = msg.get_body(preferencelist=("plain",)).get_content()
+    assert f'href="{link}"' in html and "구독 해지" in html
+    assert f"구독 해지: {link}" in text
+    assert _cte(msg, "html") == "base64"
+    assert _cte(msg, "plain") == "8bit"
+
+
+def test_endpoint_without_token_secret_fails_before_smtp(
+    current_issue, test_env, endpoint, fake_smtp, monkeypatch
+):
+    from newsletter.delivery.deliver import run_deliver
+    from newsletter.errors import DeliveryError
+
+    monkeypatch.delenv("UNSUBSCRIBE_TOKEN_SECRET", raising=False)
+    with pytest.raises(
+        DeliveryError, match="missing environment variable UNSUBSCRIBE_TOKEN_SECRET"
+    ):
+        run_deliver("test")
+    assert all(not s.login_calls for s in fake_smtp.instances)
+
+
+def test_build_message_strips_crlf_from_unsubscribe_header():
+    from newsletter.delivery.send import build_message
+
+    msg = build_message(
+        subject="s",
+        sender_addr=OWNER,
+        to="a@example.com",
+        text="t",
+        html="<p>h</p>",
+        list_unsubscribe="<mailto:x@example.com>\r\nBcc: evil@example.com",
+        one_click=False,
+    )
+    raw = msg.as_bytes()
+    assert b"\nBcc:" not in raw
+    assert _raw_header_lines(msg, "List-Unsubscribe") == [
+        "List-Unsubscribe: <mailto:x@example.com>Bcc: evil@example.com"
+    ]
+    assert _raw_header_lines(msg, "List-Unsubscribe-Post") == []
+
+
+def test_build_message_without_unsubscribe_has_no_header():
+    from newsletter.delivery.send import build_message
+
+    msg = build_message(subject="s", sender_addr=OWNER, to="a@example.com", text="t", html="h")
+    assert _raw_header_lines(msg, "List-Unsubscribe") == []
