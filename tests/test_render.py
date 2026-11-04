@@ -1,5 +1,6 @@
 """Figma v2 email render (Phase 1.1): sections, cards, email-safe markup, size, text, subject."""
 
+import hashlib
 import html as html_lib
 import re
 from html.parser import HTMLParser
@@ -283,22 +284,37 @@ def test_basis_note_mentions_upvotes_when_an_item_has_no_stars(issue_w44):
 
 
 class _Cells(HTMLParser):
-    """Collect every <td>'s style and its own visible text (nested tables excluded)."""
+    """Collect every <td>'s style, its nearest ancestor table's style and its own visible
+    text (nested tables excluded). Also keep every <table>, <td> and <span> style."""
 
     def __init__(self):
         super().__init__()
         self.stack: list[dict] = []
+        self.tables: list[str] = []  # styles of the open tables, innermost last
         self.cells: list[dict] = []
         self.tags: set[str] = set()
+        self.styles: dict[str, list[str]] = {"table": [], "td": [], "span": []}
+        self.presentation: list[str] = []
 
     def handle_starttag(self, tag, attrs):
         self.tags.add(tag)
-        if tag == "td":
-            self.stack.append({"style": dict(attrs).get("style") or "", "text": ""})
+        a = dict(attrs)
+        style = a.get("style") or ""
+        if tag in self.styles:
+            self.styles[tag].append(style)
+        if tag == "table":
+            self.tables.append(style)
+            if a.get("role") == "presentation":
+                self.presentation.append(style)
+        elif tag == "td":
+            table = self.tables[-1] if self.tables else ""
+            self.stack.append({"style": style, "table": table, "text": ""})
 
     def handle_endtag(self, tag):
         if tag == "td" and self.stack:
             self.cells.append(self.stack.pop())
+        elif tag == "table" and self.tables:
+            self.tables.pop()
 
     def handle_data(self, data):
         if self.stack:
@@ -354,13 +370,75 @@ def test_no_style_block_and_tables_only(issue_w44):
     assert "table" in p.tags and "div" not in p.tags
 
 
-def test_every_text_cell_has_korean_font_stack(issue_w44):
-    p = _cells(render_html(issue_w44, "구독자님"))
+def _variant(issue_w44, variant: str):
+    return {"w44": issue_w44, "full": _full_issue(issue_w44), "worst": _worst_case(issue_w44)}[
+        variant
+    ]
+
+
+@pytest.mark.parametrize("variant", ["w44", "full", "worst"])
+def test_every_text_cell_has_korean_font_stack(issue_w44, variant):
+    """D-14: the stack sits on the cell or, from template-version 7, its nearest table."""
+    p = _cells(render_html(_variant(issue_w44, variant), "구독자님"))
     text_cells = [c for c in p.cells if c["text"].strip()]
     assert len(text_cells) > 40
     for c in text_cells:
-        assert "IBM Plex Sans KR" in c["style"], c["text"][:40]
-        assert "Malgun Gothic" in c["style"], c["text"][:40]
+        own = "font-family" in c["style"]
+        style = c["style"] if own else c["table"]
+        assert "IBM Plex Sans KR" in style, c["text"][:40]
+        assert "Malgun Gothic" in style, c["text"][:40]
+
+
+@pytest.mark.parametrize("variant", ["w44", "full", "worst"])
+def test_font_on_every_table_and_no_cell_or_span(issue_w44, variant):
+    p = _cells(render_html(_variant(issue_w44, variant), "구독자님"))
+    assert len(p.presentation) == len(p.styles["table"]) > 10
+    for style in p.presentation:
+        assert "font-family" in style and "IBM Plex Sans KR" in style, style
+    for tag in ("td", "span"):
+        assert p.styles[tag]
+        for style in p.styles[tag]:
+            assert "font-family" not in style, (tag, style)
+
+
+def test_font_family_count_in_worst_case(issue_w44):
+    """D-14: per-table stack. Per-cell (template-version 6) rendered 215 declarations."""
+    n = render_html(_worst_case(issue_w44), "구독자님").count("font-family")
+    print(f"worst-case font-family declarations={n}")
+    assert n <= 60
+
+
+class _Visible(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data):
+        self.parts.append(data)
+
+
+def _visible_text(out: str) -> str:
+    p = _Visible()
+    p.feed(out)
+    p.close()
+    return " ".join(" ".join(p.parts).split())
+
+
+# sha256 of the visible text (tags stripped, whitespace normalized) rendered with the
+# per-cell font stack, captured at 03-05 Task 1 (commit 4edc407) before the D-14 move.
+# A fixture or copy change moves these on purpose: re-check the text, then recompute.
+PER_CELL_VISIBLE_SHA256 = {
+    "w44": "ceb2b473491a509db496d4f137002c3f453a4c0df222fa60f221fbe1d24c9d09",
+    "full": "5301ebebc770bfea20f617ebca53ed69c86f7d9f69a1dbfdd433f8c40bb4d4ac",
+    "worst": "ee2b1bae23defdab4efaeb35442f5a27cd4a9ab05729089334ef905c164092dd",
+}
+
+
+@pytest.mark.parametrize("variant", ["w44", "full", "worst"])
+def test_font_move_keeps_visible_text_identical(issue_w44, variant):
+    text = _visible_text(render_html(_variant(issue_w44, variant), "구독자님"))
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    assert digest == PER_CELL_VISIBLE_SHA256[variant]
 
 
 def test_ai_type_appears_in_each_card(issue_w44):
@@ -751,6 +829,14 @@ def _raw_image_url(rank: int) -> str:
     return url
 
 
+def _raw_explainer_url() -> str:
+    """The explainer's code-copied image at the 300-char cap, distinct from every card URL."""
+    head = "https://raw.githubusercontent.com/some-organization/some-explainer-repo/main/"
+    url = head + "e" * (IMAGE_URL_MAX - len(head) - len(".png")) + ".png"
+    assert len(url) == IMAGE_URL_MAX == 300
+    return url
+
+
 def _license_url(rank: int) -> str:
     head = f"https://huggingface.co/some-organization/some-long-model-name-{rank:02d}/blob/main/"
     url = head + "L" * (EVIDENCE_LINK_MAX - len(head) - len(".md")) + ".md"
@@ -839,6 +925,7 @@ def _worst_case(issue):
                 related_ranks=[1, 2],
                 point_ko="포" * 120,
                 example_ko="예" * 200,
+                image=ItemImage(url=_raw_explainer_url(), width=576, height=260),
             ),
         }
     )
@@ -886,13 +973,52 @@ def test_worst_case_images_and_phase3_otters(issue_w44):
         "otter-tool.png",
         "otter-chalkboard.png",
     }
-    # 10 card images (D-08) and none in the hero (D-07)
+    # 10 card images (D-08) + the explainer image (D-04), none in the hero (D-07)
     raw = [i for i in imgs if i["src"].startswith("https://raw.githubusercontent.com/")]
-    assert len(raw) == 10
+    assert len(raw) == 11
     assert all(len(i["src"]) == 300 for i in raw)
     out = render_html(_worst_case(issue_w44), "구독자님")
     assert "<img" not in out[_section_pos(out, "hero") : _section_pos(out, "greeting")]
     assert all(c.count("<img") == 1 for c in _cards(out))
+    ex_imgs = _imgs(out[_section_pos(out, "explainer") : _section_pos(out, "rest")])
+    assert [i["src"].rsplit("/", 1)[1] for i in ex_imgs if "otter-" in i["src"]] == [
+        "otter-chalkboard.png"
+    ]
+    pics = [i for i in ex_imgs if "otter-" not in i["src"]]
+    assert len(pics) == 1
+    assert pics[0]["src"].startswith(EXPLAINER_IMAGE_HOSTS), pics[0]["src"]
+    assert pics[0]["src"] == _raw_explainer_url()
+    assert pics[0]["alt"] == "주" * 40 + " 관련 그림"
+    assert (pics[0]["width"], pics[0]["height"]) == ("576", "260")
+
+
+EXPLAINER_IMAGE_HOSTS = (
+    "https://raw.githubusercontent.com/",
+    "https://cdn-uploads.huggingface.co/",
+    "https://arxiv.org/html/",
+)
+
+
+def test_explainer_without_image_has_only_the_otter(issue_w44):
+    out = render_html(_full_issue(issue_w44), "구독자님")
+    assert _full_issue(issue_w44).explainer.image is None
+    block = out[_section_pos(out, "explainer") : _section_pos(out, "rest")]
+    imgs = _imgs(block)
+    assert [i for i in imgs if "otter-" not in i["src"]] == []
+    assert [i["src"].rsplit("/", 1)[1] for i in imgs] == ["otter-chalkboard.png"]
+    assert "관련 그림" not in block
+
+
+def test_explainer_image_sits_after_body_before_example(issue_w44):
+    full = _full_issue(issue_w44)
+    url = _raw_explainer_url()
+    ex = full.explainer.model_copy(update={"image": ItemImage(url=url, width=576, height=260)})
+    out = render_html(full.model_copy(update={"explainer": ex}), "구독자님")
+    block = out[_section_pos(out, "explainer") : _section_pos(out, "rest")]
+    assert _ordered(block, ["전문가 혼합 설명", f'src="{url}"', "예를 들어"])
+    assert 'alt="MoE 해설 관련 그림"' in block
+    txt = render_text(full.model_copy(update={"explainer": ex}), "구독자님")
+    assert "관련 그림" not in txt and url not in txt
 
 
 def _strip_imgs(out: str) -> str:

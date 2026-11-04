@@ -1,17 +1,18 @@
-{# template-version: 6 #}
+{# template-version: 7 #}
 {#- Figma v2 email (Phase 1.1, D-01..D-05). Tables + inline CSS only, 640px.
     One <tr data-section="..."> per section, in Figma order. The trend and explainer
     sections render only when their data exists (D-04). The highlight section always
     renders and shows a fallback line when there is no pick (D-01, HILT-03).
     The <style> block is moved inline by css_inline and then dropped.
-    The font stack is also written on every text cell for clients that strip styles. -#}
+    The font stack is also written on every presentation <table> (template-version 7, D-14)
+    for clients that strip styles; cells and spans inherit it from their nearest table. -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
 {%- set img_style = "display: block; border: 0; outline: none; text-decoration: none;" -%}
 {%- set banner_style = img_style ~ " width: 100%; max-width: 640px; height: auto;" -%}
 
 {%- macro title_row(title, sub, otter, otter_w, otter_alt, color="#222222", align="left") -%}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td valign="middle" align="{{ align }}" style="{{ ff }} font-size: 20px; font-weight: bold; line-height: 140%; color: {{ color }};">{{ title }}{% if sub %}<br><span style="{{ ff }} font-size: 12px; font-weight: normal; color: #A3A3A3;">{{ sub }}</span>{% endif %}</td>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}"><tr>
+<td valign="middle" align="{{ align }}" style="font-size: 20px; font-weight: bold; line-height: 140%; color: {{ color }};">{{ title }}{% if sub %}<br><span style="font-size: 12px; font-weight: normal; color: #A3A3A3;">{{ sub }}</span>{% endif %}</td>
 {%- if otter %}
 <td width="{{ otter_w }}" valign="middle" align="right"><img src="{{ asset }}/{{ otter }}" width="{{ otter_w }}" height="{{ otter_w }}" alt="{{ otter_alt }}" style="{{ img_style }}"></td>
 {%- endif %}
@@ -24,10 +25,10 @@
 {%- endmacro -%}
 
 {%- macro box_cell(label, text) -%}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color: #ffffff; border-radius: 8px; padding: 14px 16px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #303A83;">{{ label }}</td></tr>
-<tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 15px; line-height: 170%; color: #222222;">{{ text }}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}"><tr><td style="background-color: #ffffff; border-radius: 8px; padding: 14px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td style="font-size: 13px; font-weight: bold; color: #303A83;">{{ label }}</td></tr>
+<tr><td style="padding: 4px 0 0 0; font-size: 15px; line-height: 170%; color: #222222;">{{ text }}</td></tr>
 </table>
 </td></tr></table>
 {%- endmacro -%}
@@ -36,31 +37,31 @@
     v1.2 (D-07, D-08): no hero image; every card shows its own image, card 1 included. #}
 {%- macro card(it) -%}
 <tr><td style="padding: 0 0 24px 0;">
-<table role="presentation" data-card="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" data-card="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 {%- if it.image %}
 <tr><td style="padding: 0 0 10px 0;"><img src="{{ it.image.url }}" width="{{ it.image.width }}" height="{{ it.image.height }}" alt="{{ it.title_ko }} 대표 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}</td></tr>
-<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 19px; font-weight: bold; line-height: 145%; color: #222222;">{{ it.title_ko }}</td></tr>
-<tr><td style="{{ ff }} padding: 4px 0 0 0; font-size: 13px; color: #A3A3A3;">{{ it.title_en }}</td></tr>
-<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 16px; font-weight: bold; line-height: 170%; color: #222222;">{{ it.summary_ko }}</td></tr>
-<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 15px; line-height: 165%; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}<br>💡 {{ it.use_idea_ko }}</td></tr>
+<tr><td style="font-size: 13px; font-weight: bold; color: #FF6B00;">{{ it.rank }}위 ㅣ {{ it.ai_type }} ㅣ {% if it.github_stars is not none %}★ {{ "{:,}".format(it.github_stars) }}{% else %}▲ {{ it.upvotes }}{% endif %}</td></tr>
+<tr><td style="padding: 10px 0 0 0; font-size: 19px; font-weight: bold; line-height: 145%; color: #222222;">{{ it.title_ko }}</td></tr>
+<tr><td style="padding: 4px 0 0 0; font-size: 13px; color: #A3A3A3;">{{ it.title_en }}</td></tr>
+<tr><td style="padding: 10px 0 0 0; font-size: 16px; font-weight: bold; line-height: 170%; color: #222222;">{{ it.summary_ko }}</td></tr>
+<tr><td style="padding: 10px 0 0 0; font-size: 15px; line-height: 165%; color: #222222;">{% for line in it.summary_lines_ko %}· {{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}<br>💡 {{ it.use_idea_ko }}</td></tr>
 {%- set rows = info_rows[it.rank] %}
 {%- if rows %}
 <tr><td style="padding: 10px 0 0 0;">
-<table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F7F7F9; border-radius: 8px;">
-<tr><td colspan="2" style="{{ ff }} padding: 14px 16px 4px 16px; font-size: 14px; font-weight: bold; color: #303A83;">🧩 모델 정보</td></tr>
+<table role="presentation" data-model-info="{{ it.rank }}" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} background-color: #F7F7F9; border-radius: 8px;">
+<tr><td colspan="2" style="padding: 14px 16px 4px 16px; font-size: 14px; font-weight: bold; color: #303A83;">🧩 모델 정보</td></tr>
 {%- for label, value in rows %}
-<tr><td width="84" valign="top" style="{{ ff }} padding: 4px 0 {% if loop.last %}14px{% else %}4px{% endif %} 16px; font-size: 13px; font-weight: 500; color: #737373;">{{ label }}</td><td valign="top" style="{{ ff }} padding: 4px 16px {% if loop.last %}14px{% else %}4px{% endif %} 0; font-size: 14px; color: #222222;">{{ value }}</td></tr>
+<tr><td width="84" valign="top" style="padding: 4px 0 {% if loop.last %}14px{% else %}4px{% endif %} 16px; font-size: 13px; font-weight: 500; color: #737373;">{{ label }}</td><td valign="top" style="padding: 4px 16px {% if loop.last %}14px{% else %}4px{% endif %} 0; font-size: 14px; color: #222222;">{{ value }}</td></tr>
 {%- endfor %}
 </table>
 </td></tr>
 {%- endif %}
 {%- set vl = verdict_lines[it.rank] %}
 {%- if vl %}
-<tr><td style="{{ ff }} padding: 12px 0 0 0; font-size: 13px; line-height: 170%; color: #555555;">{{ vl|join(" · ") }}{% if license_links[it.rank] %} · <a href="{{ license_links[it.rank] }}" style="color: #A3A3A3;">라이선스</a>{% endif %}</td></tr>
+<tr><td style="padding: 12px 0 0 0; font-size: 13px; line-height: 170%; color: #555555;">{{ vl|join(" · ") }}{% if license_links[it.rank] %} · <a href="{{ license_links[it.rank] }}" style="color: #A3A3A3;">라이선스</a>{% endif %}</td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
+<tr><td style="padding: 10px 0 28px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #E6E6E6;"><a href="{{ it.hf_url }}" style="color: #FF6B00; text-decoration: none;">논문 보기 →</a>{% if it.github_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.github_url }}" style="color: #FF6B00; text-decoration: none;">코드 →</a>{% endif %}{% if it.project_url %}&nbsp;&nbsp;&nbsp;<a href="{{ it.project_url }}" style="color: #FF6B00; text-decoration: none;">프로젝트 →</a>{% endif %}</td></tr>
 </table>
 </td></tr>
 {%- endmacro -%}
@@ -78,57 +79,57 @@ a { color: #FF6B00; text-decoration: none; }
 </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #ffffff;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} background-color: #ffffff;">
 <tr><td align="center" style="padding: 0;">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width: 640px; max-width: 640px; background-color: #ffffff;">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="{{ ff }} width: 640px; max-width: 640px; background-color: #ffffff;">
 
 <tr data-section="banner"><td style="padding: 0;"><img src="{{ asset }}/otter-banner.jpg" width="640" height="359" alt="{{ brand }}" style="{{ banner_style }}"></td></tr>
 
 <tr data-section="header"><td style="padding: 28px 32px 8px 32px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 {%- if hashtags %}
-<tr><td style="{{ ff }} font-size: 12px; font-weight: 500; color: #FF6B00; padding: 0 0 6px 0;">{{ hashtags|join(" ") }}</td></tr>
+<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 0 0 6px 0;">{{ hashtags|join(" ") }}</td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} font-size: 12px; color: #A3A3A3;">{{ date_line }}{% if web_url %} ㅣ <a href="{{ web_url }}" style="color: #A3A3A3;">웹에서 보기</a>{% endif %}</td></tr>
-<tr><td style="{{ ff }} padding: 16px 0 2px 0; font-size: 24px; font-weight: 900; color: #222222;">{{ brand }}</td></tr>
-<tr><td style="{{ ff }} font-size: 13px; color: #808080;">매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요</td></tr>
+<tr><td style="font-size: 12px; color: #A3A3A3;">{{ date_line }}{% if web_url %} ㅣ <a href="{{ web_url }}" style="color: #A3A3A3;">웹에서 보기</a>{% endif %}</td></tr>
+<tr><td style="padding: 16px 0 2px 0; font-size: 24px; font-weight: 900; color: #222222;">{{ brand }}</td></tr>
+<tr><td style="font-size: 13px; color: #808080;">매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요</td></tr>
 </table>
 </td></tr>
 
 <tr data-section="hero"><td style="padding: 20px 32px 8px 32px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="{{ ff }} font-size: 22px; font-weight: bold; line-height: 145%; color: #222222;">{{ issue.headline_ko }}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td style="font-size: 22px; font-weight: bold; line-height: 145%; color: #222222;">{{ issue.headline_ko }}</td></tr>
 </table>
 </td></tr>
 
-<tr data-section="greeting"><td style="{{ ff }} padding: 20px 32px 8px 32px; font-size: 16px; line-height: 175%; color: #222222;">{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 {{ issue.items|length }}개를 골랐어요!</td></tr>
+<tr data-section="greeting"><td style="padding: 20px 32px 8px 32px; font-size: 16px; line-height: 175%; color: #222222;">{{ greeting }}, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 {{ issue.items|length }}개를 골랐어요!</td></tr>
 
 {%- if issue.trend_ko %}
 <tr data-section="trend"><td style="padding: 28px 32px 28px 32px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="{{ ff }} font-size: 18px; font-weight: bold; color: #222222;">이번 주 흐름 한눈에 📈</td></tr>
-<tr><td style="{{ ff }} padding: 10px 0 0 0; font-size: 15px; line-height: 175%; color: #222222;">{{ issue.trend_ko }}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td style="font-size: 18px; font-weight: bold; color: #222222;">이번 주 흐름 한눈에 📈</td></tr>
+<tr><td style="padding: 10px 0 0 0; font-size: 15px; line-height: 175%; color: #222222;">{{ issue.trend_ko }}</td></tr>
 </table>
 </td></tr>
 {%- endif %}
 
 <tr data-section="highlight"><td style="padding: 20px 32px 20px 32px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color: #FFF6F0; border-radius: 12px; padding: 22px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}"><tr><td style="background-color: #FFF6F0; border-radius: 12px; padding: 22px;">
 {{ title_row("이번 주 바로 써볼 만한 것 ✨", None, "otter-tool.png", 150, "공구를 든 해달", "#FF6B00") }}
 {%- if not issue.highlights %}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">이번 주는 해당 항목 없음</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td style="padding: 14px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">이번 주는 해당 항목 없음</td></tr>
 </table>
 {%- endif %}
 {%- for h in issue.highlights %}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 <tr><td style="padding: 14px 0 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="{{ ff }} font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill(h.tag, "#ffffff", "#FF6B00") }}</td><td width="8"></td>
-<td style="{{ ff }} font-size: 15px; font-weight: bold; color: #222222;">{{ issue.items[h.rank - 1].title_ko }}</td>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}"><tr>
+<td style="font-size: 12px; font-weight: 500; line-height: 220%;">{{ pill(h.tag, "#ffffff", "#FF6B00") }}</td><td width="8"></td>
+<td style="font-size: 15px; font-weight: bold; color: #222222;">{{ issue.items[h.rank - 1].title_ko }}</td>
 </tr></table>
 </td></tr>
-<tr><td style="{{ ff }} padding: 8px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">왜 좋은지: {{ h.why_ko }}<br>어떻게 만들지: {{ h.how_ko }}</td></tr>
+<tr><td style="padding: 8px 0 0 0; font-size: 14px; line-height: 165%; color: #222222;">왜 좋은지: {{ h.why_ko }}<br>어떻게 만들지: {{ h.how_ko }}</td></tr>
 </table>
 {%- endfor %}
 </td></tr></table>
@@ -136,7 +137,7 @@ a { color: #FF6B00; text-decoration: none; }
 
 <tr data-section="top3"><td style="padding: 28px 32px 12px 32px;">
 {{ title_row("이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️", basis_note, "otter-magnifier.png", 150, "돋보기를 든 해달") }}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 <tr><td style="padding: 24px 0 0 0;"></td></tr>
 {%- for it in top3 %}
 {{ card(it) }}
@@ -148,12 +149,15 @@ a { color: #FF6B00; text-decoration: none; }
 {%- set ex = issue.explainer %}
 <tr data-section="explainer"><td style="padding: 32px; background-color: #EDF6FF;">
 {{ title_row("AI 기술 쉽게 보기 🔍", None, "otter-chalkboard.png", 170, "칠판 앞의 해달", "#303A83", "center") }}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 {%- if ex.point_ko %}
 <tr><td style="padding: 14px 0 0 0;">{{ box_cell("오늘의 포인트", ex.point_ko) }}</td></tr>
 {%- endif %}
-<tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #222222;">{{ ex.topic }}</td></tr>
-<tr><td style="{{ ff }} padding: 14px 0 0 0; font-size: 15px; line-height: 180%; color: #222222;">{{ ex.body_ko }}</td></tr>
+<tr><td style="padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #222222;">{{ ex.topic }}</td></tr>
+<tr><td style="padding: 14px 0 0 0; font-size: 15px; line-height: 180%; color: #222222;">{{ ex.body_ko }}</td></tr>
+{%- if ex.image %}
+<tr><td style="padding: 14px 0 0 0;"><img src="{{ ex.image.url }}" width="{{ ex.image.width }}" height="{{ ex.image.height }}" alt="{{ ex.topic }} 관련 그림" style="{{ img_style }} border-radius: 8px;"></td></tr>
+{%- endif %}
 {%- if ex.example_ko %}
 <tr><td style="padding: 14px 0 0 0;">{{ box_cell("예를 들어", ex.example_ko) }}</td></tr>
 {%- endif %}
@@ -164,7 +168,7 @@ a { color: #FF6B00; text-decoration: none; }
 {%- if rest %}
 <tr data-section="rest"><td style="padding: 32px 32px 12px 32px;">
 {{ title_row(rest_title, basis_note, None, 0, "") }}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
 <tr><td style="padding: 24px 0 0 0;"></td></tr>
 {%- for it in rest %}
 {{ card(it) }}
@@ -174,20 +178,20 @@ a { color: #FF6B00; text-decoration: none; }
 {%- endif %}
 
 <tr data-section="closing"><td style="padding: 0;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td align="center" style="{{ ff }} padding: 32px 32px 16px 32px; font-size: 17px; font-weight: bold; color: #222222; text-align: center;">이번 주 브리프는 여기까지! 다음 주 월요일에 또 만나요 👋</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td align="center" style="padding: 32px 32px 16px 32px; font-size: 17px; font-weight: bold; color: #222222; text-align: center;">이번 주 브리프는 여기까지! 다음 주 월요일에 또 만나요 👋</td></tr>
 <tr><td style="padding: 0;"><img src="{{ asset }}/otter-wave.jpg" width="640" height="359" alt="다음 주에 또 만나요" style="{{ banner_style }}"></td></tr>
 </table>
 </td></tr>
 
 <tr data-section="footer"><td style="padding: 28px 32px 32px 32px; background-color: #F5F5F5;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="{{ ff }} font-size: 14px; font-weight: bold; color: #222222; padding: 0 0 6px 0;">{{ brand }}</td></tr>
-<tr><td style="{{ ff }} font-size: 12px; color: #808080; padding: 0 0 6px 0;">매주 월요일 오전 8시에 보내드려요. 출처: Hugging Face Papers</td></tr>
-<tr><td style="{{ ff }} font-size: 12px; color: #808080; padding: 0 0 6px 0;">상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. 실제 사용 전 원문을 확인해 주세요.</td></tr>
-<tr><td style="{{ ff }} font-size: 12px; color: #808080;">더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="{{ ff }}">
+<tr><td style="font-size: 14px; font-weight: bold; color: #222222; padding: 0 0 6px 0;">{{ brand }}</td></tr>
+<tr><td style="font-size: 12px; color: #808080; padding: 0 0 6px 0;">매주 월요일 오전 8시에 보내드려요. 출처: Hugging Face Papers</td></tr>
+<tr><td style="font-size: 12px; color: #808080; padding: 0 0 6px 0;">상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. 실제 사용 전 원문을 확인해 주세요.</td></tr>
+<tr><td style="font-size: 12px; color: #808080;">더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.</td></tr>
 {%- if web_url %}
-<tr><td style="{{ ff }} font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ web_url }}" style="color: #FF6B00;">웹에서 보기</a> · <a href="{{ web_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
+<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ web_url }}" style="color: #FF6B00;">웹에서 보기</a> · <a href="{{ web_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
 {%- endif %}
 </table>
 </td></tr>
