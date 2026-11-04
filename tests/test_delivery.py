@@ -135,6 +135,7 @@ def test_test_send_gets_owner_token_and_unfolded_headers(
     current_issue, test_env, endpoint, fake_smtp, monkeypatch
 ):
     from newsletter.delivery.deliver import run_deliver
+    from newsletter.delivery.send import build_message
     from newsletter.delivery.unsubscribe import token
     from newsletter.stages.render import SITE_URL
 
@@ -156,8 +157,12 @@ def test_test_send_gets_owner_token_and_unfolded_headers(
     text = msg.get_body(preferencelist=("plain",)).get_content()
     assert f'href="{link}"' in html and "구독 해지" in html
     assert f"구독 해지: {link}" in text
-    assert _cte(msg, "html") == "base64"
-    assert _cte(msg, "plain") == "8bit"
+    # The policy clone runs after set_content, so body encodings match a message
+    # built from the same parts without the header.
+    plain = build_message(subject="s", sender_addr=OWNER, to=OWNER, text=text, html=html)
+    assert _cte(msg, "html") == _cte(plain, "html")
+    assert _cte(msg, "plain") == _cte(plain, "plain")
+    assert max(map(len, msg.as_bytes().splitlines())) <= 998
 
 
 def test_endpoint_without_token_secret_fails_before_smtp(

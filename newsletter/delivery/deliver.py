@@ -9,11 +9,12 @@ import logging
 import os
 
 from newsletter import store
+from newsletter.delivery import unsubscribe
 from newsletter.delivery.send import build_message, send_messages
 from newsletter.delivery.subscribers import DEFAULT_GREETING, display_name, parse_subscribers
 from newsletter.errors import DeliveryError
 from newsletter.schema import Issue
-from newsletter.stages.render import build_subject, render_html, render_text
+from newsletter.stages.render import SITE_URL, build_subject, render_html, render_text
 
 log = logging.getLogger(__name__)
 
@@ -33,14 +34,42 @@ def load_current_issue() -> Issue:
     return Issue.model_validate(store.read_json(store.week_dir(issue_id) / "issue.json"))
 
 
+def _token_secret() -> str | None:
+    """D-11: the HMAC secret, needed only once the endpoint exists. Never send a link
+    without a token (research: Secrets)."""
+    if unsubscribe.UNSUBSCRIBE_ENDPOINT is None:
+        return None
+    return _env("UNSUBSCRIBE_TOKEN_SECRET")
+
+
+def _unsubscribe_parts(
+    addr: str, user: str, secret: str | None
+) -> tuple[str | None, str | None, str]:
+    """(token, footer link, List-Unsubscribe value) for one address (D-11, D-14).
+
+    The mailto part uses SMTP_USER at runtime and is never hardcoded. With no endpoint
+    there is no token: mailto only and no footer link. None of these values is logged.
+    """
+    header = f"<mailto:{user}?subject=unsubscribe>"
+    endpoint = unsubscribe.UNSUBSCRIBE_ENDPOINT
+    if endpoint is None or secret is None:
+        return None, None, header
+    t = unsubscribe.token(addr, secret)
+    return t, f"{SITE_URL}unsubscribe/?t={t}", f"{header}, <{endpoint}?t={t}>"
+
+
 def _run_test(issue: Issue, user: str, password: str) -> dict:
     recipient = _env("TEST_RECIPIENT")
+    # The owner's own token, so the test send exercises the real flow; no list fetch.
+    t, link, header = _unsubscribe_parts(recipient, user, _token_secret())
     msg = build_message(
         subject=build_subject(issue, "test"),
         sender_addr=user,
         to=recipient,
-        text=render_text(issue, TEST_GREETING),
-        html=render_html(issue, TEST_GREETING),
+        text=render_text(issue, TEST_GREETING, unsubscribe_url=link),
+        html=render_html(issue, TEST_GREETING, unsubscribe_url=link),
+        list_unsubscribe=header,
+        one_click=t is not None,
     )
     sent = send_messages([msg], user=user, password=password)
     result = {"recipients": 1, "sent": sent}
