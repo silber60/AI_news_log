@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="{{ web_font_url }}">
 <style>
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; font-family: {{ font }}; color: #222222; background: #FFFFFF; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+body { margin: 0; overflow-wrap: break-word; word-break: keep-all; font-family: {{ font }}; color: #222222; background: #FFFFFF; line-height: 1.6; -webkit-text-size-adjust: 100%; }
 img { display: block; max-width: 100%; height: auto; }
 a { color: inherit; }
 h1, h2, h3, p, ol, ul { margin: 0; }
 .wrap { max-width: 1088px; margin: 0 auto; padding: 0 24px; }
-.row { display: grid; grid-template-columns: 544fr 440fr; gap: 56px; align-items: center; }
+.row { display: grid; grid-template-columns: minmax(0, 544fr) minmax(0, 440fr); gap: 56px; align-items: center; }
 .eyebrow { font-size: 13px; font-weight: 500; color: #FF6B00; }
 .link { font-size: 14px; font-weight: 700; color: #FF6B00; text-decoration: none; }
 .link:hover { text-decoration: underline; }
@@ -38,7 +38,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .footer a { display: inline-block; margin-top: 8px; color: #737373; }
 {% block style %}{% endblock %}
 @media (max-width: 767px) {
-  .row { grid-template-columns: 1fr; gap: 32px; }
+  .row { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .nav-links { gap: 12px; }
   .nav-links a.nav-cta { padding: 8px 12px; }
 }
