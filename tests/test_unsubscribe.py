@@ -55,9 +55,7 @@ def _client() -> httpx.Client:
 
 @respx.mock
 def test_fetch_follows_302_and_keeps_only_hex_ids():
-    post = respx.post(ENDPOINT).mock(
-        return_value=httpx.Response(302, headers={"Location": ECHO})
-    )
+    post = respx.post(ENDPOINT).mock(return_value=httpx.Response(302, headers={"Location": ECHO}))
     respx.get(ECHO).mock(
         return_value=httpx.Response(200, json={"version": 1, "ids": [VALID, "NOTHEX", 123]})
     )
@@ -144,7 +142,7 @@ def test_code_gs_carries_the_same_vector_and_scheme():
     assert "toLowerCase()" in src and "trim()" in src
     assert "& 0xff" in src
     assert f".slice(0, {TOKEN_LEN})" in src
-    assert "/^[0-9a-f]{%d}$/" % TOKEN_LEN in src
+    assert f"/^[0-9a-f]{{{TOKEN_LEN}}}$/" in src
 
 
 def test_code_gs_logs_only_the_selftest_line():
@@ -155,16 +153,24 @@ def test_code_gs_logs_only_the_selftest_line():
 
 def test_code_gs_get_never_writes():
     src = CODE_GS.read_text(encoding="utf-8")
-    body = re.search(r"function doGet\(e\) \{(.*?)\n\}", src, re.S).group(1)
+    body = re.search(r"function doGet\(e\) \{(.*?)\n\}", src, re.DOTALL).group(1)
     assert "record_" not in body and "appendRow" not in body
 
 
 def test_code_gs_holds_no_secrets_and_quotes_the_token():
     src = CODE_GS.read_text(encoding="utf-8")
-    assert re.search(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}", src) is None
+    # Only the reserved example.com test-vector address may appear.
+    found = re.findall(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}", src)
+    assert found and all(a.lower().endswith("@example.com") for a in found), found
+    header = src.split("const SHEET")[0]
     for name in ("SHEET_ID", "TOKEN_SECRET", "LIST_KEY"):
+        assert name in header
+    for name in ("SHEET_ID", "LIST_KEY"):
         assert f"prop_('{name}')" in src
-    assert ".unsubscribe(\"<?= t ?>\")" in src or ".unsubscribe('<?= t ?>')" in src
+    # The token reaches the script through a quoted attribute, never a JS-context scriptlet.
+    assert 'data-t="<?= t ?>"' in src
+    assert '.unsubscribe(b.getAttribute("data-t"))' in src
+    assert re.search(r"<script>[^<]*<\?=", src) is None
     assert "safeEq_(" in src and "LockService" in src and "matchEntireCell(true)" in src
     assert "postData.contents" in src
 
@@ -182,6 +188,7 @@ def test_brand_and_no_old_name():
 CODE_GS_SENTENCES = (
     "구독이 해지됐어요. 다음 주부터는 메일이 가지 않아요.",
     "링크가 올바르지 않아요.",
+    "잠시 후 다시 눌러 주세요.",
 )
 
 
