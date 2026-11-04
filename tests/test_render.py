@@ -187,7 +187,7 @@ def test_header_date_is_monday_after_week(issue_w44):
     out = render_html(issue_w44, "구독자님")
     assert "2026.11.02 월요일" in out
     assert "#멀티모달" in out
-    assert "AI 주간 해달 브리프" in out
+    assert "모닥로그 AI 리포트" in out
     assert "매주 월요일, 실무에 바로 쓸 AI 모델만 골라 드려요" in out
 
 
@@ -428,10 +428,11 @@ def _visible_text(out: str) -> str:
 # per-cell font stack, captured at 03-05 Task 1 (commit 4edc407) before the D-14 move.
 # A fixture or copy change moves these on purpose: re-check the text, then recompute.
 # Recomputed for schema v4 (어떻게 만들지 -> 어떻게 써 볼지; the only text change).
+# Recomputed for the brand rename (모닥로그 AI 리포트, 이번 주 리포트는; the only text change).
 PER_CELL_VISIBLE_SHA256 = {
-    "w44": "ceb2b473491a509db496d4f137002c3f453a4c0df222fa60f221fbe1d24c9d09",
-    "full": "810197b69d563a17e7128c00efafeb49f50d5be73feb6d91cf5dbd7a63b31bdb",
-    "worst": "d9c11e8acfd95a68dd15e4772f4276987a0ae790248c564dc49f568addff1036",
+    "w44": "9115c03a10e28ef4f52c73e1237c44bf76364916ddef4fdd57548a416a777a18",
+    "full": "7bcc507e82196918340c4f107f795b7506f1aa7e68301b68cb289f81575036a2",
+    "worst": "1a3c71198e025a9a7a11e5c4400097d0b16ff4729d9ae32a6793170b549c5569",
 }
 
 
@@ -807,7 +808,7 @@ def test_subject_test_prefix_only_in_test_mode(issue_w44):
 
 def test_subject_has_no_brand_prefix(issue_w44):
     for mode in ("test", "send", "preview"):
-        assert "[AI 주간 해달 브리프]" not in build_subject(issue_w44, mode)
+        assert "[모닥로그 AI 리포트]" not in build_subject(issue_w44, mode)
 
 
 def test_subject_has_no_line_breaks(issue_w44):
@@ -838,7 +839,7 @@ SECTION_TITLES = (
     "이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️",
     "AI 기술 쉽게 보기 🔍",
     "놓치기 아까운 4위부터 10위까지 👀",
-    "이번 주 브리프는 여기까지! 다음 주 월요일에 또 만나요 👋",
+    "이번 주 리포트는 여기까지! 다음 주 월요일에 또 만나요 👋",
 )
 INFO_LABELS = ("유형", "구조", "크기", "학습 데이터", "공개 범위")
 

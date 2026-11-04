@@ -11,19 +11,31 @@ canvas, so the background is keyed out with an exact-color border flood-fill,
 grown by one pixel to drop the anti-aliased fringe, and the result is saved as a quantized PNG with real alpha.
 
 Published files are immutable: an existing output is left alone unless
---force is given. Only use --force before the first push; new art goes to v2/.
+--force is given. Only use --force before the first push; new art goes to a new
+version directory.
+
+v2 (2026-11-04, brand 모닥로그 AI 리포트): the top banner is the Figma node
+34:711 "모닥로그_해달" export, resized to 1280x719. The other four files are
+byte-identical copies of v1. v1 stays published for emails already sent.
 """
 
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 SRC_DIR = Path(".planning/phases/01.1-newsletter-design-v2/figma-assets")
-OUT_DIR = Path("docs/assets/email/v1")
+V1_DIR = Path("docs/assets/email/v1")
+OUT_DIR = Path("docs/assets/email/v2")
+V2_BANNER_SRC = Path(
+    ".planning/phases/04-figma-design-email-template-web-archive/figma-assets/moalog-banner.png"
+)
+V1_COPIES = ("otter-wave.jpg", "otter-tool.png", "otter-magnifier.png", "otter-chalkboard.png")
+BANNER_SIZE = (1280, 719)  # 2x of the 640x359 slot
 
 CANVAS = (30, 30, 30)
 KEY = (255, 0, 255)
@@ -93,6 +105,8 @@ def _snap_alpha(a: int) -> int:
 
 def build_banner(src: Path, out: Path) -> None:
     im = Image.open(src).convert("RGBA")
+    if im.size != BANNER_SIZE:
+        im = im.resize(BANNER_SIZE, Image.Resampling.LANCZOS)
     flat = Image.new("RGB", im.size, "white")
     flat.paste(im, mask=im.getchannel("A"))
     flat.save(out, "JPEG", quality=JPEG_QUALITY, optimize=True, progressive=True)
@@ -103,24 +117,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true", help="rewrite existing outputs")
     args = parser.parse_args(argv)
 
-    if not SRC_DIR.is_dir():
-        print(f"missing source dir {SRC_DIR}", file=sys.stderr)
+    if not V2_BANNER_SRC.is_file() or not V1_DIR.is_dir():
+        print(f"missing {V2_BANNER_SRC} or {V1_DIR}", file=sys.stderr)
         return 1
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    jobs = [(name, out, None) for name, out in BANNERS.items()]
-    jobs += [(name, out, size) for name, (out, size) in OTTERS.items()]
-    for name, out_name, size in jobs:
-        src = SRC_DIR / name
-        out = OUT_DIR / out_name
+    banner = OUT_DIR / "otter-banner.jpg"
+    if banner.exists() and not args.force:
+        print("exists otter-banner.jpg")
+    else:
+        build_banner(V2_BANNER_SRC, banner)
+        print(f"wrote otter-banner.jpg {banner.stat().st_size}")
+    for name in V1_COPIES:
+        out = OUT_DIR / name
         if out.exists() and not args.force:
-            print(f"exists {out_name}")
+            print(f"exists {name}")
             continue
-        if size is None:
-            build_banner(src, out)
-        else:
-            build_otter(src, out, size)
-        print(f"wrote {out_name} {out.stat().st_size}")
+        shutil.copyfile(V1_DIR / name, out)
+        print(f"copied {name}")
     return 0
 
 

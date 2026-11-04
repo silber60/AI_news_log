@@ -1,1 +1,1 @@
-"""AI 주간 해달 브리프: weekly HF Papers Top 10 newsletter pipeline."""
+"""모닥로그 AI 리포트: weekly HF Papers Top 10 newsletter pipeline."""

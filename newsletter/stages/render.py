@@ -18,7 +18,7 @@ from newsletter.stages.highlight import SPACE_PREFIX
 from newsletter.stages.verdicts import EVIDENCE_HOSTS, POC_GATED_LABEL
 from newsletter.store import TEMPLATES_DIR
 
-BRAND = "AI 주간 해달 브리프"
+BRAND = "모닥로그 AI 리포트"
 # Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
 MAX_EMAIL_BYTES = 90 * 1024
 # Written on every presentation <table> (D-14, template-version 7), and cells inherit it,
@@ -31,8 +31,9 @@ WEB_FONT_URL = (
     "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap"
 )
 _INLINER = css_inline.CSSInliner(load_remote_stylesheets=False, keep_link_tags=True)
-# D-09: versioned, never-overwritten public asset directory (docs/assets/email/v1/).
-ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v1"
+# D-09: versioned, never-overwritten public asset directory. v2 (brand 모닥로그 AI 리포트)
+# swaps the top banner; v1 stays published for emails already sent.
+ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v2"
 # D-16: 웹에서 보기 / 지난 호 보기 stay hidden until the web archive exists (Phase 4).
 WEB_URL: str | None = None
 # Max hashtags in the header (research Assumption A9).

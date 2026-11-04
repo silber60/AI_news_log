@@ -1,11 +1,13 @@
-"""Guards for the published email assets in docs/assets/email/v1/."""
+"""Guards for the published email assets in docs/assets/email/v2/ (v1 kept for sent mail)."""
 
 from pathlib import Path
 
 import pytest
 from PIL import Image
 
-ASSET_DIR = Path(__file__).resolve().parent.parent / "docs" / "assets" / "email" / "v1"
+EMAIL_DIR = Path(__file__).resolve().parent.parent / "docs" / "assets" / "email"
+ASSET_DIR = EMAIL_DIR / "v2"
+V1_DIR = EMAIL_DIR / "v1"
 MAX_BYTES = 200 * 1024
 
 BANNERS = ("otter-banner.jpg", "otter-wave.jpg")
@@ -99,3 +101,19 @@ def test_otter_has_no_dark_halo(name):
     edge, dark = halo_stats(rgba)
     assert edge >= MIN_EDGE, "no opaque pixel touches the keyed area; the check would be vacuous"
     assert dark / edge < HALO_LIMIT
+
+
+def test_v1_stays_published_for_sent_mail():
+    # Emails already sent link to v1; it must never be removed.
+    assert {p.name for p in V1_DIR.iterdir()} == ALL_FILES
+
+
+@pytest.mark.parametrize("name", sorted(ALL_FILES - {"otter-banner.jpg"}))
+def test_v2_copies_match_v1(name):
+    assert (ASSET_DIR / name).read_bytes() == (V1_DIR / name).read_bytes()
+
+
+def test_v2_banner_is_the_new_art():
+    assert (ASSET_DIR / "otter-banner.jpg").read_bytes() != (
+        V1_DIR / "otter-banner.jpg"
+    ).read_bytes()
