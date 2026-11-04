@@ -1,28 +1,45 @@
-// 모닥로그 AI 리포트: unsubscribe web app (Phase 4). Phase 4.1 adds subscribe.
+// 모닥로그 AI 리포트: unsubscribe web app (Phase 4), plus subscribe, the member
+// list, the one-time import and the welcome mail (Phase 4.1).
 //
 // This file is public and holds no secrets. Everything private lives in the
-// script properties (프로젝트 설정 → 스크립트 속성):
-//   SHEET_ID      ID of the Sheet "모닥로그 AI 리포트 구독 관리"
-//   TOKEN_SECRET  same value as the GitHub Actions secret UNSUBSCRIBE_TOKEN_SECRET
-//   LIST_KEY      same value as the GitHub Actions secret UNSUBSCRIBE_LIST_KEY
+// script properties (프로젝트 설정 → 스크립트 속성), each paired with a GitHub
+// Actions secret of the same value:
+//   SHEET_ID       ID of the Sheet "모닥로그 AI 리포트 구독 관리" (no GitHub secret)
+//   TOKEN_SECRET   = UNSUBSCRIBE_TOKEN_SECRET (never change it: old links die)
+//   LIST_KEY       = UNSUBSCRIBE_LIST_KEY   (action=list: unsubscribed ids only)
+//   SEND_LIST_KEY  = SUBSCRIBER_LIST_KEY    (action=members: names and addresses)
+//   ADMIN_KEY      = SUBSCRIBE_ADMIN_KEY    (action=import: the one-time import)
 //
-// The Sheet stores only the 32-hex id, the time and how it came in. It never
-// stores an address. Nothing here logs ids, keys or addresses; the only log
-// line is the selfTest PASS/FAIL result.
+// The unsubscribes tab stores only the 32-hex id, the time and how it came in.
+// The subscribers tab holds name and address until the reader unsubscribes;
+// then the row is deleted and only the id stays in unsubscribes. Nothing here
+// logs ids, keys, names or addresses; the only log line is the selfTest result.
 //
 // GET never writes (mail scanners prefetch links). Only doPost or a button
 // press through google.script.run records an id.
 //
-// To change this script later: 배포 → 배포 관리 → 수정 → 버전: 새 버전.
-// Never 새 배포: it makes a new URL and breaks every sent email header.
+// The first deployment is the only 새 배포. To change this script later:
+// 배포 → 배포 관리 → 수정 → 버전: 새 버전. A second 새 배포 makes a new URL
+// and breaks every sent email header.
 
 const SHEET = 'unsubscribes';
 const TOKEN_RE = /^[0-9a-f]{32}$/;
 const SITE = 'https://silber60.github.io/AI_news_log/';
 const TITLE = '구독 해지 | 모닥로그 AI 리포트';
+const SUBS = 'subscribers';
+const SUBS_COLS = ['id', 'email', 'name', 'status', 'consent_at', 'consent_version', 'source', 'created_at', 'welcomed_at'];
+const CONSENT_VERSIONS = ['2026-11-04'];  // the privacy page 시행일; add, never remove
+const NAME_MAX = 40;
+const EMAIL_MAX = 254;
+const IMPORT_MAX = 25;
+// Full-match port of newsletter/delivery/subscribers.py _EMAIL_RE.
+const EMAIL_RE = /^[^@\s,;<>"']+@[^@\s,;<>"']+\.[^@\s,;<>"']+$/;
 
 function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k); }
 function sheet_() { return SpreadsheetApp.openById(prop_('SHEET_ID')).getSheetByName(SHEET); }
+function subsSheet_() {                 // null until setup() has made the tab
+  return SpreadsheetApp.openById(prop_('SHEET_ID')).getSheetByName(SUBS);
+}
 
 function doGet(e) {
   const t = String((e && e.parameter && e.parameter.t) || '').toLowerCase();
@@ -35,6 +52,9 @@ function doGet(e) {
 function doPost(e) {
   const p = params_(e);
   if (p.action === 'list') return list_(String(p.key || ''));
+  if (p.action === 'members') return members_(String(p.key || ''));
+  if (p.action === 'import') return import_(String(p.key || ''), String(p.rows || ''));
+  if (p.action === 'subscribe') return subscribe_(p);
   const t = String(p.t || '').toLowerCase();
   if (!TOKEN_RE.test(t)) return done_('링크가 올바르지 않아요.');
   record_(t, p['List-Unsubscribe'] === 'One-Click' ? 'one-click' : 'button');
@@ -77,9 +97,104 @@ function record_(t, via) {
     const sh = sheet_();
     const found = sh.getRange('A:A').createTextFinder(t).matchEntireCell(true).findNext();
     if (!found) sh.appendRow([t, new Date().toISOString(), via]);
+    const subs = subsSheet_();          // D-05: drop the name and address, keep the id
+    if (subs !== null) {
+      let row = find_(subs, t);
+      while (row) {
+        subs.deleteRow(row.getRow());
+        row = find_(subs, t);
+      }
+    }
   } finally {
     lock.releaseLock();
   }
+}
+
+function find_(sh, t) {                 // the row holding id t in column A, or null
+  return sh.getRange('A:A').createTextFinder(t).matchEntireCell(true).findNext();
+}
+
+function ids_(sh) {                     // the valid ids in column A below the header
+  const last = sh ? sh.getLastRow() : 0;
+  return last < 2 ? [] : sh.getRange(2, 1, last - 1, 1).getValues()
+      .map(function (r) { return String(r[0]); })
+      .filter(function (v) { return TOKEN_RE.test(v); });
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+      .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Trimmed, lowercased address, or null. A leading = + - @ is refused so no
+// cell starts like a formula.
+function normEmail_(raw) {
+  const e = String(raw || '').trim().toLowerCase();
+  if (!e || e.length > EMAIL_MAX || /^[=+\-@]/.test(e) || !EMAIL_RE.test(e)) return null;
+  return e;
+}
+
+// Control characters removed, leading = + - @ (and spaces) stripped, at most
+// NAME_MAX characters. May be ''.
+function normName_(raw) {
+  const n = String(raw || '').replace(/\p{C}/gu, '').replace(/^[=+\-@\s]+/, '');
+  return Array.from(n).slice(0, NAME_MAX).join('').trim();
+}
+
+// D-08: active rows whose id is not on the unsubscribe list. Behind SEND_LIST_KEY.
+function members_(key) {
+  const want = prop_('SEND_LIST_KEY') || '';
+  if (!want || !safeEq_(key, want)) return json_({ error: 'forbidden' });
+  const gone = {};
+  ids_(sheet_()).forEach(function (t) { gone[t] = true; });
+  const sh = subsSheet_();
+  const last = sh ? sh.getLastRow() : 0;
+  const rows = last < 2 ? [] : sh.getRange(2, 1, last - 1, SUBS_COLS.length).getValues();
+  const out = [];
+  rows.forEach(function (r) {
+    const t = String(r[0]);
+    if (!TOKEN_RE.test(t) || gone[t] || String(r[3]) !== 'active') return;
+    out.push({ email: String(r[1]), name: String(r[2]) });
+  });
+  return json_({ version: 1, subscribers: out });
+}
+
+// D-06: one-time import of the old list. Behind ADMIN_KEY, at most IMPORT_MAX
+// rows per call, no welcome mail. An earlier opt-out wins over the import.
+function import_(key, rowsJson) {
+  const want = prop_('ADMIN_KEY') || '';
+  if (!want || !safeEq_(key, want)) return json_({ error: 'forbidden' });
+  let rows;
+  try { rows = JSON.parse(rowsJson); } catch (err) { return json_({ error: 'bad_rows' }); }
+  if (!Array.isArray(rows)) return json_({ error: 'bad_rows' });
+  if (rows.length > IMPORT_MAX) return json_({ error: 'too_many' });
+  const secret = prop_('TOKEN_SECRET');
+  const n = { added: 0, existing: 0, unsubscribed: 0, skipped: 0 };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const un = sheet_();
+    const sh = subsSheet_();
+    rows.forEach(function (row) {
+      const email = normEmail_(row && row.email);
+      if (!email) { n.skipped++; return; }
+      const t = tokenFor_(email, secret);
+      if (find_(un, t)) { n.unsubscribed++; return; }
+      if (find_(sh, t)) { n.existing++; return; }
+      const now = new Date().toISOString();
+      sh.appendRow([t, email, normName_(row.name), 'active', now, 'import', 'import', now, '']);
+      n.added++;
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  return json_({ version: 1, added: n.added, existing: n.existing,
+                 unsubscribed: n.unsubscribed, skipped: n.skipped });
+}
+
+// Replaced in the next step by the real subscribe flow.
+function subscribe_(p) {
+  return json_({ ok: false, code: 'busy' });
 }
 
 function list_(key) {
@@ -127,6 +242,9 @@ function setup() {                       // owner runs once
   const sh = ss.getSheetByName(SHEET) || ss.insertSheet(SHEET);
   sh.getRange('A:A').setNumberFormat('@'); // keep ids as text ("123e45..." must not become a number)
   if (sh.getLastRow() === 0) sh.appendRow(['id', 'at', 'via']);
+  const subs = ss.getSheetByName(SUBS) || ss.insertSheet(SUBS);
+  subs.getRange('A:I').setNumberFormat('@');  // plain text: no formulas, no number ids
+  if (subs.getLastRow() === 0) subs.appendRow(SUBS_COLS);
 }
 
 function selfTest() {                    // owner runs once; must log PASS
