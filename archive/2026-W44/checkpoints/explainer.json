@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "issue_id": "2026-W44",
+  "stage": "explainer",
+  "data": {
+    "topic": "Agent harness: LLM을 일하게 하는 실행 틀",
+    "body_ko": "LLM에게 도구와 작업 순서, 평가 방식을 묶어 건네는 실행 틀이에요. RoboHarness는 coding agent에게 시각-기하 제어 패널을 줘서 action head를 붙인 VLA 없이 로봇을 조작해요. VibeGame은 구현 에이전트와 리뷰 에이전트를 나눠 돌려 게임의 문제를 찾아 고쳐요. RSIHub는 실행과 평가를 수정 대상 밖에 분리해서 agent-evolution 방법을 같은 환경에서 비교해요.",
+    "related_ranks": [
+      6,
+      7,
+      8
+    ],
+    "point_ko": "모델은 그대로 두고 일하는 틀을 바꿀 수 있어요.",
+    "example_ko": "신입 사원에게 업무 매뉴얼과 도구, 검수해 줄 동료를 함께 붙여 주면 같은 사람도 일을 더 잘 해내요. harness는 에이전트에게 주는 그런 업무 환경이에요.",
+    "image": {
+      "url": "https://arxiv.org/html/2610.33106v1/fig/teaser_v2.jpg",
+      "width": 576,
+      "height": 221
+    }
+  }
+}

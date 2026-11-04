@@ -1,0 +1,423 @@
+{
+  "issue_id": "2026-W44",
+  "count": 10,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2610.35518",
+      "upvotes": 18,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-27T00:00:00+00:00",
+      "github_stars": 5222,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.35518",
+          "title": "S3AC: Stabilized, Selective, and Scalable Actor-Critic for LLM Reasoning",
+          "summary": "Critic-free methods are widely used in reinforcement learning with verifiable rewards (RLVR) for long chain-of-thought (CoT) reasoning, avoiding difficult and costly critic training. Common alternatives lack token-level credit assignment and typically rely on grouped rollouts to estimate prompt-specific baselines. A critic can address both limitations, but long-CoT critic training is hindered by insufficient coverage of trajectories with diverse lengths and early gradients dominated by the newly initialized value head. We introduce S3AC (Stabilized, Selective, and Scalable Actor-Critic) for LLM reasoning, built around a practical critic-training recipe. The trained critic provides token-specific advantages and prompt-specific baselines. Using the prompt-level baseline to estimate difficulty, we propose Difficulty-Aware Prompt Sampling (DAPS). DAPS combines this estimate with outcome history to select prompts before generation, reducing rollout waste without offline difficulty initialization. S3AC improves group-rollout performance across dense and mixture-of-experts models from 1.5B to 397B parameters, outperforming a modern GRPO variant (GRPO-X). At 35B, it sustains single-rollout training while tested critic-free baselines deteriorate after initial gains.",
+          "upvotes": 18,
+          "publishedAt": "2026-10-26T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+          "ai_summary": "S3AC introduces a stabilized actor-critic training method with difficulty-aware prompt sampling to improve long reasoning in large language models without relying on grouped rollouts.",
+          "ai_keywords": [
+            "reinforcement learning with verifiable rewards",
+            "chain-of-thought reasoning",
+            "actor-critic",
+            "token-level credit assignment",
+            "value head",
+            "Difficulty-Aware Prompt Sampling",
+            "mixture-of-experts",
+            "GRPO"
+          ],
+          "githubRepo": "https://github.com/InternLM/xtuner",
+          "githubStars": 5222
+        },
+        "title": "S3AC: Stabilized, Selective, and Scalable Actor-Critic for LLM Reasoning",
+        "numComments": 2,
+        "organization": {
+          "name": "Shanghai-AI-Laboratory",
+          "fullname": "Shanghai AI Laboratory"
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2610.40599",
+      "upvotes": 31,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-30T00:00:00+00:00",
+      "github_stars": 786,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.40599",
+          "title": "HairDeck: Animation-Ready Stylized Hair Cards from a Single Image",
+          "summary": "The hair of stylized characters in games and avatars is built from hair cards: artist-placed ribbons whose geometry is the visible hair, animated by spring bones. Existing image-based methods produce realistic hair or a single fused mesh, while CHARM, the only generator of stylized hair cards, decodes a hairstyle autoregressively as a long sequence of control points. Observing that a card hairstyle is an unordered set of artist-defined primitives, we propose HairDeck, which generates it as one: each card is a single token, and a set diffusion transformer denoises all cards together. From a single image, HairDeck generates the cards and the spring-bone chains that drive them, yielding an animatable asset that exports to ready-to-use downstream formats. On CHARM's own test set, it lowers Chamfer distance by 44% and card-orientation error by more than half while running 33 times faster, and from single images it outperforms CHARM, image-to-3D pipelines and strand-based methods. Project page: https://hyzcluster.github.io/HairDeck",
+          "upvotes": 31,
+          "publishedAt": "2026-10-29T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-30T00:00:00.000Z",
+          "ai_summary": "HairDeck generates stylized hair cards and spring-bone animations as unordered token sets using a diffusion transformer, improving accuracy and speed over prior methods.",
+          "ai_keywords": [
+            "hair cards",
+            "spring bones",
+            "set diffusion transformer",
+            "control points",
+            "Chamfer distance",
+            "card-orientation error",
+            "image-to-3D"
+          ],
+          "githubRepo": "https://github.com/hyz317/HairDeck",
+          "githubStars": 786,
+          "projectPage": "https://hyzcluster.github.io/HairDeck/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/64c903957b4d0d947ce86bc6/_48fUB0tHL8KYiDdyg12X.mp4"
+          ]
+        },
+        "title": "HairDeck: Animation-Ready Stylized Hair Cards from a Single Image",
+        "numComments": 2,
+        "organization": {
+          "name": "Tsinghua",
+          "fullname": "Tsinghua University"
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2610.36729",
+      "upvotes": 112,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-28T00:00:00+00:00",
+      "github_stars": 478,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.36729",
+          "title": "Hy-Nomas: Towards Free-form Interactive World Generation",
+          "summary": "Interactive world generation requires models to follow successive commands while preserving relevant history and action consequences. We present Hy-Nomas, a video world model with an 8B diffusion backbone that supports free-form text instructions and continuous camera control across multiple interaction turns. It generates variable-length segments conditioned on current inputs and cached history. Our central design aligns structured video captions with action-aware causal attention: descriptive context remains accessible across segments, while action instructions are restricted to their intended temporal windows. A vision-language Prompt Enhancer (PE) translates user requests and multimodal interaction histories into structured conditions for the next segment. A multi-stage curriculum progressively introduces causal generation, text interaction, camera control, and training on model-generated histories, followed by diffusion distillation. In human evaluation, Hy-Nomas shows superior performance over existing world models. We release model weights, code and benchmarks, together with a lightweight adaptation workflow, to support reproducible research on interactive world generation.",
+          "upvotes": 112,
+          "publishedAt": "2026-10-27T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-28T00:00:00.000Z",
+          "ai_summary": "Hy-Nomas is a video world model that uses causal attention and structured conditioning to generate interactive, multi-turn video segments with text and camera control.",
+          "ai_keywords": [
+            "video world model",
+            "diffusion backbone",
+            "causal attention",
+            "vision-language Prompt Enhancer",
+            "curriculum learning",
+            "diffusion distillation",
+            "interactive world generation"
+          ],
+          "githubRepo": "https://github.com/Tencent-Hunyuan/Hy-Nomas",
+          "githubStars": 478,
+          "projectPage": "https://hy-nomas.hy.tencent.com/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/63d34004b734eaa4d4faeccf/lOBvI5ytl4xxTPiMTwOCy.mp4"
+          ]
+        },
+        "title": "Hy-Nomas: Towards Free-form Interactive World Generation",
+        "numComments": 2,
+        "organization": {
+          "name": "Tencent-Hunyuan",
+          "fullname": "Tencent Hunyuan"
+        }
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.30006",
+      "upvotes": 13,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-26T00:00:00+00:00",
+      "github_stars": 411,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.30006",
+          "title": "Building Auditable AI Text Detectors with Sparse Autoencoders",
+          "summary": "AI-generated text detectors are increasingly deployed in consequential settings---peer review, education, admissions, journalism, and content moderation---where their outputs directly affect individuals. Yet the strongest detectors are fine-tuned neural classifiers whose decisions are opaque, while transparent alternatives (stylometric and linguistic-feature classifiers) underperform them by wide margins. We present a pipeline that converts a fine-tuned neural detector into a classifier that operates on human-readable concepts. We accomplish this by training sparse autoencoders (SAEs) directly on a detector's residual stream, assigning auto-interpretation labels to each SAE feature, and retaining only features whose generated descriptions pass a global fidelity threshold. We then train a lightweight classifier on just the interpretable features. We find that our SAEs recover latent concepts that correspond to highly specific and predictive linguistic \"tells\" of AI-generated text. Classifiers built on these extracted features are not only highly interpretable but exhibit stronger performance on out-of-distribution texts than either neural or stylometric alternatives.",
+          "upvotes": 13,
+          "publishedAt": "2026-10-21T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-26T00:00:00.000Z",
+          "ai_summary": "A pipeline using sparse autoencoders extracts interpretable linguistic features from neural detectors, yielding more accurate and explainable AI-generated text classification.",
+          "ai_keywords": [
+            "sparse autoencoders",
+            "residual stream",
+            "auto-interpretation",
+            "fidelity threshold",
+            "interpretable features",
+            "out-of-distribution"
+          ],
+          "githubRepo": "https://github.com/google-deepmind/detectorscope",
+          "githubStars": 411,
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/6509e1e01b3694179dee256e/NQXLe55w6swINgajDUUP4.gif"
+          ]
+        },
+        "title": "Building Auditable AI Text Detectors with Sparse Autoencoders",
+        "numComments": 2,
+        "organization": {
+          "name": "GoogleDeepMind",
+          "fullname": "GoogleDeepMind"
+        }
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2610.31635",
+      "upvotes": 24,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-27T00:00:00+00:00",
+      "github_stars": 402,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.31635",
+          "title": "HiP3R: Hierarchical Pose Graphs for Long-Horizon 3D Reconstruction",
+          "summary": "Feed-forward models accurately estimate camera motion and 3D geometry from short video windows. However, computational and memory costs prevent direct inference on sequences containing thousands of frames. Long videos must therefore be processed as overlapping chunks. This division produces independent local reconstructions with inconsistent coordinate frames and duplicate estimates of shared cameras. Achieving global consistency requires propagating constraints from adjacent overlaps and distant revisits across the sequence. This requirement naturally motivates pose graph optimization. However, the choice of graph level creates a trade-off. Chunk-level graphs efficiently resolve scale drift and close large loops. Yet, their rigid transformations cannot correct internal errors or conflicting frame predictions. Conversely, frame-level optimization offers local flexibility, but scaling it globally is computationally expensive and can break metric scale. HiP3R resolves this trade-off using a hierarchical pose graph. HiP3R first optimizes a robust chunk-level Sim(3) graph to establish the global layout and scale. It then holds this layout fixed and estimates one shared SE(3) camera per frame, turning overlapping window predictions into a single trajectory. Experiments across multiple benchmarks demonstrate the effectiveness of HiP3R in improving camera trajectories and 3D reconstruction. Our method applies to both chunk-based and streaming backends without additional training or fine-tuning. The codes are available at https://kkakkkka.github.io/HiP3R.",
+          "upvotes": 24,
+          "publishedAt": "2026-10-22T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+          "ai_summary": "HiP3R uses a hierarchical pose graph to merge local video reconstructions into globally consistent camera trajectories and 3D geometry without retraining.",
+          "ai_keywords": [
+            "feed-forward models",
+            "camera motion",
+            "3D geometry",
+            "pose graph optimization",
+            "Sim(3)",
+            "SE(3)",
+            "chunk-level graph",
+            "frame-level optimization",
+            "hierarchical pose graph",
+            "HiP3R"
+          ],
+          "githubRepo": "https://github.com/HiP3Rs/HiP3R",
+          "githubStars": 402,
+          "projectPage": "https://kkakkkka.github.io/HiP3R/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/6481523b3fb124fc9850afed/YudKZx5QZ6VmT-d2QVlXv.mp4"
+          ]
+        },
+        "title": "HiP3R: Hierarchical Pose Graphs for Long-Horizon 3D Reconstruction",
+        "numComments": 2,
+        "organization": {
+          "name": "nanyang-technological-university-singapore",
+          "fullname": "Nanyang Technological University Singapore"
+        }
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2610.33106",
+      "upvotes": 25,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-30T00:00:00+00:00",
+      "github_stars": 358,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.33106",
+          "title": "VibeGame: Prompt-to-Game Development with AI-Native Engine and Self-Evolving Adversarial Agent Team",
+          "summary": "Large language model agents have enabled software development through natural-language interaction, but extending this paradigm to end-to-end game development remains challenging. Building a playable game requires coordinating code, scenes, assets, animations, physics, and configurations, while allowing developers to validate their integrated behavior through interactive testing. We introduce VibeGame, a framework for creating complete 2D game projects from natural-language prompts and optional reference images. Its AI-native game engine represents project state as schema-validated structured text and provides frame-synchronous runtime control, enabling agents to inspect game states, execute actions, and verify behavior at their own pace. Built upon this interface, we design an Adversarial Agent Team of eight specialized agents to separate implementation from review, so that problems are found and fixed through multi-round loops. For each conducted and accepted project, we further introduce a training-free self-evolution mechanism to distill it into reusable skeletons, modules, and collaboration contracts for future development. We evaluate prompt-assets-to-game (PA2G), where agents are given an asset library, and prompt-to-game (P2G), where agents generate their own art. On a GameCraft-Bench subset, VibeGame in P2G consistently outperforms a range of agent harnesses in either P2G or PA2G with the same underlying model, including GPT-6.1-Sol.",
+          "upvotes": 25,
+          "publishedAt": "2026-10-22T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-30T00:00:00.000Z",
+          "ai_summary": "VibeGame is a framework that uses specialized adversarial agents and an AI-native engine to build complete 2D games from natural-language prompts with interactive validation and self-evolving reusable components.",
+          "ai_keywords": [
+            "large language model agents",
+            "adversarial agent team",
+            "AI-native game engine",
+            "schema-validated structured text",
+            "frame-synchronous runtime control",
+            "self-evolution mechanism",
+            "skeletons",
+            "modules",
+            "collaboration contracts",
+            "PA2G",
+            "P2G"
+          ],
+          "githubRepo": "https://github.com/tettethu/VibeGame",
+          "githubStars": 358,
+          "projectPage": "https://vibegame.tettet.org",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/6754f9eea4b0a4a71aeed438/OzwrI14ADhCGtWx7Uw--5.mp4"
+          ]
+        },
+        "title": "VibeGame: Prompt-to-Game Development with AI-Native Engine and Self-Evolving Adversarial Agent Team",
+        "numComments": 2,
+        "organization": {
+          "name": "nanjinguniv",
+          "fullname": "Nanjing University"
+        }
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2610.32253",
+      "upvotes": 42,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-26T00:00:00+00:00",
+      "github_stars": 320,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.32253",
+          "title": "RSIHub: A Composable Framework for Agent-Evolution Methods",
+          "summary": "Agent-evolution methods use execution feedback to improve prompts, skills, tools, and orchestration, but their implementations often rebuild the same experimental machinery. We present RSIHub, an open-source framework for building, comparing, and extending these methods on shared infrastructure. Recipes compose reusable operators and declare mutable resources; RSIHub supplies execution, evaluation, recovery, and lineage. Researchers can focus on evolution policy while evaluation stays outside the mutable surface and results remain tied to candidates and evaluation conditions. We instantiate AHE, Hyperagents, A-Evolve, and GEPA without modifying the framework core, keeping method-specific logic in recipes and operators. We evaluate them with MiniSWE and Codex on Terminal Bench 2 and τ^3 Banking under fixed model and evaluator configurations. The largest observed overall pass@1 gain is 13.5 percentage points, while method rankings vary across settings and optimization gains do not always transfer to held-out tasks. RSIHub provides a common protocol for comparing evolution policies, inspectable candidate histories, and reusable components for developing new methods.",
+          "upvotes": 42,
+          "publishedAt": "2026-10-23T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-26T00:00:00.000Z",
+          "ai_summary": "RSIHub is an open-source framework that standardizes agent-evolution research by providing shared infrastructure for building, comparing, and extending methods with reusable components and consistent evaluation.",
+          "ai_keywords": [
+            "agent-evolution",
+            "execution feedback",
+            "prompts",
+            "skills",
+            "tools",
+            "orchestration",
+            "RSIHub",
+            "recipes",
+            "operators",
+            "mutable resources",
+            "lineage",
+            "AHE",
+            "Hyperagents",
+            "A-Evolve",
+            "GEPA",
+            "MiniSWE",
+            "Codex",
+            "Terminal Bench 2",
+            "pass@1"
+          ],
+          "githubRepo": "https://github.com/simple-agent-lab/RSIHub",
+          "githubStars": 320,
+          "projectPage": "https://simpleagentlab.com/rsihub"
+        },
+        "title": "RSIHub: A Composable Framework for Agent-Evolution Methods",
+        "numComments": 2,
+        "organization": {
+          "name": "ByteDance",
+          "fullname": "ByteDance"
+        }
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2610.14018",
+      "upvotes": 5,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-27T00:00:00+00:00",
+      "github_stars": 288,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.14018",
+          "title": "RoboHarness: A Simple Harness Outperforms VLA and World Action Models",
+          "summary": "The rise of large language models (LLMs) has opened a path toward generalist embodied AI, raising the question of how LLMs can act in the physical world. One straightforward approach is training the model to generate actions: collect robot-action data and video demonstration, refine LLM architecture with an action head, and train a vision-language-action (VLA) model at scale. However, we argue that coding agents have the potential to realize generalist embodied manipulation. All they need is a simple yet effective robot harness. We present RoboHarness: a robotic harness that gives LLM agents a visual-geometric control panel so that they can directly understand and invoke embodied tasks. With RoboHarness, Qwen3.8-Flash-Next outperforms state-of-the-art VLA models on BEHAVIOR Challenge 2025 tasks. The implementation is open source.",
+          "upvotes": 5,
+          "publishedAt": "2026-10-16T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+          "ai_summary": "RoboHarness enables LLM agents to perform embodied manipulation via a visual-geometric control interface, surpassing specialized vision-language-action models on robotics benchmarks.",
+          "ai_keywords": [
+            "large language models",
+            "vision-language-action",
+            "VLA",
+            "coding agents",
+            "RoboHarness",
+            "visual-geometric control",
+            "embodied manipulation"
+          ],
+          "githubRepo": "https://github.com/BinceQu/RoboHarness",
+          "githubStars": 288,
+          "projectPage": "https://bincequ.github.io/RoboHarness/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/68a56b4d340f26c20552d998/wPG5QxHbaKVKrtjUZqcPu.mp4"
+          ]
+        },
+        "title": "RoboHarness: A Simple Harness Outperforms VLA and World Action Models",
+        "numComments": 2,
+        "organization": {
+          "name": "zju",
+          "fullname": "Zhejiang University"
+        }
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.33005",
+      "upvotes": 6,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-10-27T00:00:00+00:00",
+      "github_stars": 248,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.33005",
+          "title": "OpenESM: Energy-Steered Models Are Scalable Foundation Learners",
+          "summary": "Energy-based models have shown promising properties for domain-specific tasks but remain challenging in modeling general-purpose scenarios. To bridge this gap, we design energy-steered models (ESMs) for foundational language modeling. ESMs integrate energy steering and token generation within a single architecture to leverage the energy-guided search to refine token generation. Specifically, ESMs first optimize a latent state over the energy landscape, then leverages the refined latent state for token generation. By performing such energy-guided pre-training on large-scale corpora, ESMs learn generally effective energy landscape where favorable tokens correspond to lower energy values. To explore the scaling behavior of ESMs, we pre-train ESMs on three large-scale corpora, then evaluate across 26 downstream tasks spanning a broad range of domains. Our results demonstrate that ESMs have promising scaling behaviors with increasing model size and training data, and outperform GPTs on most downstream tasks. These findings highlight ESMs as a promising architecture for large-scale pre-training and general purpose problem solving. We fully release the model weights and training infrastructure to enable the community to completely reproduce and extend our results.\n  GitHub: https://github.com/datamllab/openesm HuggingFace: https://huggingface.co/collections/guan-wang/openesm",
+          "upvotes": 6,
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-27T00:00:00.000Z",
+          "ai_summary": "Energy-steered models integrate energy-guided latent optimization with token generation to improve foundational language modeling and scale effectively across diverse tasks.",
+          "ai_keywords": [
+            "energy-based models",
+            "energy-steered models",
+            "energy landscape",
+            "latent state",
+            "energy-guided pre-training",
+            "scaling behavior"
+          ],
+          "githubRepo": "https://github.com/datamllab/OpenEBFM",
+          "githubStars": 248,
+          "projectPage": "https://huggingface.co/collections/guan-wang/openebfm"
+        },
+        "title": "OpenESM: Energy-Steered Models Are Scalable Foundation Learners",
+        "numComments": 2,
+        "organization": {
+          "name": "Shanghai-AI-Laboratory",
+          "fullname": "Shanghai AI Laboratory"
+        }
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "2610.39633",
+      "upvotes": 28,
+      "numComments": 4,
+      "submittedOnDailyAt": "2026-10-30T00:00:00+00:00",
+      "github_stars": 239,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.39633",
+          "title": "Intrinsic Distribution Matching",
+          "summary": "One-step and few-step text-to-image generation must accurately render the details specified in the prompt despite limited opportunities for refinement. Distribution matching distillation (DMD) uses score differences to bring the generated distribution closer to a reference distribution. Following prior work, we estimate this difference with internal velocity branches, avoiding a separate fake-score network. We ask whether an explicit moment constraint improves this learned score supervision. A decomposition of the reverse-KL field into a Gaussian moment component and a non-Gaussian residual identifies statistics that can be constrained explicitly. We introduce Intrinsic Distribution Matching (IDM), which retains the full DMD correction and matches feature means and per-coordinate standard deviations using the generator's exponential-moving-average (EMA) copy, requiring no external feature encoder. Experiments use full-parameter and low-rank adaptation (LoRA) tuning on Z-Image-Turbo 6B and Qwen-Image 20B. At two network evaluations, IDM reaches 94.25% and 90.20% on Chinese and English LongText-Bench, the highest scores among the compared methods at this budget. Controlled ablations show gains from the added moment loss, while generator EMA features perform competitively with an external DINOv2 encoder across the five reported metrics. Code is available at https://github.com/inclusionAI/IDM.",
+          "upvotes": 28,
+          "publishedAt": "2026-10-29T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-10-30T00:00:00.000Z",
+          "ai_summary": "Intrinsic Distribution Matching improves few-step text-to-image generation by adding explicit moment constraints to distribution matching distillation, achieving state-of-the-art long-text rendering with minimal network evaluations.",
+          "ai_keywords": [
+            "Distribution Matching Distillation",
+            "score differences",
+            "internal velocity branches",
+            "reverse-KL",
+            "Gaussian moment",
+            "non-Gaussian residual",
+            "Intrinsic Distribution Matching",
+            "exponential-moving-average",
+            "LoRA",
+            "LongText-Bench"
+          ],
+          "githubRepo": "https://github.com/inclusionAI/IDM",
+          "githubStars": 239,
+          "projectPage": "https://www.inclusion-ai.org/IDM/?lang=zh"
+        },
+        "title": "Intrinsic Distribution Matching",
+        "numComments": 4,
+        "organization": {
+          "name": "inclusionAI",
+          "fullname": "inclusionAI"
+        }
+      }
+    }
+  ]
+}

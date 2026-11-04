@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "issue_id": "2026-W44",
+  "stage": "highlight",
+  "data": [
+    {
+      "rank": 2,
+      "tag": "데모",
+      "why_ko": "이미지 한 장으로 게임 캐릭터용 헤어 카드와 흔들림 뼈대를 받아 볼 수 있어요.",
+      "how_ko": "데모에 머리카락이 잘 보이는 캐릭터 이미지를 올려 헤어 카드가 어떻게 나오는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/hyz317/HairDeck"
+    },
+    {
+      "rank": 3,
+      "tag": "데모",
+      "why_ko": "텍스트와 카메라 조작을 주고받으며 영상 세계를 이어서 만들어 볼 수 있어요.",
+      "how_ko": "데모에 장면 설명을 넣고 카메라 방향을 바꿔 가며 다음 구간이 어떻게 이어지는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/tencent/hy-nomas"
+    },
+    {
+      "rank": 10,
+      "tag": "데모",
+      "why_ko": "한두 번의 계산만으로 글자가 들어간 이미지를 만들어 볼 수 있어요.",
+      "how_ko": "데모에 간판이나 포스터 문구가 들어간 프롬프트를 넣어 글자가 맞게 나오는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/akhaliq/fibo2-edit-idm-demo"
+    }
+  ]
+}

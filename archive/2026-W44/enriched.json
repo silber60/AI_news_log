@@ -1,0 +1,320 @@
+{
+  "issue_id": "2026-W44",
+  "count": 10,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2610.35518",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/InternLM/xtuner/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/InternLM/xtuner/blob/main/LICENSE",
+        "https://github.com/InternLM/xtuner"
+      ]
+    },
+    {
+      "rank": 2,
+      "paper_id": "2610.40599",
+      "model_id": "hyz317/HairDeck",
+      "linked_models": [
+        {
+          "id": "hyz317/HairDeck",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "hyz317/HairDeck"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/hyz317/HairDeck/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/hyz317/HairDeck",
+        "https://huggingface.co/spaces/hyz317/HairDeck",
+        "https://github.com/hyz317/HairDeck/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 3,
+      "paper_id": "2610.36729",
+      "model_id": "tencent/Hy-Nomas",
+      "linked_models": [
+        {
+          "id": "tencent/Hy-Nomas",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "tencent/hy-nomas",
+        "akhaliq/tencent-hy-nomas",
+        "hugging-apps/tencent-hy-nomas"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/tencent/Hy-Nomas",
+        "https://huggingface.co/spaces/tencent/hy-nomas",
+        "https://github.com/Tencent-Hunyuan/Hy-Nomas/blob/main/LICENSE",
+        "https://huggingface.co/tencent/Hy-Nomas/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.30006",
+      "model_id": "liamdugan/detector-scope",
+      "linked_models": [
+        {
+          "id": "liamdugan/detector-scope",
+          "gated": false
+        },
+        {
+          "id": "liamdugan/detector-scope-peer-review-gpt4o",
+          "gated": false
+        },
+        {
+          "id": "liamdugan/detector-scope-peer-review-llama",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "liamdugan/detector-scope-demo",
+        "umair1ali2/detector-scope-demo"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "gemma",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 302130176,
+        "parameters": {
+          "F32": 302130176
+        }
+      },
+      "base_model_tags": [
+        "base_model:google/gemma-2-2b",
+        "base_model:finetune:google/gemma-2-2b"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/liamdugan/detector-scope",
+        "https://huggingface.co/spaces/liamdugan/detector-scope-demo",
+        "https://github.com/google-deepmind/detectorscope/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 5,
+      "paper_id": "2610.31635",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/HiP3Rs/HiP3R/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/HiP3Rs/HiP3R/blob/main/LICENSE",
+        "https://github.com/HiP3Rs/HiP3R"
+      ]
+    },
+    {
+      "rank": 6,
+      "paper_id": "2610.33106",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/tettethu/VibeGame/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/tettethu/VibeGame/blob/main/LICENSE",
+        "https://github.com/tettethu/VibeGame"
+      ]
+    },
+    {
+      "rank": 7,
+      "paper_id": "2610.32253",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/simple-agent-lab/RSIHub/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/simple-agent-lab/RSIHub/blob/main/LICENSE",
+        "https://github.com/simple-agent-lab/RSIHub"
+      ]
+    },
+    {
+      "rank": 8,
+      "paper_id": "2610.14018",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/BinceQu/RoboHarness/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/BinceQu/RoboHarness/blob/main/LICENSE",
+        "https://github.com/BinceQu/RoboHarness"
+      ]
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.33005",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/datamllab/OpenEBFM/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/datamllab/OpenEBFM/blob/main/LICENSE",
+        "https://github.com/datamllab/OpenEBFM"
+      ]
+    },
+    {
+      "rank": 10,
+      "paper_id": "2610.39633",
+      "model_id": "akhaliq/Fibo-2.0-edit-IDM-2steps",
+      "linked_models": [
+        {
+          "id": "akhaliq/MOSS-Image-IDM-2-Steps",
+          "gated": false
+        },
+        {
+          "id": "akhaliq/Fibo-2.0-edit-IDM-2steps",
+          "gated": false
+        },
+        {
+          "id": "akhaliq/Fibo-2.0-edit-IDM-1step",
+          "gated": false
+        },
+        {
+          "id": "NidAll/Fibo-2.0-edit-IDM-2steps-ComfyUI",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "akhaliq/fibo2-edit-idm-demo",
+        "akhaliq/moss-image-2steps"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "bria-fibo",
+        "license_link": "https://creativecommons.org/licenses/by-nc/4.0/deed.en"
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:briaai/Fibo-2.0-edit-turbo",
+        "base_model:adapter:briaai/Fibo-2.0-edit-turbo"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/inclusionAI/IDM/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/akhaliq/Fibo-2.0-edit-IDM-2steps",
+        "https://huggingface.co/spaces/akhaliq/fibo2-edit-idm-demo",
+        "https://github.com/inclusionAI/IDM/blob/main/LICENSE"
+      ]
+    }
+  ]
+}
