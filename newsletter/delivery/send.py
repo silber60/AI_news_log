@@ -15,7 +15,7 @@ import logging
 import smtplib
 import ssl
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from email.message import EmailMessage
 from email.utils import formataddr, formatdate, make_msgid
 
@@ -77,8 +77,17 @@ def build_text_message(*, subject: str, sender_addr: str, to: str, text: str) ->
     return msg
 
 
-def send_messages(messages: Iterable[EmailMessage], *, password: str, pause: float = 0.0) -> int:
+def send_messages(
+    messages: Iterable[EmailMessage],
+    *,
+    password: str,
+    pause: float = 0.0,
+    on_sent: Callable[[int], None] | None = None,
+) -> int:
     """Send all messages over one SMTP_SSL connection.
+
+    on_sent(i) runs right after message i went out, so the caller can record it
+    (05-03 send ledger) before the next message or a failure.
 
     SMTP and socket errors are re-raised as DeliveryError carrying only the class
     name and SMTP code. Their text can hold recipient or sender addresses, so the
@@ -95,6 +104,8 @@ def send_messages(messages: Iterable[EmailMessage], *, password: str, pause: flo
                     time.sleep(pause)
                 smtp.send_message(msg)
                 sent += 1
+                if on_sent is not None:
+                    on_sent(i)
     except (smtplib.SMTPException, OSError) as e:
         failure = (type(e).__name__, getattr(e, "smtp_code", None))
     if failure is not None:

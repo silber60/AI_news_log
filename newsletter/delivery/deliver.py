@@ -5,15 +5,16 @@ personalized message per subscriber, skipping anyone whose unsubscribe token is
 on the Apps Script list (D-13). The subscribers come from the live Sheet list
 (Apps Script action=members with SUBSCRIBER_LIST_KEY, D-08) once
 UNSUBSCRIBE_ENDPOINT is set, and from the SUBSCRIBERS_CSV secret while it is None
-(the transition until 04.1-06). Logs carry counts only, never addresses, names,
-tokens or keys (DLVR-06).
+(the transition until 04.1-06). Readers already in that week's send ledger are
+skipped, and each successful message is added to the ledger at once (DLVR-05).
+Logs carry counts only, never addresses, names, tokens or keys (DLVR-06).
 """
 
 import logging
 import os
 from datetime import datetime
 
-from newsletter import store, week
+from newsletter import ledger, store, week
 from newsletter.delivery import members, unsubscribe
 from newsletter.delivery.send import build_message, send_messages
 from newsletter.delivery.subscribers import DEFAULT_GREETING, display_name, parse_subscribers
@@ -84,6 +85,9 @@ def _run_test(issue: Issue, user: str, password: str) -> dict:
 
 def _run_send(issue: Issue, user: str, password: str) -> dict:
     subject = build_subject(issue, "send")  # D-03: no prefix
+    # DLVR-05: the ledger key needs the secret even without an endpoint; read it before
+    # any list fetch or SMTP connection (fail closed).
+    ledger_secret = _env("UNSUBSCRIBE_TOKEN_SECRET")
     secret = _token_secret()
     gone: set[str] = set()
     endpoint = unsubscribe.UNSUBSCRIBE_ENDPOINT
@@ -97,13 +101,21 @@ def _run_send(issue: Issue, user: str, password: str) -> dict:
         unsub_key = _env("UNSUBSCRIBE_LIST_KEY")
         subscribers, skipped = members.fetch_subscribers(endpoint, list_key)
         gone = unsubscribe.fetch_unsubscribed(endpoint, unsub_key)
+    done = ledger.load(issue.issue_id)
     messages = []
+    keys: list[str] = []
     unsubscribed = 0
+    skipped_ledger = 0
     for sub in subscribers:
         t, link, header = _unsubscribe_parts(sub.email, user, secret)
         if t is not None and t in gone:
             unsubscribed += 1
             continue
+        k = ledger.key(sub.email, ledger_secret)
+        if k in done:
+            skipped_ledger += 1
+            continue
+        keys.append(k)
         greeting = display_name(sub.name)  # body only, never a header
         messages.append(
             build_message(
@@ -116,21 +128,30 @@ def _run_send(issue: Issue, user: str, password: str) -> dict:
                 one_click=t is not None,
             )
         )
+
+    def record(i: int) -> None:
+        # Rewrite the ledger right after each message, so a run that stops partway
+        # keeps everyone already mailed (D-05).
+        done.add(keys[i])
+        ledger.save(issue.issue_id, done)
+
     sent = 0
     if messages:
-        sent = send_messages(messages, password=password, pause=SEND_PAUSE_SECONDS)
+        sent = send_messages(messages, password=password, pause=SEND_PAUSE_SECONDS, on_sent=record)
     else:
-        log.info("mode=send nothing to send after unsubscribe filter")
+        log.info("mode=send nothing to send after unsubscribe and ledger filter")
     result = {
         "recipients": len(subscribers),
         "unsubscribed": unsubscribed,
+        "skipped_ledger": skipped_ledger,
         "sent": sent,
         "skipped_rows": skipped,
     }
     log.info(
-        "mode=send recipients=%d unsubscribed=%d sent=%d skipped_rows=%d",
+        "mode=send recipients=%d unsubscribed=%d skipped_ledger=%d sent=%d skipped_rows=%d",
         result["recipients"],
         unsubscribed,
+        skipped_ledger,
         sent,
         skipped,
     )

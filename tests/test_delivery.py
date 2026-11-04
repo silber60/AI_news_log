@@ -36,6 +36,8 @@ def send_env(monkeypatch):
     monkeypatch.setenv("SMTP_USER", "owner@example.com")
     monkeypatch.setenv("SMTP_PASSWORD", "abcd efgh")
     monkeypatch.setenv("SUBSCRIBERS_CSV", "﻿" + EXAMPLE_CSV)
+    # 05-03: send mode keys the send ledger with this secret, endpoint or not.
+    monkeypatch.setenv("UNSUBSCRIBE_TOKEN_SECRET", TOKEN_SECRET)
 
 
 def test_send_mode_greets_subscriber_by_name(current_issue, send_env, fake_smtp):
@@ -67,7 +69,13 @@ def test_send_mode_one_message_per_recipient(current_issue, send_env, fake_smtp,
 
     result = run_deliver("send")
 
-    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 1}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 0,
+        "skipped_ledger": 0,
+        "sent": 2,
+        "skipped_rows": 1,
+    }
     sent = fake_smtp.instances[0].sent
     assert [m["To"] for m in sent] == ["a@example.com", "b@example.com"]
     assert "가님" in sent[0].get_body(preferencelist=("plain",)).get_content()
@@ -252,14 +260,23 @@ def test_send_skips_unsubscribed_reader(current_issue, filter_env, fake_smtp, ca
         {"action": ["members"], "key": [MEMBERS_KEY]},
         {"action": ["list"], "key": [LIST_KEY]},
     ]
-    assert result == {"recipients": 2, "unsubscribed": 1, "sent": 1, "skipped_rows": 0}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 1,
+        "skipped_ledger": 0,
+        "sent": 1,
+        "skipped_rows": 0,
+    }
     sent = fake_smtp.instances[0].sent
     assert [m["To"] for m in sent] == [B]
     t = token(B, TOKEN_SECRET)
     assert f"<{LONG_ENDPOINT}?t={t}>" in _raw_header_lines(sent[0], "List-Unsubscribe")[0]
     assert _raw_header_lines(sent[0], "List-Unsubscribe-Post")
     assert f"unsubscribe/?t={t}" in sent[0].get_body(preferencelist=("html",)).get_content()
-    assert "mode=send recipients=2 unsubscribed=1 sent=1 skipped_rows=0" in caplog.text
+    assert (
+        "mode=send recipients=2 unsubscribed=1 skipped_ledger=0 sent=1 skipped_rows=0"
+        in caplog.text
+    )
     captured = capsys.readouterr()
     _secret_free(caplog.text + captured.out + captured.err)
 
@@ -275,9 +292,18 @@ def test_send_with_everyone_unsubscribed_sends_nothing(
     with respx.mock(assert_all_mocked=True) as router:
         mock_apps_script(router, LONG_ENDPOINT, TWO_ROWS, ids=ids)
         result = run_deliver("send")
-    assert result == {"recipients": 2, "unsubscribed": 2, "sent": 0, "skipped_rows": 0}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 2,
+        "skipped_ledger": 0,
+        "sent": 0,
+        "skipped_rows": 0,
+    }
     assert fake_smtp.instances == []
-    assert "mode=send recipients=2 unsubscribed=2 sent=0 skipped_rows=0" in caplog.text
+    assert (
+        "mode=send recipients=2 unsubscribed=2 skipped_ledger=0 sent=0 skipped_rows=0"
+        in caplog.text
+    )
     _secret_free(caplog.text)
 
 
@@ -339,9 +365,18 @@ def test_send_dedupes_live_list(current_issue, filter_env, fake_smtp, caplog):
     with respx.mock(assert_all_mocked=True) as router:
         mock_apps_script(router, LONG_ENDPOINT, rows)
         result = run_deliver("send")
-    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 3}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 0,
+        "skipped_ledger": 0,
+        "sent": 2,
+        "skipped_rows": 3,
+    }
     assert [m["To"] for m in fake_smtp.instances[0].sent] == [A, B]
-    assert "mode=send recipients=2 unsubscribed=0 sent=2 skipped_rows=3" in caplog.text
+    assert (
+        "mode=send recipients=2 unsubscribed=0 skipped_ledger=0 sent=2 skipped_rows=3"
+        in caplog.text
+    )
     _secret_free(caplog.text)
 
 
@@ -395,12 +430,19 @@ def test_send_without_endpoint_fetches_nothing_and_mails_everyone(
 
     assert unsubscribe.UNSUBSCRIBE_ENDPOINT is None
     monkeypatch.setenv("SUBSCRIBERS_CSV", TWO_CSV)
-    monkeypatch.delenv("UNSUBSCRIBE_TOKEN_SECRET", raising=False)
+    # 05-03: the ledger key needs the secret; without an endpoint it still makes no link.
+    monkeypatch.setenv("UNSUBSCRIBE_TOKEN_SECRET", TOKEN_SECRET)
     monkeypatch.delenv("UNSUBSCRIBE_LIST_KEY", raising=False)
     with respx.mock(assert_all_mocked=True) as router:
         result = run_deliver("send")
         assert router.calls.call_count == 0
-    assert result == {"recipients": 2, "unsubscribed": 0, "sent": 2, "skipped_rows": 0}
+    assert result == {
+        "recipients": 2,
+        "unsubscribed": 0,
+        "skipped_ledger": 0,
+        "sent": 2,
+        "skipped_rows": 0,
+    }
     sent = fake_smtp.instances[0].sent
     assert [m["To"] for m in sent] == [A, B]
     for m in sent:

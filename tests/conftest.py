@@ -614,6 +614,12 @@ def no_runner_outputs(monkeypatch):
     monkeypatch.delenv("SEND_PAUSED", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def ledger_tmp(tmp_path, monkeypatch):
+    """05-03: every test writes its send ledger under tmp_path, never the repo's data/ledger/."""
+    monkeypatch.setenv("NEWSLETTER_LEDGER_DIR", str(tmp_path / "ledger"))
+
+
 @pytest.fixture
 def fake_anthropic() -> FakeAnthropic:
     return FakeAnthropic()
