@@ -215,7 +215,8 @@ def test_trigger_installed_idempotently():
 
 def test_queue_worker_exists_and_returns_when_idle():
     body = _body("processWelcomeQueue")
-    assert "'q_'" in body
+    assert "some(queued_)" in body
+    assert "k.indexOf('q_') === 0" in _body("queued_")
     idle = body.index("return;")
     assert idle < body.index("LockService")
 
@@ -226,3 +227,192 @@ def test_new_korean_messages_pass_humanizer(code):
     assert sentence in _src()
     codes = humanize.lint(sentence)
     assert not [c for c in codes if c in humanize.HARD_CODES], codes
+
+
+# ---- Task 4: the queue worker, the welcome sender, manifest and README ----
+
+MANIFEST = ROOT / "apps_script" / "appsscript.json"
+README = ROOT / "apps_script" / "README.md"
+ADDRESS_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")
+
+# Shared with newsletter.delivery.subscribers.display_name and Code.gs selfTest.
+GREETING_VECTORS = (
+    (" 홍길동님 ", "홍길동님", "' 홍길동님 '"),
+    ("", "구독자님", "''"),
+    ("<b>", "<b>님", "'<b>'"),
+    ("김\t철수", "김철수님", "'김\\t철수'"),
+)
+
+# google.script.run can call any top-level function without a trailing "_".
+PUBLIC_FUNCTIONS = {"doGet", "doPost", "unsubscribe", "setup", "selfTest", "processWelcomeQueue"}
+
+
+def test_public_functions_are_the_known_set():
+    names = re.findall(r"^function (\w+)\(", _src(), re.MULTILINE)
+    public = {n for n in names if not n.endswith("_")}
+    assert public == PUBLIC_FUNCTIONS
+    header = _src().split("const SHEET")[0]
+    assert "google.script.run" in header
+    for name in PUBLIC_FUNCTIONS:
+        assert name in header, name
+    # setup, selfTest and processWelcomeQueue hand nothing back to a caller
+    # (only their own top-level returns count; inner callbacks are indented deeper).
+    for name in ("setup", "selfTest", "processWelcomeQueue"):
+        assert re.search(r"^  return [^;]", _body(name), re.MULTILINE) is None, name
+    assert set(re.findall(r"return ([^;]+);", _body("unsubscribe"))) == {"false", "true"}
+
+
+def test_welcome_uses_gmail_advanced_service():
+    src = _src()
+    assert src.count("Gmail.Users.Messages.send(") == 1
+    assert "Utilities.base64EncodeWebSafe(mime, Utilities.Charset.UTF_8)" in src
+    assert "GmailApp" not in src and "MailApp" not in src
+    assert "Gmail.Users.Messages.send" in _body("sendWelcome_")
+
+
+def test_welcome_headers_mirror_python():
+    body = _body("sendWelcome_")
+    for s in (
+        "'List-Unsubscribe: <mailto:' + me + '?subject=unsubscribe>, <' + d.endpoint + '?t=' + t + '>'",
+        "'List-Unsubscribe-Post: List-Unsubscribe=One-Click'",
+        "multipart/alternative",
+        "'Content-Transfer-Encoding: base64'",
+        "'To: ' + email,",
+        "'MIME-Version: 1.0'",
+        "word_(String(d.subject).replace(/[\\r\\n]/g, ' '))",
+        "join('\\r\\n')",
+        "Utilities.getUuid()",
+    ):
+        assert s in body, s
+    # The name only reaches the body through the greeting, never a header.
+    assert "word_(name" not in body and "'To: ' + name" not in body
+    assert body.index("text/plain") < body.index("text/html")
+    assert "b64_(text)" in body and "b64_(html)" in body
+    assert "{76}" in _body("b64_")
+    # Python sends the same pair (newsletter/delivery/deliver.py, send.py).
+    deliver = (ROOT / "newsletter" / "delivery" / "deliver.py").read_text(encoding="utf-8")
+    send = (ROOT / "newsletter" / "delivery" / "send.py").read_text(encoding="utf-8")
+    assert '"<mailto:{user}?subject=unsubscribe>"' in deliver.replace('f"', '"')
+    assert '"List-Unsubscribe=One-Click"' in send
+
+
+def test_word_stays_under_75_characters():
+    body = _body("word_")
+    assert "=?UTF-8?B?" in body and "45" in body
+    # 45 UTF-8 bytes encode to 60 base64 characters; with the 12-character frame, 72.
+    assert len("=?UTF-8?B?") + 60 + len("?=") <= 75
+
+
+def test_fill_uses_split_join_and_checks_shape():
+    body = _body("fill_")
+    assert "split(" in body and ".join(" in body
+    assert ".replace(" not in body  # $& in a name would be expanded by String.replace
+    assert "!== 2" in body  # each slot exactly once
+    assert "/^[A-Z_]+$/" in body
+    src = _src()
+    assert "WELCOME_MAX_BYTES = 92160" in src
+    assert "const LATEST_URL = SITE + 'welcome/latest.json';" in src
+    send = _body("sendWelcome_")
+    assert "fill_(d.html, d.slots, escapeHtml_(g), link)" in send
+    assert "fill_(d.text, d.slots, g, link)" in send
+    assert "utf8Len_(html) >= WELCOME_MAX_BYTES" in send
+    assert "muteHttpExceptions: true" in send and "followRedirects: true" in send
+    for code in ("'fetch'", "'no_issue'", "'shape'", "'sent'"):
+        assert code in send, code
+    assert "d.version !== 1 || !d.issue_id" in send
+
+
+def test_queue_worker_never_frees_w():
+    src = _src()
+    assert "WELCOME_MAX_ATTEMPTS = 3" in src
+    body = _body("processWelcomeQueue")
+    assert "tryLock(" in body
+    assert "deleteProperty(k)" in body  # the claim
+    claim = body.index("deleteProperty(k)")
+    assert claim < body.index("releaseLock") < body.index("sendWelcome_(")
+    assert "res === 'sent'" in body and "markWelcomed_(" in body
+    assert "(res === 'fetch' || res === 'error') && j.n + 1 < WELCOME_MAX_ATTEMPTS" in body
+    assert "requeue_(j.t, j.n + 1)" in body
+    for fn in ("processWelcomeQueue", "requeue_", "markWelcomed_", "sendWelcome_", "member_"):
+        assert "'w_'" not in _body(fn), fn
+    assert "LockService" in _body("requeue_") and "'q_' + t" in _body("requeue_")
+    assert "'active'" in _body("member_") and "normEmail_(" in _body("member_")
+
+
+def test_greeting_port_matches_python():
+    from newsletter.delivery.subscribers import display_name
+
+    body = _body("greetingFor_")
+    assert "/(?! )[\\p{C}\\p{Z}]/gu" in body  # str.isprintable: C* and Z* except ASCII space
+    assert "'님'" in body and "'구독자님'" in body
+    selftest = _body("selfTest")
+    for raw, want, js in GREETING_VECTORS:
+        assert display_name(raw) == want
+        assert f"[{js}, '{want}']" in selftest, js
+    assert "escapeHtml_('<b>님') === '&lt;b&gt;님'" in selftest
+    for ch in ("&amp;", "&lt;", "&gt;", "&quot;", "&#39;"):
+        assert ch in _body("escapeHtml_")
+
+
+def test_selftest_checks_and_logs_names_only():
+    body = _body("selfTest")
+    assert body.count("Logger.log") == 1
+    assert "Logger.log(fails.length ? 'FAIL ' + fails.join(' ') : 'PASS');" in body
+    for name in ("token", "greeting", "escape", "gmail", "user", "latest", "tabs", "trigger"):
+        assert f"'{name}'" in body, name
+    assert "typeof Gmail !== 'undefined'" in body
+    assert "LATEST_URL" in body and "processWelcomeQueue" in body
+
+
+def test_manifest():
+    import json
+
+    m = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert m["timeZone"] == "Asia/Seoul"
+    assert m["runtimeVersion"] == "V8"
+    assert {"userSymbol": "Gmail", "serviceId": "gmail", "version": "v1"} in m["dependencies"][
+        "enabledAdvancedServices"
+    ]
+    assert m["webapp"] == {"executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS"}
+    base = "https://www.googleapis.com/auth/"
+    for scope in (
+        "gmail.send",
+        "spreadsheets",
+        "script.external_request",
+        "script.scriptapp",
+        "userinfo.email",
+    ):
+        assert base + scope in m["oauthScopes"], scope
+
+
+def test_readme_combined_setup():
+    text = README.read_text(encoding="utf-8")
+    for s in (
+        "SHEET_ID",
+        "TOKEN_SECRET",
+        "LIST_KEY",
+        "SEND_LIST_KEY",
+        "ADMIN_KEY",
+        "UNSUBSCRIBE_TOKEN_SECRET",
+        "UNSUBSCRIBE_LIST_KEY",
+        "SUBSCRIBER_LIST_KEY",
+        "SUBSCRIBE_ADMIN_KEY",
+        "appsscript.json",
+        "Gmail API",
+        "setup",
+        "selfTest",
+        "트리거",
+        "processWelcomeQueue",
+        "1분",
+        "Origin: https://silber60.github.io",
+        "read -rs",
+        "확인되지 않은 앱",
+        "oauthScopes",
+        "action=members",
+        "82a671b5104273fe07992f40d81000c8",
+    ):
+        assert s in text, s
+    assert "새 배포" in text and "새 버전" in text
+    assert "붙여 넣지 않아요" in text  # never paste a key value anywhere
+    found = ADDRESS_RE.findall(text)
+    assert all(a.lower().endswith("@example.com") for a in found), found

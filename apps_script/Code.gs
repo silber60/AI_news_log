@@ -18,6 +18,13 @@
 // GET never writes (mail scanners prefetch links). Only doPost or a button
 // press through google.script.run records an id.
 //
+// google.script.run lets any visitor of the doGet page call any top-level
+// function whose name has no trailing underscore, and it runs as the owner.
+// Those public functions are doGet, doPost, unsubscribe, setup, selfTest and
+// processWelcomeQueue. Each is safe to call that way: idempotent, and none
+// returns a key, member data or an address. Every other function ends in "_".
+// tests/test_apps_script.py pins this list, so add a public one only on purpose.
+//
 // The first deployment is the only 새 배포. To change this script later:
 // 배포 → 배포 관리 → 수정 → 버전: 새 버전. A second 새 배포 makes a new URL
 // and breaks every sent email header.
@@ -36,6 +43,11 @@ const PER_ID_LIMIT = 3;                 // form posts per address per 6 h; more 
 const GLOBAL_HOURLY_LIMIT = 30;         // form posts per hour overall; more get busy
 const WELCOME_DAILY_CAP = 50;           // welcomes queued per KST day
 const WELCOME_GAP_MS = 24 * 3600 * 1000; // at most one welcome per address per 24 h
+const WELCOME_MAX_ATTEMPTS = 3;         // trigger runs that may try one welcome
+const WELCOME_BATCH = 20;               // welcomes claimed per trigger run
+const WELCOME_MAX_BYTES = 92160;        // the filled html must stay below this (D-04)
+const LATEST_URL = SITE + 'welcome/latest.json';
+const BRAND = '모닥로그 AI 리포트';
 const SUB_TITLE = '구독 신청 | 모닥로그 AI 리포트';
 const REPLY = {
   ok: '신청됐어요. 매주 월요일 아침에 메일을 보내드려요.',
@@ -304,13 +316,189 @@ function installTrigger_() {
   if (!has) ScriptApp.newTrigger('processWelcomeQueue').timeBased().everyMinutes(1).create();
 }
 
-// Time-driven, every minute. Idle runs return at once.
+// Time-driven, every minute (D-04). Idle runs return at once, so they stay
+// cheap against the trigger runtime quota. Under the lock each queued id is
+// claimed by deleting q_<id> before anything is sent, so a welcome goes out at
+// most once even when two runs overlap. Only a fetch or Gmail error re-adds
+// q_<id>, at most WELCOME_MAX_ATTEMPTS runs in all. This function never deletes
+// or rewrites w_<id>: no outcome (sent, no_issue, shape, gone, failed) lets a
+// second welcome happen sooner than the 24 h rule allows. A reader whose
+// welcome is dropped stays registered and gets the Monday mail.
 function processWelcomeQueue() {
-  const keys = Object.keys(PropertiesService.getScriptProperties().getProperties());
-  if (!keys.some(function (k) { return k.indexOf('q_') === 0; })) return;
+  const props = PropertiesService.getScriptProperties();
+  if (!Object.keys(props.getProperties()).some(queued_)) return;
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;
-  lock.releaseLock();
+  const jobs = [];
+  try {
+    const all = props.getProperties();
+    Object.keys(all).filter(queued_).slice(0, WELCOME_BATCH).forEach(function (k) {
+      jobs.push({ t: k.slice(2), n: Number(all[k]) || 0 });
+      props.deleteProperty(k);
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  jobs.forEach(function (j) {
+    let res;
+    try {
+      const m = TOKEN_RE.test(j.t) ? member_(j.t) : null;
+      res = m ? sendWelcome_(m.email, m.name, j.t) : 'gone';
+    } catch (err) {
+      res = 'error';                    // a Gmail or Sheet error; nothing of it is kept
+    }
+    if (res === 'sent') {
+      markWelcomed_(j.t);
+    } else if ((res === 'fetch' || res === 'error') && j.n + 1 < WELCOME_MAX_ATTEMPTS) {
+      requeue_(j.t, j.n + 1);
+    }
+  });
+}
+
+function queued_(k) { return k.indexOf('q_') === 0; }
+
+function requeue_(t, n) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;     // dropped; the Monday mail still reaches the reader
+  try {
+    PropertiesService.getScriptProperties().setProperty('q_' + t, String(n));
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function markWelcomed_(t) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    const sh = subsSheet_();
+    const hit = sh && find_(sh, t);
+    if (hit) {
+      sh.getRange(hit.getRow(), SUBS_COLS.indexOf('welcomed_at') + 1)
+          .setValue(new Date().toISOString());
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// {email, name} of the active row for id t, or null when it is gone.
+function member_(t) {
+  const sh = subsSheet_();
+  const hit = sh && find_(sh, t);
+  if (!hit) return null;
+  const r = sh.getRange(hit.getRow(), 1, 1, SUBS_COLS.length).getValues()[0];
+  const email = normEmail_(r[1]);
+  if (!email || String(r[3]) !== 'active') return null;
+  return { email: email, name: String(r[2]) };
+}
+
+// D-03, D-04: fills the render.py welcome from latest.json and sends it through
+// the Gmail advanced service, the only path that keeps List-Unsubscribe. The
+// headers mirror newsletter/delivery/send.py. Returns sent, fetch, no_issue or
+// shape; a Gmail error throws.
+function sendWelcome_(email, name, t) {
+  let r;
+  try {
+    r = UrlFetchApp.fetch(LATEST_URL, { muteHttpExceptions: true, followRedirects: true });
+  } catch (err) {
+    return 'fetch';
+  }
+  if (r.getResponseCode() !== 200) return 'fetch';
+  let d;
+  try { d = JSON.parse(r.getContentText('UTF-8')); } catch (err) { return 'shape'; }
+  if (!d || d.version !== 1 || !d.issue_id) return 'no_issue';
+  if (!/^https:\/\//.test(String(d.endpoint || ''))) return 'shape';
+  if (!/^https:\/\//.test(String(d.unsubscribe_page || ''))) return 'shape';
+  const g = greetingFor_(name);
+  const link = d.unsubscribe_page + t;
+  const html = fill_(d.html, d.slots, escapeHtml_(g), link);
+  const text = fill_(d.text, d.slots, g, link);
+  if (html === null || text === null || utf8Len_(html) >= WELCOME_MAX_BYTES) return 'shape';
+  const me = Session.getEffectiveUser().getEmail();
+  if (!me) return 'shape';
+  const b = 'b' + Utilities.getUuid().replace(/-/g, '');
+  const mime = [
+    'From: ' + word_(String(d.from_name || BRAND)) + ' <' + me + '>',
+    'To: ' + email,                     // the address only; the name never goes in a header
+    'Subject: ' + word_(String(d.subject).replace(/[\r\n]/g, ' ')),
+    'MIME-Version: 1.0',
+    'List-Unsubscribe: <mailto:' + me + '?subject=unsubscribe>, <' + d.endpoint + '?t=' + t + '>',
+    'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+    'Content-Type: multipart/alternative; boundary="' + b + '"',
+    '',
+    '--' + b,
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    b64_(text),
+    '--' + b,
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    b64_(html),
+    '--' + b + '--',
+    ''
+  ].join('\r\n');
+  Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime, Utilities.Charset.UTF_8) }, 'me');
+  return 'sent';
+}
+
+// Port of newsletter/delivery/subscribers.py display_name: str.isprintable()
+// rejects Unicode categories C and Z except the ASCII space.
+function greetingFor_(raw) {
+  let n = String(raw == null ? '' : raw).replace(/(?! )[\p{C}\p{Z}]/gu, '').trim();
+  if (n.slice(-1) === '님') n = n.slice(0, -1).trim();
+  return n ? n + '님' : '구독자님';
+}
+
+function escapeHtml_(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Fills the two slots with split/join (String.replace would expand $& in a
+// name). Returns null unless each slot occurs exactly once. The link goes in
+// first, so a name that spells a slot cannot add a second fill.
+function fill_(src, slots, greeting, link) {
+  if (typeof src !== 'string' || !slots) return null;
+  const g = String(slots.greeting || '');
+  const u = String(slots.unsubscribe_url || '');
+  if (!/^[A-Z_]+$/.test(g) || !/^[A-Z_]+$/.test(u)) return null;
+  if (src.split(g).length !== 2 || src.split(u).length !== 2) return null;
+  return src.split(u).join(link).split(g).join(greeting);
+}
+
+function utf8Len_(s) {
+  let n = 0;
+  for (const ch of String(s)) {
+    const c = ch.codePointAt(0);
+    n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+  }
+  return n;
+}
+
+// RFC 2047 B-words of at most 45 UTF-8 bytes each (60 base64 characters, 72
+// with the frame, under the 75-character limit), folded onto new lines.
+function word_(s) {
+  const words = [];
+  let cur = '';
+  let bytes = 0;
+  Array.from(String(s)).forEach(function (ch) {
+    const n = utf8Len_(ch);
+    if (bytes + n > 45) { words.push(cur); cur = ''; bytes = 0; }
+    cur += ch;
+    bytes += n;
+  });
+  if (cur) words.push(cur);
+  return words.map(function (w) {
+    return '=?UTF-8?B?' + Utilities.base64Encode(w, Utilities.Charset.UTF_8) + '?=';
+  }).join('\r\n ');
+}
+
+// UTF-8 base64 wrapped at 76 characters (RFC 5322 caps a line at 998).
+function b64_(s) {
+  return Utilities.base64Encode(s, Utilities.Charset.UTF_8).replace(/(.{76})/g, '$1\r\n');
 }
 
 function list_(key) {
@@ -365,8 +553,41 @@ function setup() {                       // owner runs once
 }
 
 function selfTest() {                    // owner runs once; must log PASS
-  const got = tokenFor_('Subscriber@Example.com ', 'test-secret-do-not-use');
-  Logger.log(got === 'f290b8e448576cf84f63ac2b465c3e65' ? 'PASS' : 'FAIL ' + got);
+  const fails = [];
+  function check(name, fn) {
+    let ok = false;
+    try { ok = fn(); } catch (err) { ok = false; }
+    if (!ok) fails.push(name);
+  }
+  check('token', function () {
+    return tokenFor_('Subscriber@Example.com ', 'test-secret-do-not-use')
+        === 'f290b8e448576cf84f63ac2b465c3e65';
+  });
+  const greet = [[' 홍길동님 ', '홍길동님'], ['', '구독자님'], ['<b>', '<b>님'], ['김\t철수', '김철수님']];
+  check('greeting', function () {
+    return greet.every(function (v) { return greetingFor_(v[0]) === v[1]; });
+  });
+  check('escape', function () { return escapeHtml_('<b>님') === '&lt;b&gt;님'; });
+  check('gmail', function () { return typeof Gmail !== 'undefined'; });
+  check('user', function () { return !!Session.getEffectiveUser().getEmail(); });
+  check('latest', function () {         // issue_id null passes: nothing is published yet
+    const r = UrlFetchApp.fetch(LATEST_URL, { muteHttpExceptions: true, followRedirects: true });
+    if (r.getResponseCode() !== 200) return false;
+    const d = JSON.parse(r.getContentText('UTF-8'));
+    if (!d || d.version !== 1) return false;
+    return !d.issue_id || (fill_(d.html, d.slots, 'x', 'y') !== null
+        && fill_(d.text, d.slots, 'x', 'y') !== null);
+  });
+  check('tabs', function () {
+    const ss = SpreadsheetApp.openById(prop_('SHEET_ID'));
+    return !!ss.getSheetByName(SHEET) && !!ss.getSheetByName(SUBS);
+  });
+  check('trigger', function () {
+    return ScriptApp.getProjectTriggers().some(function (tr) {
+      return tr.getHandlerFunction() === 'processWelcomeQueue';
+    });
+  });
+  Logger.log(fails.length ? 'FAIL ' + fails.join(' ') : 'PASS');
 }
 
 // The token sits in a quoted HTML attribute (HTML-escaped by the printing
