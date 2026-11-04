@@ -585,6 +585,15 @@ def test_highlight_demo_link_v4(issue_w44):
     assert f"데모 써보기: {space}" in txt and f"프로젝트 페이지: {page}" in txt
 
 
+def test_explainer_title_is_left_aligned(issue_w44):
+    # Owner request 2026-11-04: the 칸 title moved from center to left.
+    full = render_html(_full_issue(issue_w44), "구독자님")
+    block = full[_section_pos(full, "explainer") : _section_pos(full, "rest")]
+    head = block[: block.index("AI 기술 쉽게 보기 🔍")]
+    cell = head[head.rindex("<td") :]
+    assert 'align="left"' in cell and "center" not in cell
+
+
 def test_explainer_point_and_example_boxes_only_when_set(issue_w44):
     full = render_html(_full_issue(issue_w44), "구독자님")
     block = full[_section_pos(full, "explainer") : _section_pos(full, "rest")]
