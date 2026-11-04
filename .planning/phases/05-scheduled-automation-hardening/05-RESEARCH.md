@@ -497,19 +497,19 @@ user, password = _env("SMTP_USER"), _env("SMTP_PASSWORD")
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | The ledger uses HMAC-SHA256 keyed with `UNSUBSCRIBE_TOKEN_SECRET` instead of D-05's literal plain SHA-256 | Pattern 6 | Low. The owner may insist on plain SHA-256, which leaks membership. Needs owner ack. |
-| A2 | `github.event.schedule` holds exactly the cron string (`'0 8 * * 1'`) when `timezone` is set | Pattern 1 | Fail-safe: 08:00 becomes a test and nothing reaches subscribers. The first Monday shows it. |
-| A3 | A weekly `GITHUB_TOKEN` push counts as repo activity. The optional `gh workflow enable` resets the 60-day counter. | Keepalive | The schedule silently disables after 60 quiet days. Mitigated by owner commits and the re-enable step. |
+| A1 | The ledger uses HMAC-SHA256 keyed with `UNSUBSCRIBE_TOKEN_SECRET` instead of D-05's literal plain SHA-256 | Pattern 6 | Low. **RESOLVED (owner, 2026-11-04):** HMAC-SHA256 approved ("비밀값으로 서명한 해시"); key = HMAC-SHA256(UNSUBSCRIBE_TOKEN_SECRET, "ledger-v1:" + strip().lower()). Planned in 05-03. |
+| A2 | `github.event.schedule` holds exactly the cron string (`'0 8 * * 1'`) when `timezone` is set | Pattern 1 | Fail-safe: 08:00 becomes a test and nothing reaches subscribers. **RESOLVED (owner):** verified live on the first Monday (2026-11-09) from the Trigger log line, 05-05 Task 3; fails safe to test. |
+| A3 | A weekly `GITHUB_TOKEN` push counts as repo activity. The optional `gh workflow enable` resets the 60-day counter. | Keepalive | The schedule silently disables after 60 quiet days. **RESOLVED (owner: "안 넣음"):** no `actions: write` re-enable step; the weekly content commit is the keepalive; recovery is Actions tab → Enable workflow. |
 | A4 | Artifacts from attempt 1 are downloadable by name in a re-run attempt of the same run | Pattern 4/6 | The commit job misses the ledger on a commit-only re-run. `continue-on-error` keeps it from failing, and the next send re-reads the committed state. |
 | A5 | Job outputs (`mode: ${{ env.MODE }}`) are set even when the run job fails | Pattern 4 | The commit job `MODE` would be empty. Publish steps are gated on outcome anyway, and the job `if` does not use outputs. |
 | A6 | Mixed `queue` settings across workflows in one group are undefined | Pattern 5 | Set both the same. |
 | A7 | Asia/Seoul has no DST | Pattern 1 | None in practice |
 
-## Open Questions
+## Open Questions (all RESOLVED 2026-11-04 by the owner)
 
-1. **Catch-up cron (owner call):** a third schedule, for example `0 10 * * 1` mapped to send, would recover from a dropped 08:00 run. GitHub documents that scheduled runs can be dropped under load. The ledger makes it idempotent. It adds a second report on normal weeks unless an "all already in ledger" run skips the mail. Recommendation: not in this phase. Owner guidance instead: if no report arrives by 10:00, dispatch `mode=send`.
-2. **`actions: write` re-enable step (A3):** include it or not. Recommendation: include it in plan 4 behind an owner checkpoint.
-3. **Git history growth:** `raw.json` is trimmed but holds roughly 50-200 entries. Expect a few hundred KB per week. Acceptable for years. Revisit only if it becomes a problem.
+1. **Catch-up cron (owner call):** a third schedule, for example `0 10 * * 1` mapped to send, would recover from a dropped 08:00 run. GitHub documents that scheduled runs can be dropped under load. The ledger makes it idempotent. It adds a second report on normal weeks unless an "all already in ledger" run skips the mail. Recommendation: not in this phase. Owner guidance instead: if no report arrives by 10:00, dispatch `mode=send`. **RESOLVED:** no catch-up cron; the owner dispatches by hand if no report by 10:00.
+2. **`actions: write` re-enable step (A3):** include it or not. Recommendation: include it in plan 4 behind an owner checkpoint. **RESOLVED:** not included (owner: "안 넣음"); the weekly content commit is the keepalive.
+3. **Git history growth:** `raw.json` is trimmed but holds roughly 50-200 entries. Expect a few hundred KB per week. Acceptable for years. Revisit only if it becomes a problem. **RESOLVED:** accepted as is.
 
 ## Environment Availability
 
