@@ -12,7 +12,9 @@
     the public copy (no reply line, no recipient data; D-06, D-15).
     04-02 (still v9): web=True adds the 판정 근거 block under every card (code-built rows from
     render.basis_rows), the headline page title, the 680px phone rule and the 지난 호 전체 보기 link;
-    the 640 table gets the wrap class in web mode only, so the email bytes do not change. -#}
+    the 640 table gets the wrap class in web mode only, so the email bytes do not change.
+    04-05 (still v9): the email footer adds the per-recipient 구독 해지 link when unsubscribe_url
+    is set (D-11, D-14); the 수신거부 reply line stays as a fallback. -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
 {%- set img_style = "display: block; border: 0; outline: none; text-decoration: none;" -%}
 {%- set banner_style = img_style ~ " width: 100%; max-width: 640px; height: auto;" -%}
@@ -228,7 +230,7 @@ a { color: #FF6B00; text-decoration: none; }
 <tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
 {%- else %}
 <tr><td style="font-size: 12px; color: #808080;">더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.</td></tr>
-<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ issue_url }}" style="color: #FF6B00;">웹에서 보기</a> · <a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a></td></tr>
+<tr><td style="font-size: 12px; font-weight: 500; color: #FF6B00; padding: 6px 0 0 0;"><a href="{{ issue_url }}" style="color: #FF6B00;">웹에서 보기</a> · <a href="{{ archive_url }}" style="color: #FF6B00;">지난 호 보기</a>{% if unsubscribe_url %} · <a href="{{ unsubscribe_url }}" style="color: #FF6B00;">구독 해지</a>{% endif %}</td></tr>
 {%- endif %}
 </table>
 </td></tr>
