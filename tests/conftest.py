@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, ClassVar
+from urllib.parse import parse_qs
 
 import httpx
 import pytest
@@ -250,6 +251,54 @@ def mock_enrich(
             side_effect=cdn_side
         )
     return routes
+
+
+# ------------------------------------------------------ Apps Script routes
+
+APPS_ECHO = "https://script.googleusercontent.com/macros/echo"
+
+
+def mock_apps_script(
+    router: respx.MockRouter,
+    endpoint: str,
+    rows: list | None = None,
+    *,
+    ids: tuple[str, ...] | list[str] = (),
+    members_reply: httpx.Response | Exception | None = None,
+    list_reply: httpx.Response | Exception | None = None,
+) -> respx.Route:
+    """Register the one Apps Script POST route and return it (04.1-03, reused by 04.1-06).
+
+    The POST is dispatched on its form `action`: `members` answers 302 to a
+    googleusercontent GET that serves `{"version": 1, "subscribers": rows}` (or
+    `members_reply`), `list` answers `{"version": 1, "ids": ids}` (or `list_reply`),
+    anything else `{"error": "forbidden"}`. A reply that is an exception is raised.
+    """
+    members_url = APPS_ECHO + "?user_content_key=members"
+
+    def _reply(value: httpx.Response | Exception) -> httpx.Response:
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    def post(request: httpx.Request) -> httpx.Response:
+        action = parse_qs(request.content.decode()).get("action", [""])[0]
+        if action == "members":
+            return httpx.Response(302, headers={"Location": members_url})
+        if action == "list":
+            if list_reply is not None:
+                return _reply(list_reply)
+            return httpx.Response(200, json={"version": 1, "ids": list(ids)})
+        return httpx.Response(200, json={"error": "forbidden"})
+
+    def get(request: httpx.Request) -> httpx.Response:
+        if members_reply is not None:
+            return _reply(members_reply)
+        return httpx.Response(200, json={"version": 1, "subscribers": list(rows or [])})
+
+    route = router.post(endpoint).mock(side_effect=post)
+    router.get(members_url).mock(side_effect=get)
+    return route
 
 
 # ---------------------------------------------------------------- Claude fakes
@@ -532,6 +581,12 @@ def fake_smtp(monkeypatch) -> type[FakeSMTP]:
     FakeSMTP.instances = []
     monkeypatch.setattr(send.smtplib, "SMTP_SSL", FakeSMTP)
     return FakeSMTP
+
+
+@pytest.fixture
+def members_api():
+    """`mock_apps_script` as a fixture: members_api(router, endpoint, rows, ids=...)."""
+    return mock_apps_script
 
 
 @pytest.fixture

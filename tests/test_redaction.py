@@ -14,6 +14,7 @@ from conftest import (
     default_analysis,
     default_response,
     make_parsed,
+    mock_apps_script,
     mock_hf_week,
 )
 
@@ -150,6 +151,35 @@ def test_send_logs_counts_only(ready, fake_smtp, capsys, caplog):
     assert "@" not in out
     assert "홍길동" not in out
     assert "recipients=1 unsubscribed=0 sent=1 skipped_rows=0" in out
+
+
+def test_live_list_send_logs_counts_only(ready, fake_smtp, capsys, caplog, monkeypatch):
+    """D-08: with the endpoint set, the live-list send prints and logs no address,
+    name or key."""
+    from newsletter.__main__ import main
+    from newsletter.delivery import unsubscribe
+
+    endpoint = "https://script.google.com/macros/s/AKfycbREDACT/exec"
+    keys = ("members-key-redaction-1", "list-key-redaction-2", "token-secret-redaction-3")
+    monkeypatch.setattr(unsubscribe, "UNSUBSCRIBE_ENDPOINT", endpoint)
+    monkeypatch.delenv("SUBSCRIBERS_CSV")
+    for name, value in zip(
+        ("SUBSCRIBER_LIST_KEY", "UNSUBSCRIBE_LIST_KEY", "UNSUBSCRIBE_TOKEN_SECRET"),
+        keys,
+        strict=True,
+    ):
+        monkeypatch.setenv(name, value)
+    caplog.set_level("DEBUG")
+    rows = [{"email": "subscriber@example.com", "name": "홍길동"}, {"email": "bad"}]
+    with respx.mock(assert_all_mocked=True) as router:
+        mock_apps_script(router, endpoint, rows)
+        assert main(["deliver", "--mode", "send"]) == 0
+    captured = capsys.readouterr()
+    out = captured.out + captured.err + caplog.text
+    _assert_clean(out)
+    for value in keys:
+        assert value not in out
+    assert "recipients=1 unsubscribed=0 sent=1 skipped_rows=1" in out
 
 
 def test_build_logs_never_carry_newsletter_text(hf_pages, archive_tmp, caplog):

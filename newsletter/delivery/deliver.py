@@ -1,16 +1,19 @@
 """Deliver stage. The only package that reads SMTP and recipient secrets.
 
 `test` sends one de-personalized message to TEST_RECIPIENT. `send` sends one
-personalized message per subscriber from the SUBSCRIBERS_CSV secret, skipping
-anyone whose unsubscribe token is on the Apps Script list (D-13). Logs carry
-counts only, never addresses, names, tokens or keys (DLVR-06).
+personalized message per subscriber, skipping anyone whose unsubscribe token is
+on the Apps Script list (D-13). The subscribers come from the live Sheet list
+(Apps Script action=members with SUBSCRIBER_LIST_KEY, D-08) once
+UNSUBSCRIBE_ENDPOINT is set, and from the SUBSCRIBERS_CSV secret while it is None
+(the transition until 04.1-06). Logs carry counts only, never addresses, names,
+tokens or keys (DLVR-06).
 """
 
 import logging
 import os
 
 from newsletter import store
-from newsletter.delivery import unsubscribe
+from newsletter.delivery import members, unsubscribe
 from newsletter.delivery.send import build_message, send_messages
 from newsletter.delivery.subscribers import DEFAULT_GREETING, display_name, parse_subscribers
 from newsletter.errors import DeliveryError
@@ -79,15 +82,20 @@ def _run_test(issue: Issue, user: str, password: str) -> dict:
 
 
 def _run_send(issue: Issue, user: str, password: str) -> dict:
-    subscribers, skipped = parse_subscribers(_env("SUBSCRIBERS_CSV"))
     subject = build_subject(issue, "send")  # D-03: no prefix
     secret = _token_secret()
     gone: set[str] = set()
     endpoint = unsubscribe.UNSUBSCRIBE_ENDPOINT
-    if endpoint is not None:
-        # D-13 fail closed: read the list before any message or SMTP connection. A missing
-        # key or any read problem raises DeliveryError, so nobody is mailed.
-        gone = unsubscribe.fetch_unsubscribed(endpoint, _env("UNSUBSCRIBE_LIST_KEY"))
+    if endpoint is None:
+        subscribers, skipped = parse_subscribers(_env("SUBSCRIBERS_CSV"))
+    else:
+        # D-08 / D-13 fail closed: read both keys first, then the live list and the
+        # unsubscribe list, all before any message or SMTP connection. A missing key or
+        # any read problem raises DeliveryError (no rows: NoSubscribersError).
+        list_key = _env("SUBSCRIBER_LIST_KEY")
+        unsub_key = _env("UNSUBSCRIBE_LIST_KEY")
+        subscribers, skipped = members.fetch_subscribers(endpoint, list_key)
+        gone = unsubscribe.fetch_unsubscribed(endpoint, unsub_key)
     messages = []
     unsubscribed = 0
     for sub in subscribers:
