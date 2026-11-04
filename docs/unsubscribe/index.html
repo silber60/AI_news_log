@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>구독 해지 · 모닥로그 AI 리포트</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&amp;display=swap">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; overflow-wrap: break-word; word-break: keep-all; font-family: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #222222; background: #FFFFFF; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+h1, h2, h3, p, ol, ul { margin: 0; }
+.wrap { max-width: 1088px; margin: 0 auto; padding: 0 24px; }
+.row { display: grid; grid-template-columns: minmax(0, 544fr) minmax(0, 440fr); gap: 56px; align-items: center; }
+.eyebrow { font-size: 13px; font-weight: 500; color: #FF6B00; }
+.link { font-size: 14px; font-weight: 700; color: #FF6B00; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.nav { border-bottom: 1px solid #EEEEEE; background: #FFFFFF; }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 72px; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; text-decoration: none; }
+.nav-links { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+.nav-links a { text-decoration: none; color: #737373; }
+.nav-links a.nav-cta { color: #FFFFFF; background: #FF6B00; font-weight: 700; padding: 10px 18px; border-radius: 8px; }
+.form-card { background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08); }
+.form-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+.form-card label { display: block; font-size: 13px; font-weight: 500; margin: 14px 0 6px; }
+.form-card input[type="text"], .form-card input[type="email"] { width: 100%; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid #E6E6E6; border-radius: 8px; }
+.form-card .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; font-weight: 400; color: #737373; margin-top: 16px; }
+.form-card button { width: 100%; margin-top: 18px; font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 8px; padding: 14px; cursor: pointer; }
+.form-card .note { font-size: 12px; color: #A3A3A3; margin-top: 12px; }
+.footer { background: #FAFAFA; border-top: 1px solid #EEEEEE; padding: 32px 0 40px; font-size: 13px; color: #808080; }
+.footer strong { display: block; font-size: 14px; color: #222222; margin-bottom: 6px; }
+.footer a { display: inline-block; margin-top: 8px; color: #737373; }
+
+.unsub { padding: 80px 0 96px; }
+.unsub .form-card { max-width: 440px; margin: 0 auto; text-align: center; }
+.unsub h1 { font-size: 24px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; }
+.unsub p { font-size: 15px; color: #444444; }
+@media (max-width: 767px) {
+  .unsub { padding: 48px 0 64px; }
+}
+
+@media (max-width: 767px) {
+  .row { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .nav-links { gap: 12px; }
+  .nav-links a.nav-cta { padding: 8px 12px; }
+}
+</style>
+</head>
+<body>
+<header class="nav" data-section="nav">
+<div class="wrap">
+<a class="logo" href="../"><img src="https://silber60.github.io/AI_news_log/assets/email/v2/otter-tool.png" width="36" height="36" alt="">모닥로그 AI 리포트</a>
+<nav class="nav-links">
+<a href="../#archive">지난 호</a>
+</nav>
+</div>
+</header>
+
+<main class="unsub" data-section="unsubscribe">
+<div class="wrap">
+<div class="form-card">
+<p>메일에 '수신거부'라고 회신해 주세요.</p>
+</div>
+</div>
+</main>
+
+<footer class="footer" data-section="footer">
+<div class="wrap">
+<strong>모닥로그 AI 리포트</strong>
+<p>매주 월요일 오전 8시 발송 · 출처: Hugging Face Papers</p>
+</div>
+</footer>
+</body>
+</html>

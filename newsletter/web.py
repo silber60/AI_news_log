@@ -2,7 +2,8 @@
 
 data/issues/<issue_id>.json is the source of truth (first send wins, like
 topics.record). docs/issues/<issue_id>/index.html and docs/index.html are always
-regenerated from it, with no timestamps, so a re-run changes no byte. Nothing here
+regenerated from it, as is docs/unsubscribe/index.html (the D-12 confirm page), with
+no timestamps, so a re-run changes no byte. Nothing here
 writes under docs/assets/ or touches the network.
 """
 
@@ -13,6 +14,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 from markupsafe import Markup
 
 from newsletter import store
+from newsletter.delivery import unsubscribe
 from newsletter.schema import Issue
 from newsletter.stages import render
 
@@ -87,8 +89,21 @@ def _home_context(issues: list[Issue]) -> dict:
     }
 
 
+def _unsubscribe_context() -> dict:
+    """D-12: the confirm page lives one level down, so its nav links climb with ../."""
+    return {
+        **_home_context([]),
+        "subscribe_url": None,  # no subscribe CTA on the way out
+        "home_href": "../",
+        "archive_href": "../" + render.ARCHIVE_ANCHOR,
+        "endpoint": unsubscribe.UNSUBSCRIBE_ENDPOINT,
+        "token_len": unsubscribe.TOKEN_LEN,
+    }
+
+
 def build_site() -> list[Path]:
-    """Regenerate every issue page and the home page. Returns the written paths."""
+    """Regenerate every issue page, the home page and the unsubscribe confirm page.
+    Returns the written paths."""
     issues = load_issues()
     docs = docs_dir()
     written: list[Path] = []
@@ -99,5 +114,9 @@ def build_site() -> list[Path]:
     home = _web_env.get_template("home.html.j2").render(**_home_context(issues))
     path = docs / "index.html"
     store.write_text(path, home)
+    written.append(path)
+    page = _web_env.get_template("unsubscribe.html.j2").render(**_unsubscribe_context())
+    path = docs / "unsubscribe" / "index.html"
+    store.write_text(path, page)
     written.append(path)
     return written
