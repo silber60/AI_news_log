@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+{#- Shared shell for the web pages (04-03): head, nav, footer. The brand name always comes
+    from the context (render.BRAND); never write it here. No JavaScript, no contact
+    address (D-15). Subscribe and privacy slots render only when their URLs are set (D-09). #}
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ brand }}{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="{{ web_font_url }}">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; overflow-wrap: break-word; word-break: keep-all; font-family: {{ font }}; color: #222222; background: #FFFFFF; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+h1, h2, h3, p, ol, ul { margin: 0; }
+.wrap { max-width: 1088px; margin: 0 auto; padding: 0 24px; }
+.row { display: grid; grid-template-columns: minmax(0, 544fr) minmax(0, 440fr); gap: 56px; align-items: center; }
+.eyebrow { font-size: 13px; font-weight: 500; color: #FF6B00; }
+.link { font-size: 14px; font-weight: 700; color: #FF6B00; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.nav { border-bottom: 1px solid #EEEEEE; background: #FFFFFF; }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 72px; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; text-decoration: none; }
+.nav-links { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+.nav-links a { text-decoration: none; color: #737373; }
+.nav-links a.nav-cta { color: #FFFFFF; background: #FF6B00; font-weight: 700; padding: 10px 18px; border-radius: 8px; }
+.form-card { background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08); }
+.form-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+.form-card label { display: block; font-size: 13px; font-weight: 500; margin: 14px 0 6px; }
+.form-card input[type="text"], .form-card input[type="email"] { width: 100%; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid #E6E6E6; border-radius: 8px; }
+.form-card .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; font-weight: 400; color: #737373; margin-top: 16px; }
+.form-card button { width: 100%; margin-top: 18px; font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 8px; padding: 14px; cursor: pointer; }
+.form-card .note { font-size: 12px; color: #A3A3A3; margin-top: 12px; }
+.footer { background: #FAFAFA; border-top: 1px solid #EEEEEE; padding: 32px 0 40px; font-size: 13px; color: #808080; }
+.footer strong { display: block; font-size: 14px; color: #222222; margin-bottom: 6px; }
+.footer a { display: inline-block; margin-top: 8px; color: #737373; }
+{% block style %}{% endblock %}
+@media (max-width: 767px) {
+  .row { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .nav-links { gap: 12px; }
+  .nav-links a.nav-cta { padding: 8px 12px; }
+}
+</style>
+</head>
+<body>
+<header class="nav" data-section="nav">
+<div class="wrap">
+<a class="logo" href="./"><img src="{{ asset }}/otter-tool.png" width="36" height="36" alt="">{{ brand }}</a>
+<nav class="nav-links">
+<a href="{{ archive_href }}">지난 호</a>
+{%- if subscribe_url %}
+<a class="nav-cta" href="#subscribe">구독하기</a>
+{%- endif %}
+</nav>
+</div>
+</header>
+{% block content %}{% endblock %}
+<footer class="footer" data-section="footer">
+<div class="wrap">
+<strong>{{ brand }}</strong>
+<p>매주 월요일 오전 8시 발송 · 출처: Hugging Face Papers</p>
+{%- if privacy_url %}
+<a href="{{ privacy_url }}">개인정보 처리방침</a>
+{%- endif %}
+</div>
+</footer>
+</body>
+</html>

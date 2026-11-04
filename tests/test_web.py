@@ -168,3 +168,219 @@ def test_committed_site_is_fresh(tmp_path, monkeypatch):
     for p in (REPO / "docs").rglob("*.html"):
         text = p.read_text(encoding="utf-8")
         assert OLD_BRAND not in text, p
+
+
+# --- 04-03 Task 1: archive cards and hidden subscribe slots (D-07, D-08, D-09) ---
+
+
+def _two_issues(issue):
+    older = issue.model_copy(update={"issue_id": "2026-W43", "headline_ko": "지난주 제목"})
+    return issue, older
+
+
+def _home(site) -> str:
+    return (site / "docs" / "index.html").read_text(encoding="utf-8")
+
+
+def _archive(home: str) -> str:
+    start = home.index('id="archive"')
+    return home[start : home.index("</section>", start)]
+
+
+def test_card_holds_date_headline_top3_and_image(issue_w44):
+    c = web.card(issue_w44)
+    assert c["url"] == f"issues/{ISSUE_ID}/"
+    assert c["date"] == render.date_line(issue_w44)
+    assert c["headline"] == issue_w44.headline_ko
+    assert c["top3"] == [it.title_ko for it in issue_w44.items[:3]]
+    assert c["image"] == issue_w44.items[0].image
+
+
+def test_archive_cards_newest_first_with_top3(site, issue_w44):
+    for i in _two_issues(issue_w44):
+        web.publish(i)
+    web.build_site()
+    archive = _archive(_home(site))
+    assert archive.index('href="issues/2026-W44/"') < archive.index('href="issues/2026-W43/"')
+    assert archive.index(issue_w44.headline_ko) < archive.index("지난주 제목")
+    for it in issue_w44.items[:3]:
+        assert it.title_ko in archive
+    assert render.date_line(issue_w44) in archive
+
+
+def test_archive_card_image_only_when_present(site, issue_w44):
+    first = issue_w44.items[0]
+    assert first.image is not None
+    no_image = issue_w44.model_copy(
+        update={
+            "issue_id": "2026-W43",
+            "items": [first.model_copy(update={"image": None}), *issue_w44.items[1:]],
+        }
+    )
+    web.publish(issue_w44)
+    web.publish(no_image)
+    web.build_site()
+    archive = _archive(_home(site))
+    w44, w43 = archive.split('href="issues/2026-W43/"', 1)
+    assert w44.count("<img") == 1
+    assert f'src="{first.image.url}"' in w44
+    assert f'alt="{first.title_ko}"' in w44
+    assert "<img" not in w43
+
+
+def test_subscribe_hidden_while_url_is_none(site, issue_w44):
+    assert web.SUBSCRIBE_URL is None
+    assert web.PRIVACY_URL is None
+    web.publish(issue_w44)
+    web.build_site()
+    home = _home(site)
+    assert "<form" not in home
+    assert "무료로 구독하기" not in home
+    assert "구독하기" not in home
+    assert "개인정보 처리방침" not in home
+
+
+def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
+    url = "https://script.google.com/macros/s/example/exec"
+    monkeypatch.setattr(web, "SUBSCRIBE_URL", url)
+    monkeypatch.setattr(web, "PRIVACY_URL", "https://example.org/privacy")
+    web.publish(issue_w44)
+    web.build_site()
+    home = _home(site)
+    assert home.count("<form") == 2
+    assert home.count(f'action="{url}"') == 2
+    assert home.count("무료로 구독하기") == 2
+    assert 'class="nav-cta"' in home
+    assert "개인정보 처리방침" in home
+
+
+def test_archive_empty_state_line(site):
+    web.build_site()
+    assert "아직 발행된 호가 없어요." in _archive(_home(site))
+
+
+# --- 04-03 Task 2: Figma 25:356 landing (D-04, D-15) ---
+
+SECTIONS = ["nav", "hero", "what-you-get", "sample", "archive", "cta", "footer"]
+# Sentences written for the page; each must appear in the home and pass the humanizer.
+HOME_SENTENCES = [
+    (
+        "Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 것만 골라, 무엇을 하는 "
+        "모델인지 비전공자도 이해하게 풀어 써요. 상업적으로 써도 되는지, 바로 돌려볼 수 "
+        "있는지도 함께 알려 드려요."
+    ),
+    "지난주 올라온 모델 중 개발자들이 실제로 관심 갖는 것만 골라요.",
+    "이번 주 새로 나온 기술 하나를 예시와 함께 쉽게 풀어 설명해요.",
+    (
+        "카드마다 한 줄 요약, 쉬운 설명 세 줄, 모델 정보와 활용 아이디어가 들어가요. 스크롤 몇 "
+        "번이면 이번 주 Top 10을 다 볼 수 있어요."
+    ),
+    "첫 메일이 나가면 그 호를 여기에서 바로 읽을 수 있어요.",
+]
+# Labels and noun phrases (lint kind="name").
+HOME_NAMES = [
+    "한 번 읽으면 이번 주 AI 흐름이 정리돼요",
+    "이런 메일이 매주 도착해요",
+    "지금까지 보낸 메일",
+    "첫 호를 준비하고 있어요",
+    "매주 월요일 오전 8시 발송 · 출처: Hugging Face Papers",
+]
+# Only rendered once SUBSCRIBE_URL is set (Phase 4.1).
+FORM_SENTENCES = [
+    "뉴스레터 수신과 이메일 수집에 동의해요. 언제든 그만 받을 수 있어요.",
+    "메일 아래쪽 링크로 언제든 해지할 수 있어요.",
+]
+# Owner-approved copy taken verbatim from Figma 25:356: exempt from the lint (D-04).
+OWNER_FIGMA_COPY = [
+    "AI 모델, 해달이 골라 드려요",  # hero title, second line
+    "다음 주 월요일, 해달이 기다릴게요 👋",  # bottom CTA, same emoji as the email closing
+]
+
+
+@pytest.fixture
+def home_html(site, issue_w44) -> str:
+    web.publish(issue_w44)
+    web.build_site()
+    return _home(site)
+
+
+def test_home_sections_follow_figma_order(home_html):
+    marks = [home_html.index(f'data-section="{s}"') for s in SECTIONS]
+    assert marks == sorted(marks)
+
+
+def test_what_you_get_has_exactly_two_cards(home_html):
+    assert home_html.count('data-card="what-you-get"') == 2
+    assert "GitHub star Top 10" in home_html
+    assert "AI 기술 쉽게 보기" in home_html
+    assert "바로 써볼 만한 것" not in home_html
+
+
+def test_sample_preview_has_no_banner_and_shows_latest(home_html, issue_w44):
+    sample = home_html[home_html.index('data-section="sample"') : home_html.index('id="archive"')]
+    assert "otter-banner" not in sample
+    assert issue_w44.headline_ko in sample
+    assert f'href="issues/{ISSUE_ID}/"' in sample
+    assert sample.count(f'href="{render.ARCHIVE_ANCHOR}"') == 1
+
+
+def test_nav_archive_link_uses_anchor(home_html):
+    nav = home_html[: home_html.index('data-section="hero"')]
+    assert f'href="{render.ARCHIVE_ANCHOR}">지난 호<' in nav
+
+
+def test_home_static_font_and_responsive(home_html):
+    assert "<script" not in home_html.lower()
+    assert "@media (max-width: 767px)" in home_html
+    assert f'href="{render.WEB_FONT_URL.replace("&", "&amp;")}"' in home_html
+    assert "IBM+Plex+Sans+KR" in home_html
+    assert render.FONT_STACK in home_html
+    assert home_html.count(f"{render.ASSET_BASE_URL}/otter-banner.jpg") == 1
+    assert '<html lang="ko">' in home_html
+    assert "mailto:" not in home_html
+
+
+def test_home_footer_is_brand_and_send_note_only(home_html):
+    footer = home_html[home_html.index('data-section="footer"') :]
+    assert render.BRAND in footer
+    assert "매주 월요일 오전 8시 발송 · 출처: Hugging Face Papers" in footer
+    assert not _EMAIL_RE.search(footer)
+
+
+def test_templates_hold_no_literal_brand():
+    for name in ("_base.html.j2", "home.html.j2"):
+        text = (store.TEMPLATES_DIR / "web" / name).read_text(encoding="utf-8")
+        assert render.BRAND not in text, name
+        assert OLD_BRAND not in text, name
+
+
+def test_no_page_uses_old_brand(home_html):
+    assert render.BRAND in home_html
+    assert home_html.count(render.BRAND) >= 3  # title, nav, footer
+    for p in (REPO / "docs").rglob("*.html"):
+        assert OLD_BRAND not in p.read_text(encoding="utf-8"), p
+
+
+def test_home_copy_is_rendered(home_html, site, issue_w44, monkeypatch):
+    for text in HOME_SENTENCES[:4] + HOME_NAMES[:3] + HOME_NAMES[4:] + OWNER_FIGMA_COPY:
+        assert text in home_html, text
+    # empty-state preview copy
+    for p in (site / "data" / "issues").glob("*.json"):
+        p.unlink()
+    monkeypatch.setattr(web, "SUBSCRIBE_URL", "https://script.google.com/macros/s/x/exec")
+    web.build_site()
+    empty = _home(site)
+    assert HOME_SENTENCES[4] in empty
+    assert HOME_NAMES[3] in empty
+    for text in FORM_SENTENCES:
+        assert text in empty, text
+
+
+@pytest.mark.parametrize("text", HOME_SENTENCES + FORM_SENTENCES)
+def test_home_sentences_pass_humanizer(text):
+    assert not [c for c in humanize.lint(text) if c in humanize.HARD_CODES]
+
+
+@pytest.mark.parametrize("text", HOME_NAMES)
+def test_home_labels_pass_humanizer(text):
+    assert not [c for c in humanize.lint(text, kind="name") if c in humanize.HARD_CODES]

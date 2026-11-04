@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from markupsafe import Markup
 
 from newsletter import store
 from newsletter.schema import Issue
@@ -21,6 +22,12 @@ _web_env = Environment(
     undefined=StrictUndefined,
     keep_trailing_newline=True,
 )
+
+# D-09: the subscribe forms, the nav 구독하기 button and the privacy link are built but
+# stay out of the HTML until Phase 4.1 sets these (the Apps Script endpoint and the
+# privacy page).
+SUBSCRIBE_URL: str | None = None
+PRIVACY_URL: str | None = None
 
 
 def issues_dir() -> Path:
@@ -51,11 +58,32 @@ def load_issues() -> list[Issue]:
     return sorted(issues, key=lambda i: i.issue_id, reverse=True)
 
 
-def _card(issue: Issue) -> dict:
+def card(issue: Issue) -> dict:
+    """D-08: one 지난 호 card. Relative url so the home page works under any Pages base."""
+    first = issue.items[0]
     return {
-        "href": f"issues/{issue.issue_id}/",
+        "url": f"issues/{issue.issue_id}/",
         "date": render.date_line(issue),
         "headline": issue.headline_ko,
+        "top3": [it.title_ko for it in issue.items[:3]],
+        "image": first.image,  # ItemImage | None; hotlinked like the email
+        "image_alt": first.title_ko,
+    }
+
+
+def _home_context(issues: list[Issue]) -> dict:
+    cards = [card(i) for i in issues]
+    return {
+        "brand": render.BRAND,
+        "cards": cards,
+        "latest": cards[0] if cards else None,
+        "subscribe_url": SUBSCRIBE_URL,
+        "privacy_url": PRIVACY_URL,
+        "archive_id": render.ARCHIVE_ANCHOR.removeprefix("#"),
+        "archive_href": render.ARCHIVE_ANCHOR,
+        "asset": render.ASSET_BASE_URL,
+        "web_font_url": render.WEB_FONT_URL,
+        "font": Markup(render.FONT_STACK),  # trusted constant; keeps quotes unescaped
     }
 
 
@@ -68,9 +96,7 @@ def build_site() -> list[Path]:
         path = docs / "issues" / issue.issue_id / "index.html"
         store.write_text(path, render.render_web_issue(issue))
         written.append(path)
-    home = _web_env.get_template("home.html.j2").render(
-        brand=render.BRAND, cards=[_card(i) for i in issues]
-    )
+    home = _web_env.get_template("home.html.j2").render(**_home_context(issues))
     path = docs / "index.html"
     store.write_text(path, home)
     written.append(path)
