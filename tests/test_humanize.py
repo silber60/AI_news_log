@@ -4,9 +4,9 @@ import json
 import logging
 
 import pytest
-from conftest import FIXTURES
+from conftest import FIXTURES, FakeAnthropic, make_parsed
 
-from newsletter.schema import Explainer, Highlight, Issue
+from newsletter.schema import Explainer, Highlight, Issue, PolishFixLLM, PolishLLM
 from newsletter.stages import analyze, headline, humanize, notes, trend
 from newsletter.store import PROMPTS_DIR
 
@@ -300,3 +300,69 @@ def test_every_system_prompt_carries_the_port():
         notes.notes_system_prompt(),
     ):
         assert port in prompt
+
+
+# ---- 03-06: polish pass (HUMN-03, D-08, D-13) ----
+
+LINE_PATH = "items.1.summary_lines_ko.1"
+
+
+def _dirty(issue_w44: Issue) -> tuple[Issue, str]:
+    line = issue_w44.items[1].summary_lines_ko[1]
+    return _with(issue_w44, LINE_PATH, "혁신적인 " + line), line
+
+
+def _fixes(*pairs: tuple[str, str]):
+    return make_parsed(PolishLLM(fixes=[PolishFixLLM(id=i, text=t) for i, t in pairs]))
+
+
+def _same_outside(a: Issue, b: Issue, allowed: set[str]) -> bool:
+    return humanize.unchanged_outside(a.model_dump(mode="json"), b.model_dump(mode="json"), allowed)
+
+
+def test_polish_clean_issue_makes_no_call(issue_w44):
+    fake = FakeAnthropic()
+    assert humanize.polish_issue(issue_w44, fake) == issue_w44
+    assert fake.calls == []
+
+
+def test_polish_fixes_only_the_flagged_field(issue_w44):
+    issue, line = _dirty(issue_w44)
+    fake = FakeAnthropic()
+    out = humanize.polish_issue(issue, fake)
+    assert len(fake.calls) == 1
+    sent = fake.user_texts()[0]
+    assert sent.startswith("<fields>") and sent.count("id: ") == 1
+    assert f"id: {LINE_PATH}\nkind: 문장\nlimit: 70\nproblems: hype\ntext: 혁신적인 " in sent
+    assert out.items[1].summary_lines_ko[1] == line
+    assert out == issue_w44
+
+
+def test_polish_ignores_a_fix_for_an_unrequested_id(issue_w44):
+    issue, line = _dirty(issue_w44)
+    fake = FakeAnthropic(
+        [_fixes((LINE_PATH, line), ("items.0.summary_ko", "다른 요약으로 바꿨어요."))]
+    )
+    out = humanize.polish_issue(issue, fake)
+    assert len(fake.calls) == 1
+    assert out.items[0].summary_ko == issue.items[0].summary_ko
+    assert out == issue_w44
+
+
+def test_polish_diff_guard_discards_an_outside_change(issue_w44, monkeypatch, caplog):
+    issue, _ = _dirty(issue_w44)
+    real = humanize.set_texts
+
+    def leaky(base, texts):
+        out = real(base, texts)
+        if list(texts) == [LINE_PATH]:  # the fix step also moves a leaf nobody asked about
+            out = real(out, {"items.0.summary_ko": "몰래 바뀐 요약이에요."})
+        return out
+
+    monkeypatch.setattr(humanize, "set_texts", leaky)
+    with caplog.at_level(logging.INFO, logger="newsletter.stages.humanize"):
+        out = humanize.polish_issue(issue, FakeAnthropic())
+    assert out == issue
+    assert _same_outside(out, issue, set())
+    assert any("polish=discarded reason=diff" in r.getMessage() for r in caplog.records)
+    assert any("humanizer=unfixed fields=1 codes=hype" in r.getMessage() for r in caplog.records)

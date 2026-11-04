@@ -299,6 +299,17 @@ class ExplainerLLM(BaseModel):  # EXPL-01/02, D-04, D-10: code copies the image
     related_ranks: list[int]  # 1-3 unique ranks of this week (checked in code)
 
 
+class PolishFixLLM(BaseModel):  # HUMN-03, D-13 (plan 03-06): one rewritten field
+    model_config = ConfigDict(extra="forbid")
+    id: str  # a requested field path, copied verbatim (checked in code)
+    text: str  # the rewritten field text (guarded in code)
+
+
+class PolishLLM(BaseModel):  # HUMN-03, D-08: one fix per requested id
+    model_config = ConfigDict(extra="forbid")
+    fixes: list[PolishFixLLM]
+
+
 class VerdictNoteLLM(BaseModel):  # ANLY-04, D-14 (plan 02-03): one item's reasons
     model_config = ConfigDict(extra="forbid")
     rank: int

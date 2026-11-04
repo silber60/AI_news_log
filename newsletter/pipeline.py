@@ -1,5 +1,8 @@
 """Build stage: week -> fetch -> select -> analyze -> enrich -> verdicts -> notes -> trend
--> highlight -> explainer -> headline -> Issue -> render -> archive."""
+-> highlight -> explainer -> headline -> Issue -> polish -> render -> archive.
+
+The polish pass (HUMN-03, D-13) runs on the assembled Issue before anything is
+written, so issue.json, email.html and email.txt all carry the same text."""
 
 import logging
 from datetime import datetime
@@ -13,6 +16,7 @@ from newsletter.stages import (
     fetch,
     headline,
     highlight,
+    humanize,
     notes,
     render,
     select,
@@ -96,6 +100,8 @@ def run_build(issue_id: str, *, http_client=None, claude_client=None) -> Issue:
         explainer=explainer_,
         headline_ko=headline.write_headline(items, client),
     )
+    # HUMN-03, D-08: lint-gated polish of Claude free text; 0 calls when clean.
+    issue = humanize.polish_issue(issue, client)
     store.write_json(out / "issue.json", issue)
     store.write_text(out / "email.html", render.render_html(issue, PREVIEW_GREETING))
     store.write_text(out / "email.txt", render.render_text(issue, PREVIEW_GREETING))

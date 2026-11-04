@@ -13,7 +13,10 @@ from conftest import (
     DEFAULT_SKILL_GPT_REASON,
     DEFAULT_TREND,
     FakeAnthropic,
+    default_analysis,
     default_notes,
+    default_response,
+    make_parsed,
     mock_hf_week,
 )
 
@@ -166,6 +169,8 @@ def test_run_build_writes_archive(hf_pages, archive_tmp, monkeypatch):
         assert text.startswith("<items>")
         assert "http" not in text
     assert "<past_topics>" in texts[13]
+    # HUMN-03, D-13: every default text is lint-clean, so no polish call is made.
+    assert not any("<fields>" in t for t in texts)
 
     # ANLY-04, D-14: Claude reasons for known verdicts, the code reason otherwise.
     note = default_notes({"messages": [{"content": "rank: 1"}]}).notes[0]
@@ -232,6 +237,43 @@ def test_run_build_writes_archive(hf_pages, archive_tmp, monkeypatch):
     assert len(cards) == 10
     assert all("🤖 Claude/GPT 기법 적용" in c for c in cards)
     assert "구독자님" in (week / "email.txt").read_text(encoding="utf-8")
+
+
+DIRTY_LINE = "혁신적인 이전 방법과 다른 점이에요."
+
+
+def _dirty_rank2(kw):
+    a = default_analysis(kw)
+    return make_parsed(a.model_copy(update={"new_ko": DIRTY_LINE}))
+
+
+def _dump(issue: Issue) -> dict:
+    data = issue.model_dump(mode="json")
+    data.pop("generated_at")
+    return data
+
+
+def test_flagged_line_gets_one_polish_call(hf_pages, archive_tmp):
+    """HUMN-03, D-08, D-13: one AI-tell sentence is rewritten by a 16th call before
+    anything is written; every other leaf equals the clean build."""
+    clean = _build(hf_pages, FakeAnthropic())
+
+    fake = FakeAnthropic([default_response, _dirty_rank2])
+    issue = _build(hf_pages, fake)
+    assert len(fake.calls) == 16
+    last = fake.user_texts()[-1]
+    assert last.startswith("<fields>")
+    assert last.count("id: ") == 1
+    assert "id: items.1.summary_lines_ko.1\n" in last
+    assert "혁신적인" in last
+
+    week = archive_tmp / "archive" / ISSUE_ID
+    stored = Issue.model_validate_json((week / "issue.json").read_text(encoding="utf-8"))
+    assert stored == issue
+    assert stored.items[1].summary_lines_ko[1] == "이전 방법과 다른 점이에요."
+    assert _dump(stored) == _dump(clean)
+    for name in ("email.html", "email.txt"):
+        assert "혁신적인" not in (week / name).read_text(encoding="utf-8")
 
 
 def test_trend_api_error_keeps_the_build(hf_pages, archive_tmp):

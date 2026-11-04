@@ -27,6 +27,8 @@ from newsletter.schema import (
     HighlightsLLM,
     Issue,
     ItemAnalysisLLM,
+    PolishFixLLM,
+    PolishLLM,
     TrendLLM,
     VerdictNoteLLM,
     VerdictNotesLLM,
@@ -383,6 +385,27 @@ def default_explainer(kw: dict) -> ExplainerLLM:
     )
 
 
+POLISH_DROP_WORDS = ("혁신적인 ", "획기적인 ")
+
+
+def default_polish(kw: dict) -> PolishLLM:
+    """One fix per `id:` / `text:` pair inside `<fields>`: the text with the words
+    "혁신적인 " and "획기적인 " removed, which keeps every fact."""
+    m = re.search(r"<fields>(.*?)</fields>", _user_text(kw), re.DOTALL)
+    body = m.group(1) if m else ""
+    fixes, fid = [], None
+    for line in body.splitlines():
+        if line.startswith("id: "):
+            fid = line[4:].strip()
+        elif line.startswith("text: ") and fid is not None:
+            text = line[6:]
+            for word in POLISH_DROP_WORDS:
+                text = text.replace(word, "")
+            fixes.append(PolishFixLLM(id=fid, text=text.strip()))
+            fid = None
+    return PolishLLM(fixes=fixes)
+
+
 def default_response(kw: dict) -> SimpleNamespace:
     """Valid default for any request type, chosen by the request's output_format."""
     if kw.get("output_format") is HeadlineLLM:
@@ -395,6 +418,8 @@ def default_response(kw: dict) -> SimpleNamespace:
         return make_parsed(default_highlights(kw))
     if kw.get("output_format") is ExplainerLLM:
         return make_parsed(default_explainer(kw))
+    if kw.get("output_format") is PolishLLM:
+        return make_parsed(default_polish(kw))
     return make_parsed(default_analysis(kw))
 
 
@@ -418,7 +443,7 @@ class FakeAnthropic:
     `output_format`: a headline (HeadlineLLM), a trend (TrendLLM), one note per
     input rank (VerdictNotesLLM), picks for the first three input ranks
     (HighlightsLLM), an explainer tied to the first two input ranks
-    (ExplainerLLM), or else an analysis.
+    (ExplainerLLM), one fix per requested field (PolishLLM), or else an analysis.
     Every call is recorded in `calls` as `{"ns": "messages"|"beta", "kw": kw}`.
     """
 

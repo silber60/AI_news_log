@@ -3,9 +3,13 @@
 `collect_fields` lists every Claude free-text field of an `Issue` by its
 `model_dump(mode="json")` leaf path. `lint` returns the banned-pattern codes found
 in one text, and `lint_issue` maps each flagged sentence field to its codes. One
-hard hit, or two or more weak hits in the same field, flags a field. The polish
-call that acts on the result lives in a later plan (03-06); this module makes no
-Claude call.
+hard hit, or two or more weak hits in the same field, flags a field.
+
+`polish_issue` (HUMN-03, D-08, D-13) runs once at the end of the build: it cleans
+every collected field, and only when a sentence field is flagged it sends one
+polish call with just the flagged fields. Each fix passes per-fix guards, then a
+whole-dump diff guard rejects any change outside the accepted paths. At most two
+calls; leftovers log a warning and never stop the build.
 
 Never collected: headline_ko (own checks and code fallback), enums, URLs, numbers,
 ranks and images. Reason fields equal to `notes.UNKNOWN_REASON` are code text and
@@ -19,8 +23,12 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
-from newsletter.schema import Issue
+import anthropic
+from pydantic import ValidationError
+
+from newsletter.schema import Issue, PolishLLM
 from newsletter.stages import analyze, notes, trend
+from newsletter.store import PROMPTS_DIR
 
 log = logging.getLogger(__name__)
 
@@ -232,3 +240,226 @@ def dash_fallback(text: str) -> str:
     """Research cleanup step 4 (after polish only): connector dashes become ", ".
     English hyphens ("Vision-Language-Action", "GPT-5") are left alone."""
     return _DASH_RE.sub(", ", text)
+
+
+# ---- polish pass (HUMN-03, D-08, D-13; research §2) ----
+
+MAX_POLISH_ATTEMPTS = 2
+
+
+def polish_system_prompt() -> str:
+    """polish.md + humanizer_ko.md as one text, sent as one cached block."""
+    head = (PROMPTS_DIR / "polish.md").read_text(encoding="utf-8").strip()
+    humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8").strip()
+    return head + "\n\n" + humanizer
+
+
+def _leaves(d, prefix: str = ""):
+    if isinstance(d, dict):
+        for k, v in d.items():
+            yield from _leaves(v, f"{prefix}{k}.")
+    elif isinstance(d, list):
+        for i, v in enumerate(d):
+            yield from _leaves(v, f"{prefix}{i}.")
+    else:
+        yield prefix.rstrip("."), d
+
+
+def unchanged_outside(before: dict, after: dict, allowed: set[str]) -> bool:
+    """True when every leaf outside `allowed` is equal and the key sets match."""
+    a, b = dict(_leaves(before)), dict(_leaves(after))
+    return a.keys() == b.keys() and all(a[k] == b[k] for k in a if k not in allowed)
+
+
+def _set_path(data: dict, path: str, text: str) -> None:
+    keys = path.split(".")
+    node = data
+    for k in keys[:-1]:
+        node = node[int(k)] if isinstance(node, list) else node[k]
+    last = keys[-1]
+    if isinstance(node, list):
+        node[int(last)] = text
+    else:
+        node[last] = text
+
+
+def set_texts(issue: Issue, texts: dict[str, str]) -> Issue:
+    """A copy of issue with each path set to its text, rebuilt through
+    Issue.model_validate so the contract checks run again."""
+    data = issue.model_dump(mode="json")
+    for path, text in texts.items():
+        _set_path(data, path, text)
+    return Issue.model_validate(data)
+
+
+def _hard(codes: list[str]) -> int:
+    return sum(1 for c in codes if c in HARD_CODES)
+
+
+def _weak(codes: list[str]) -> int:
+    return sum(1 for c in codes if c in WEAK_CODES)
+
+
+def _clean_field(text: str) -> str:
+    # Data fence: a text can never close the <fields> block or carry a link.
+    return analyze._one_line(_FIELDS_TAG_RE.sub("", text))
+
+
+_FIELDS_TAG_RE = re.compile(r"</?fields>", re.IGNORECASE)
+
+
+def fields_block(refs: list[FieldRef], flagged: dict[str, list[str]]) -> str:
+    lines = ["<fields>"]
+    for f in refs:
+        lines += [
+            f"id: {f.path}",
+            "kind: 문장",
+            f"limit: {f.limit}",
+            f"problems: {', '.join(flagged[f.path])}",
+            f"text: {_clean_field(f.text)}",
+            "",
+        ]
+    lines[-1] = "</fields>"
+    return "\n".join(lines)
+
+
+def fix_errors(ref: FieldRef, text: str, issue: Issue) -> list[tuple[str, str]]:
+    """Guards for one rewritten field. Messages name the id and the rule, never text."""
+    where = ref.path
+    if not text.strip():
+        return [("fix_empty", f"{where}의 text가 비어 있음")]
+    errs: list[tuple[str, str]] = []
+    if ref.limit is not None and len(text) > ref.limit:
+        errs.append(("fix_len", f"{where}가 {len(text)}자로 {ref.limit}자를 넘음"))
+    if analyze.not_haeyo(text):
+        errs.append(("fix_tone", f"{where}의 문장이 해요체(~요)로 끝나지 않음"))
+    before, after = lint(ref.text), lint(text)
+    if _hard(after) >= _hard(before):
+        errs.append(("fix_lint", f"{where}에 고칠 문제가 그대로 남음"))
+    return errs
+
+
+def _codes(problems: list[tuple[str, str]]) -> str:
+    return "+".join(sorted({code for code, _ in problems})) or "unknown"
+
+
+def _request_fixes(
+    client, refs: list[FieldRef], flagged: dict[str, list[str]], issue: Issue
+) -> dict[str, str]:
+    """One or two polish calls. Returns accepted path -> text; never raises."""
+    by_path = {f.path: f for f in refs}
+    pending = [f.path for f in refs]
+    accepted: dict[str, str] = {}
+    problems: list[tuple[str, str]] = []
+    system = polish_system_prompt()
+    for attempt in range(1, MAX_POLISH_ATTEMPTS + 1):
+        block = fields_block([by_path[p] for p in pending], flagged)
+        try:
+            resp = analyze._request(
+                client,
+                analyze._with_feedback(block, problems),
+                system=system,
+                output_format=PolishLLM,
+            )
+        except anthropic.APIError as e:
+            log.warning("polish=none reason=api_error status=%s", getattr(e, "status_code", None))
+            break
+        except ValueError:  # client-side schema validation
+            problems = [("schema", "출력이 스키마와 맞지 않음")]
+            log.warning("polish attempt=%d reason=schema", attempt)
+            continue
+        if resp.stop_reason in ("refusal", "max_tokens"):
+            problems = [
+                (f"stop_{resp.stop_reason}", f"응답이 stop_reason={resp.stop_reason}로 끝남")
+            ]
+            log.warning("polish attempt=%d reason=stop_%s", attempt, resp.stop_reason)
+            continue
+        out = resp.parsed_output
+        if not isinstance(out, PolishLLM):
+            problems = [("no_output", "구조화된 출력이 비어 있음")]
+            continue
+        counts: dict[str, int] = {}
+        for fix in out.fixes:
+            counts[fix.id] = counts.get(fix.id, 0) + 1
+        problems = []
+        failed: list[str] = []
+        for path in pending:
+            n = counts.get(path, 0)
+            if n != 1:
+                code = "fix_missing" if n == 0 else "fix_repeat"
+                problems.append((code, f"{path}의 fix가 {n}개임 (1개여야 함)"))
+                failed.append(path)
+                continue
+            text = cleanup(next(f.text for f in out.fixes if f.id == path))
+            errs = fix_errors(by_path[path], text, issue)
+            if errs:
+                problems += errs
+                failed.append(path)
+            else:
+                accepted[path] = text
+        extra = len(set(counts) - set(pending))
+        log.info(
+            "polish attempt=%d requested=%d accepted=%d ignored=%d reason=%s",
+            attempt,
+            len(pending),
+            len(pending) - len(failed),
+            extra,
+            _codes(problems) if problems else "-",
+        )
+        pending = failed
+        if not pending:
+            break
+    return accepted
+
+
+def polish_issue(issue: Issue, client) -> Issue:
+    """Clean every Claude field, lint the sentence fields, send only the flagged ones
+    to one guarded polish call (two at most), apply the fixes that pass, and apply
+    the dash fallback. Never raises; any doubt keeps the cleaned originals."""
+    original = issue.model_dump(mode="json")
+    refs = collect_fields(issue)
+    collected = {f.path for f in refs}
+    try:
+        cleaned = set_texts(issue, {f.path: cleanup(f.text) for f in refs})
+    except ValidationError:
+        log.warning("cleanup=skipped reason=validation")
+        cleaned = issue
+
+    flagged = lint_issue(cleaned)
+    polished = cleaned
+    if flagged:
+        sentence = [f for f in collect_fields(cleaned) if f.path in flagged]
+        accepted = _request_fixes(client, sentence, flagged, cleaned)
+        if accepted:
+            try:
+                candidate = set_texts(cleaned, accepted)
+            except ValidationError:
+                candidate = None
+            before = cleaned.model_dump(mode="json")
+            if candidate is not None and unchanged_outside(
+                before, candidate.model_dump(mode="json"), set(accepted)
+            ):
+                polished = candidate
+                log.info("polish=applied fields=%d", len(accepted))
+            else:
+                log.warning("polish=discarded reason=diff fields=%d", len(accepted))
+        left = lint_issue(polished) if accepted else flagged
+        if left:
+            codes = sorted({c for cs in left.values() for c in cs})
+            log.warning("humanizer=unfixed fields=%d codes=%s", len(left), ",".join(codes))
+
+    dashed = {
+        f.path: dash_fallback(f.text)
+        for f in collect_fields(polished)
+        if dash_fallback(f.text) != f.text
+    }
+    if dashed:
+        try:
+            polished = set_texts(polished, dashed)
+            log.info("cleanup=dash fields=%d", len(dashed))
+        except ValidationError:
+            log.warning("cleanup=dash_skipped reason=validation")
+    if not unchanged_outside(original, polished.model_dump(mode="json"), collected):
+        log.warning("polish=discarded reason=final_diff")
+        return issue
+    return polished
