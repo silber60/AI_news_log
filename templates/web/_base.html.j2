@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 {#- Shared shell for the web pages (04-03): head, nav, footer. The brand name always comes
-    from the context (render.BRAND); never write it here. No JavaScript here (only the
-    /unsubscribe/ page adds its own small script), no contact address (D-15). Subscribe and
-    privacy slots render only when their URLs are set (D-09). home_href defaults to "./";
+    from the context (render.BRAND); never write it here. No JavaScript here: the home page
+    adds the subscribe script only when the endpoint is set, and the /unsubscribe/ page adds
+    its own small script. No contact address (D-15). Subscribe and privacy slots render only
+    when their URLs are set (D-09). home_href defaults to "./";
     pages one level down pass "../" and a matching archive_href. #}
 <html lang="ko">
 <head>

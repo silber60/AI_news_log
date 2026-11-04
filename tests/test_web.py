@@ -235,7 +235,7 @@ def test_archive_card_image_only_when_present(site, issue_w44):
 
 
 def test_subscribe_hidden_while_url_is_none(site, issue_w44):
-    assert web.SUBSCRIBE_URL is None
+    assert web.unsubscribe.UNSUBSCRIBE_ENDPOINT is None
     assert web.PRIVACY_URL is None
     web.publish(issue_w44)
     web.build_site()
@@ -248,7 +248,7 @@ def test_subscribe_hidden_while_url_is_none(site, issue_w44):
 
 def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
     url = "https://script.google.com/macros/s/example/exec"
-    monkeypatch.setattr(web, "SUBSCRIBE_URL", url)
+    monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", url)
     monkeypatch.setattr(web, "PRIVACY_URL", "https://example.org/privacy")
     web.publish(issue_w44)
     web.build_site()
@@ -291,9 +291,9 @@ HOME_NAMES = [
     "첫 호를 준비하고 있어요",
     "매주 월요일 오전 8시 발송 · 출처: Hugging Face Papers",
 ]
-# Only rendered once SUBSCRIBE_URL is set (Phase 4.1).
+# Only rendered once unsubscribe.UNSUBSCRIBE_ENDPOINT is set (Phase 4.1, D-10).
 FORM_SENTENCES = [
-    "뉴스레터 수신과 이메일 수집에 동의해요. 언제든 그만 받을 수 있어요.",
+    "이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요.",
     "메일 아래쪽 링크로 언제든 해지할 수 있어요.",
 ]
 # Owner-approved copy taken verbatim from Figma 25:356: exempt from the lint (D-04).
@@ -373,7 +373,9 @@ def test_home_copy_is_rendered(home_html, site, issue_w44, monkeypatch):
     # empty-state preview copy
     for p in (site / "data" / "issues").glob("*.json"):
         p.unlink()
-    monkeypatch.setattr(web, "SUBSCRIBE_URL", "https://script.google.com/macros/s/x/exec")
+    monkeypatch.setattr(
+        web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", "https://script.google.com/macros/s/x/exec"
+    )
     web.build_site()
     empty = _home(site)
     assert HOME_SENTENCES[4] in empty
@@ -490,3 +492,133 @@ def test_unsubscribe_sentences_pass_humanizer(text):
 
 def test_unsubscribe_heading_passes_humanizer():
     assert not [c for c in humanize.lint(UNSUB_HEADING, kind="name") if c in humanize.HARD_CODES]
+
+
+# --- 04.1-04 Task 1: live subscribe forms behind the endpoint switch (D-02, D-10) ---
+
+CODE_GS = REPO / "apps_script" / "Code.gs"
+# Code.gs REPLY, verbatim (04.1-02 contract). There is no per-address code.
+FORM_MSG = {
+    "ok": "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    "invalid": "이메일 주소를 다시 확인해 주세요.",
+    "consent": "개인정보 수집에 동의해야 신청할 수 있어요.",
+    "busy": "잠시 후 다시 신청해 주세요.",
+}
+FORM_SENDING = "보내는 중이에요."
+FORM_UNKNOWN = "신청 결과를 확인하지 못했어요. 몇 분 뒤에도 메일이 없으면 한 번 더 신청해 주세요."
+FORM_NAMES = ["무료로 구독하기", "구독하기", "이름", "이메일", "웹사이트", "개인정보 처리방침"]
+
+
+def _subscribe_home(site, monkeypatch, endpoint: str | None, issue=None) -> str:
+    monkeypatch.setattr(web.unsubscribe, "UNSUBSCRIBE_ENDPOINT", endpoint)
+    if issue is not None:
+        web.publish(issue)
+    web.build_site()
+    return _home(site)
+
+
+def _forms(html: str) -> list[str]:
+    parts = html.split("<form")[1:]
+    return ["<form" + p[: p.index("</form>")] for p in parts]
+
+
+def test_forms_post_every_field_to_the_endpoint(site, issue_w44, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, ENDPOINT, issue_w44)
+    forms = _forms(home)
+    assert len(forms) == 2
+    assert 'id="subscribe"' in forms[0]
+    assert 'id="subscribe-bottom"' in forms[1]
+    for form in forms:
+        head = form[: form.index(">")]
+        assert 'method="post"' in head
+        assert f'action="{ENDPOINT}"' in head
+        assert f'data-endpoint="{ENDPOINT}"' in head
+        assert '<input type="hidden" name="action" value="subscribe">' in form
+        assert '<input type="hidden" name="fmt" value="html">' in form
+        assert f'<input type="hidden" name="cv" value="{web.CONSENT_VERSION}">' in form
+        assert 'name="name"' in form
+        assert re.search(r'<input type="email"[^>]*name="email"[^>]*required', form)
+        assert re.search(r'<input type="checkbox" name="consent" value="yes" required>', form)
+        hp = form[form.index('<div class="hp"') :]
+        hp = hp[: hp.index("</div>")]
+        assert 'aria-hidden="true"' in hp
+        assert re.search(r'<input type="text" name="website" tabindex="-1" autocomplete="off">', hp)
+        assert re.search(r'<p class="msg" role="status" aria-live="polite"></p>', form)
+        assert FORM_SENTENCES[0] in form
+    assert home.count("<script>") == 1
+
+
+def test_form_script_posts_body_only_and_uses_text_content(site, issue_w44, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, ENDPOINT, issue_w44)
+    js = _script(home)
+    for needle in ("URLSearchParams", "new FormData(", '"fmt"', '"json"', "textContent"):
+        assert needle in js, needle
+    assert 'method: "POST"' in js
+    assert 'redirect: "follow"' in js
+    for banned in ("innerHTML", "Content-Type", "JSON.stringify", "email=", "?", "location"):
+        assert banned not in js, banned
+    assert ENDPOINT not in js  # endpoint only via the autoescaped data- attribute
+    for code, msg in FORM_MSG.items():
+        assert f'{code}: "{msg}"' in js, code
+    assert f'unknown: "{FORM_UNKNOWN}"' in js
+    assert f'"{FORM_SENDING}"' in js
+
+
+def test_page_puts_no_address_in_any_url(site, issue_w44, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, ENDPOINT, issue_w44)
+    assert "email=" not in home
+    assert "name=" not in "".join(re.findall(r'(?:href|action|data-endpoint)="([^"]*)"', home))
+    assert "innerHTML" not in home
+    assert not _EMAIL_RE.search(home)
+
+
+def test_subscribe_endpoint_is_autoescaped(site, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, 'https://x.example/"><script>alert(1)</script>')
+    assert "<script>alert(1)" not in home
+    assert home.count('action="https://x.example/&#34;&gt;&lt;script&gt;') == 2
+    assert home.count('data-endpoint="https://x.example/&#34;&gt;&lt;script&gt;') == 2
+
+
+def test_endpoint_none_gates_css_and_script(site, issue_w44, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, None, issue_w44)
+    assert ".hp" not in home
+    assert ".msg" not in home
+    assert "<script" not in home.lower()
+    assert 'name="website"' not in home
+    assert ">구독하기<" not in home
+
+
+def test_endpoint_set_carries_form_css(site, monkeypatch):
+    home = _subscribe_home(site, monkeypatch, ENDPOINT)
+    assert re.search(r"\.form-card \.hp \{[^}]*position: absolute;[^}]*left: -9999px;", home)
+    assert ".form-card .msg {" in home
+    assert '<a class="nav-cta" href="#subscribe">구독하기</a>' in home
+
+
+def test_form_contract_matches_code_gs():
+    gs = CODE_GS.read_text(encoding="utf-8")
+    versions = re.search(r"const CONSENT_VERSIONS = \[([^\]]*)\]", gs).group(1)
+    assert f"'{web.CONSENT_VERSION}'" in versions
+    assert web.CONSENT_VERSION == "2026-11-04"
+    assert "p.website" in gs
+    for code, msg in FORM_MSG.items():
+        assert f"{code}: '{msg}'" in gs, code
+    reply = gs[gs.index("const REPLY = {") :]
+    reply = reply[: reply.index("};")]
+    assert set(re.findall(r"^\s+(\w+):", reply, re.MULTILINE)) == set(FORM_MSG)
+
+
+def test_home_template_has_no_inner_html():
+    text = (store.TEMPLATES_DIR / "web" / "home.html.j2").read_text(encoding="utf-8")
+    assert "innerHTML" not in text
+    assert "data-endpoint" in text
+
+
+@pytest.mark.parametrize("text", [*FORM_MSG.values(), FORM_SENDING, FORM_UNKNOWN])
+def test_form_messages_pass_humanizer(text):
+    assert not [c for c in humanize.lint(text) if c in humanize.HARD_CODES]
+
+
+@pytest.mark.parametrize("text", FORM_NAMES)
+def test_form_labels_pass_humanizer(text):
+    assert not [c for c in humanize.lint(text, kind="name") if c in humanize.HARD_CODES]

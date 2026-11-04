@@ -31,11 +31,13 @@ _web_env = Environment(
     keep_trailing_newline=True,
 )
 
-# D-09: the subscribe forms, the nav 구독하기 button and the privacy link are built but
-# stay out of the HTML until Phase 4.1 sets these (the Apps Script endpoint and the
-# privacy page).
-SUBSCRIBE_URL: str | None = None
+# D-09, D-10: unsubscribe.UNSUBSCRIBE_ENDPOINT is the one switch. The subscribe forms and
+# the nav 구독하기 button post to that same Apps Script /exec URL and render only once it
+# is set; it is read at render time, never copied here.
 PRIVACY_URL: str | None = None
+# The consent-text version each form posts as cv. Code.gs CONSENT_VERSIONS must list it,
+# and it is the privacy page 시행일 (04.1-02 contract).
+CONSENT_VERSION = "2026-11-04"
 
 
 def issues_dir() -> Path:
@@ -85,7 +87,8 @@ def _home_context(issues: list[Issue]) -> dict:
         "brand": render.BRAND,
         "cards": cards,
         "latest": cards[0] if cards else None,
-        "subscribe_url": SUBSCRIBE_URL,
+        "subscribe_url": unsubscribe.UNSUBSCRIBE_ENDPOINT,  # read at call time (one switch)
+        "consent_version": CONSENT_VERSION,
         "privacy_url": PRIVACY_URL,
         "archive_id": render.ARCHIVE_ANCHOR.removeprefix("#"),
         "archive_href": render.ARCHIVE_ANCHOR,

@@ -1,17 +1,27 @@
 {% extends "_base.html.j2" %}
 {#- Home page, Figma 25:356 (Website / Subscribe landing). Owner edits kept: no otter banner
     on top of the sample preview, no 바로 써볼 만한 것 card (D-04). The archive section id is
-    permanent: every sent email's 지난 호 보기 links to it (04-01 Task 1). #}
+    permanent: every sent email's 지난 호 보기 links to it (04-01 Task 1).
+    Forms, their CSS and the one script render only once subscribe_url (the Apps Script
+    endpoint, D-10) is set. A form works as a plain POST with no JavaScript (fmt=html); the
+    script resends the same fields as a URLSearchParams body with fmt=json and shows the
+    reply by code with textContent. The address and name only ever travel in the POST body
+    (D-02). Field names, cv and the reply strings are the Code.gs contract (04.1-02). #}
 
 {%- macro subscribe_form(form_id) %}
-<form class="form-card" id="{{ form_id }}" method="post" action="{{ subscribe_url }}">
+<form class="form-card" id="{{ form_id }}" method="post" action="{{ subscribe_url }}" data-endpoint="{{ subscribe_url }}">
 <h2>매주 월요일 아침, 메일함으로 받아보세요</h2>
+<input type="hidden" name="action" value="subscribe">
+<input type="hidden" name="fmt" value="html">
+<input type="hidden" name="cv" value="{{ consent_version }}">
 <label for="{{ form_id }}-name">이름</label>
 <input type="text" id="{{ form_id }}-name" name="name" placeholder="홍길동" autocomplete="name">
 <label for="{{ form_id }}-email">이메일</label>
 <input type="email" id="{{ form_id }}-email" name="email" placeholder="이메일 주소" autocomplete="email" required>
-<label class="consent"><input type="checkbox" name="consent" value="yes" required> 뉴스레터 수신과 이메일 수집에 동의해요. 언제든 그만 받을 수 있어요.</label>
+<div class="hp" aria-hidden="true"><label>웹사이트<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+<label class="consent"><input type="checkbox" name="consent" value="yes" required> <span>이름과 이메일을 뉴스레터 발송에만 쓰고, 구독 해지 때까지 보관하는 데 동의해요.{% if privacy_url %} <a href="{{ privacy_url }}">개인정보 처리방침</a>{% endif %}</span></label>
 <button type="submit">무료로 구독하기</button>
+<p class="msg" role="status" aria-live="polite"></p>
 <p class="note">메일 아래쪽 링크로 언제든 해지할 수 있어요.</p>
 </form>
 {%- endmacro %}
@@ -59,7 +69,12 @@
 .cta h2 { font-size: 28px; font-weight: 700; color: #303A83; margin-top: 24px; }
 .cta.solo .row { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
 .cta.solo .row > div { width: 100%; max-width: 544px; }
-@media (max-width: 767px) {
+{% if subscribe_url %}.form-card .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.form-card .msg { font-size: 13px; font-weight: 500; color: #303A83; margin-top: 12px; }
+.form-card .msg:empty { display: none; }
+.form-card .consent a { color: #737373; }
+.form-card button:disabled { opacity: 0.6; cursor: default; }
+{% endif %}@media (max-width: 767px) {
   .hero { padding: 40px 0 48px; }
   .hero h1 { font-size: 30px; }
   .hero.solo .row, .cards, .archive-list { grid-template-columns: minmax(0, 1fr); }
@@ -182,5 +197,36 @@
 {%- endif %}
 </div>
 </section>
-</main>
+{% if subscribe_url %}<script>
+(function () {
+  var MSG = {
+    ok: "신청됐어요. 매주 월요일 아침에 메일을 보내드려요.",
+    invalid: "이메일 주소를 다시 확인해 주세요.",
+    consent: "개인정보 수집에 동의해야 신청할 수 있어요.",
+    busy: "잠시 후 다시 신청해 주세요.",
+    unknown: "신청 결과를 확인하지 못했어요. 몇 분 뒤에도 메일이 없으면 한 번 더 신청해 주세요."
+  };
+  document.querySelectorAll("form[data-endpoint]").forEach(function (f) {
+    f.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var b = f.querySelector("button"), m = f.querySelector(".msg");
+      var body = new URLSearchParams(new FormData(f));
+      body.set("fmt", "json");
+      b.disabled = true;
+      m.textContent = "보내는 중이에요.";
+      fetch(f.getAttribute("data-endpoint"), { method: "POST", body: body, redirect: "follow" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var code = "busy";
+          if (d && typeof d.code === "string" && d.code !== "unknown" && Object.prototype.hasOwnProperty.call(MSG, d.code)) code = d.code;
+          m.textContent = MSG[code];
+          if (d && d.ok === true) f.reset();
+        })
+        .catch(function () { m.textContent = MSG.unknown; })
+        .finally(function () { b.disabled = false; });
+    });
+  });
+})();
+</script>
+{% endif %}</main>
 {% endblock %}
