@@ -1,6 +1,6 @@
 """CLI: `python -m newsletter build --week YYYY-Www`, `deliver --mode test|send`,
 `notify-failure --mode test|send`, `record-topic --mode preview|test|send`,
-`publish --mode preview|test|send`, `site`.
+`publish --mode preview|test|send`, `site`, `import-subscribers`.
 
 `record-topic` appends the current issue's explainer topic to
 data/explainer_topics.json, only in send mode (D-06, D-15). It logs issue ids
@@ -10,6 +10,11 @@ and status codes only, never topic text.
 the GitHub Pages files under docs/, only in send mode (D-03). `site` only
 regenerates docs/ from data/issues (after a template change). Both log ids and
 counts only.
+
+`import-subscribers` copies the readers of the old CSV secret into the Sheet
+through Apps Script action=import (D-06; the secrets are read only inside
+newsletter.delivery). It runs once from the import-subscribers workflow and logs
+counts only. Removed again in 04.1-06.
 
 The top-level handler reports a failure as `stage=<stage> error=<ClassName>` only
 and writes the same two fields to out/status.json. Exception text and tracebacks
@@ -33,6 +38,7 @@ NOTIFY = "notify-failure"
 RECORD = "record-topic"
 PUBLISH = "publish"
 SITE = "site"
+IMPORT = "import-subscribers"
 
 log = logging.getLogger("newsletter")
 
@@ -51,6 +57,7 @@ def _parser() -> argparse.ArgumentParser:
     w = sub.add_parser(PUBLISH, help="publish the sent issue to the web archive")
     w.add_argument("--mode", choices=["preview", "test", "send"], required=True)
     sub.add_parser(SITE, help="regenerate docs/ from data/issues")
+    sub.add_parser(IMPORT, help="one-time copy of the old CSV readers into the Sheet")
     return p
 
 
@@ -94,6 +101,21 @@ def _publish(mode: str) -> None:
     _build_site()
 
 
+def _import_subscribers() -> None:
+    from newsletter.delivery.importer import run_import
+
+    n = run_import()
+    log.info(
+        "import rows=%d added=%d existing=%d unsubscribed=%d skipped=%d skipped_rows=%d",
+        n["rows"],
+        n["added"],
+        n["existing"],
+        n["unsubscribed"],
+        n["skipped"],
+        n["skipped_rows"],
+    )
+
+
 def _run(args: argparse.Namespace) -> None:
     if args.command == "build":
         from newsletter.pipeline import run_build
@@ -114,14 +136,16 @@ def _run(args: argparse.Namespace) -> None:
         _publish(args.mode)
     elif args.command == SITE:
         _build_site()
+    elif args.command == IMPORT:
+        _import_subscribers()
 
 
 _EMAIL_RE = re.compile(r"[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}")
 
 
 def _report(command: str, exc: BaseException) -> None:
-    if command == NOTIFY:
-        stage = NOTIFY
+    if command in (NOTIFY, IMPORT):
+        stage = command
     elif isinstance(exc, PipelineError):
         stage = exc.stage
     else:

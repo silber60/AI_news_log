@@ -10,6 +10,7 @@ WORKFLOWS = Path(__file__).parent.parent / ".github" / "workflows"
 NEWSLETTER = WORKFLOWS / "newsletter.yml"
 CI = WORKFLOWS / "ci.yml"
 PAGES = WORKFLOWS / "pages.yml"
+IMPORT = WORKFLOWS / "import-subscribers.yml"
 DEPLOY_PAGES_PIN = "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346"
 UPLOAD_PAGES_PIN = "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9"
 
@@ -19,6 +20,7 @@ DELIVERY_SECRETS = (
     "SMTP_PASSWORD",
     "TEST_RECIPIENT",
     "SUBSCRIBERS_CSV",
+    "SUBSCRIBER_LIST_KEY",
     *UNSUBSCRIBE_SECRETS,
 )
 STEP_PREFIX = "      - "
@@ -153,7 +155,7 @@ def test_anthropic_key_only_in_build():
 
 
 def test_no_expression_interpolation_in_run_lines():
-    for path in (NEWSLETTER, CI, PAGES):
+    for path in (NEWSLETTER, CI, PAGES, IMPORT):
         for line in _run_lines(_text(path)):
             assert "${{" not in line, f"{path.name}: expression in run line: {line!r}"
 
@@ -287,7 +289,7 @@ def test_artifact_uploads_archive_only():
 
 
 def test_actions_pinned_to_commit_sha():
-    for path in (NEWSLETTER, CI, PAGES):
+    for path in (NEWSLETTER, CI, PAGES, IMPORT):
         uses = [line for line in _text(path).splitlines() if "uses:" in line]
         assert uses
         for line in uses:
@@ -312,3 +314,68 @@ def test_build_step_gets_job_token_not_a_secret():
     assert "secrets.GITHUB_TOKEN" not in _text(NEWSLETTER)
     holders = [b for b in blocks if "GITHUB_TOKEN" in b]
     assert holders == [build]
+
+
+# ------------------------------------------- live list and one-time import (04.1-03)
+
+
+def test_subscriber_list_key_send_gated_in_deliver_only():
+    # D-08, T-04.1-10: the members key reaches only the send-mode Deliver step.
+    text = _text(NEWSLETTER)
+    _, blocks = _split(text)
+    deliver = _named(blocks, "Deliver")
+    line = "SUBSCRIBER_LIST_KEY: ${{ inputs.mode == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}"
+    assert line in deliver
+    assert text.count("SUBSCRIBER_LIST_KEY") == deliver.count("SUBSCRIBER_LIST_KEY") == 2
+    for block in blocks:
+        if block != deliver:
+            assert "SUBSCRIBER_LIST_KEY" not in block
+    for name, (header, job_blocks) in _jobs(text).items():
+        if name != "run":
+            assert "SUBSCRIBER_LIST_KEY" not in header + "\n".join(job_blocks)
+    assert "SUBSCRIBE_ADMIN_KEY" not in text
+    assert text.count("UNSUBSCRIBE_") == 4
+    assert _named(blocks, "Build").count("secrets.") == 1
+
+
+def test_import_workflow_is_dispatch_only_and_serialized():
+    text = _text(IMPORT)
+    header = _workflow_header(text)
+    assert "\non:\n  workflow_dispatch:\n\npermissions:" in header  # the only trigger
+    assert "inputs:" not in text
+    for other in ("push", "pull_request", "schedule", "workflow_run", "repository_dispatch"):
+        assert f"{other}:" not in text
+    assert "group: newsletter" in header
+    assert "cancel-in-progress: false" in header
+    assert set(_jobs(text)) == {"import"}
+
+
+def test_import_workflow_secrets_only_in_import_step():
+    # D-06, T-04.1-12: both secrets in the one step, nowhere else, and no log helpers.
+    text = _text(IMPORT)
+    _, blocks = _jobs(text)["import"]
+    step = _named(blocks, "Import subscribers")
+    assert text.count("secrets.") == step.count("secrets.") == 2
+    assert "SUBSCRIBERS_CSV: ${{ secrets.SUBSCRIBERS_CSV }}" in step
+    assert "SUBSCRIBE_ADMIN_KEY: ${{ secrets.SUBSCRIBE_ADMIN_KEY }}" in step
+    for name in ("SUBSCRIBERS_CSV", "SUBSCRIBE_ADMIN_KEY"):
+        assert text.count(name) == step.count(name) == 2, name
+    assert "uv run python -m newsletter import-subscribers" in step
+    assert "upload-artifact" not in text
+    assert "set -x" not in text
+    assert "echo" not in text
+    assert "github.token" not in text
+    checkout = [b for b in blocks if "actions/checkout@" in b]
+    assert len(checkout) == 1 and "persist-credentials: false" in checkout[0]
+
+
+def test_import_workflow_permissions_read_only():
+    text = _text(IMPORT)
+    code = _code(text)
+    assert sum(1 for ln in code if ln.strip() == "permissions:") == 1
+    assert "permissions:" in _workflow_header(text)
+    assert "  contents: read" in _workflow_header(text)
+    for name, (header, blocks) in _jobs(text).items():
+        assert "permissions:" not in header + "\n".join(blocks), name
+    assert not any(": write" in ln for ln in text.splitlines())
+    assert "write-all" not in text
