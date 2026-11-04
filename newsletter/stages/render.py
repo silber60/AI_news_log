@@ -12,6 +12,7 @@ import css_inline
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup
 
+from newsletter.delivery.subscribers import DEFAULT_GREETING
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, Issue, Item
 from newsletter.stages.highlight import SPACE_PREFIX
@@ -34,8 +35,11 @@ _INLINER = css_inline.CSSInliner(load_remote_stylesheets=False, keep_link_tags=T
 # D-09: versioned, never-overwritten public asset directory. v2 (brand 모닥로그 AI 리포트)
 # swaps the top banner; v1 stays published for emails already sent.
 ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v2"
-# D-16: 웹에서 보기 / 지난 호 보기 stay hidden until the web archive exists (Phase 4).
-WEB_URL: str | None = None
+# D-01, D-02: the GitHub Pages site. Issue pages live at SITE_URL + "issues/<issue_id>/"
+# forever, since sent emails link there. 04-01 Task 1 (owner): 지난 호 보기 opens the
+# home page's archive section, so id="archive" must stay on the home page.
+SITE_URL = "https://silber60.github.io/AI_news_log/"
+ARCHIVE_ANCHOR = "#archive"
 # Max hashtags in the header (research Assumption A9).
 HASHTAG_MAX = 3
 _WEEKDAYS_KO = ("월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일")
@@ -174,15 +178,28 @@ def basis_note(issue: Issue) -> str:
     return "GitHub star 기준"
 
 
-def _context(issue: Issue, greeting: str) -> dict:
+def issue_url(issue_id: str) -> str:
+    """D-02: the fixed public URL of one issue page."""
+    return SITE_URL + "issues/" + issue_id + "/"
+
+
+def archive_url() -> str:
+    """D-07: where 지난 호 보기 lands (the home page's archive section)."""
+    return SITE_URL + ARCHIVE_ANCHOR
+
+
+def _context(issue: Issue, greeting: str, *, web: bool = False) -> dict:
     return {
         "issue": issue,
+        "web": web,
         "greeting": greeting,
         "brand": BRAND,
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
         "web_font_url": WEB_FONT_URL,
         "asset": ASSET_BASE_URL,
-        "web_url": WEB_URL,
+        "site_url": SITE_URL,
+        "issue_url": issue_url(issue.issue_id),
+        "archive_url": archive_url(),
         "hashtags": _hashtags(issue),
         "date_line": date_line(issue),
         "top3": issue.items[:3],
@@ -204,6 +221,14 @@ def render_html(issue: Issue, greeting: str) -> str:
         # Message holds only the size; never content or recipient data.
         raise RenderTooLarge(f"bytes={n}")
     return html
+
+
+def render_web_issue(issue: Issue) -> str:
+    """D-06: the public web copy of an issue. Fixed greeting, no reply or unsubscribe line,
+    no recipient data. Not inlined and not size-gated (research Pattern 2)."""
+    return _html_env.get_template("email.html.j2").render(
+        **_context(issue, DEFAULT_GREETING, web=True)
+    )
 
 
 def render_text(issue: Issue, greeting: str) -> str:

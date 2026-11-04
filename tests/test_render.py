@@ -429,10 +429,11 @@ def _visible_text(out: str) -> str:
 # A fixture or copy change moves these on purpose: re-check the text, then recompute.
 # Recomputed for schema v4 (어떻게 만들지 -> 어떻게 써 볼지; the only text change).
 # Recomputed for the brand rename (모닥로그 AI 리포트, 이번 주 리포트는; the only text change).
+# Recomputed for the 04-01 web links (웹에서 보기 / 지난 호 보기; the only text change).
 PER_CELL_VISIBLE_SHA256 = {
-    "w44": "9115c03a10e28ef4f52c73e1237c44bf76364916ddef4fdd57548a416a777a18",
-    "full": "7bcc507e82196918340c4f107f795b7506f1aa7e68301b68cb289f81575036a2",
-    "worst": "1a3c71198e025a9a7a11e5c4400097d0b16ff4729d9ae32a6793170b549c5569",
+    "w44": "7bb412bd66232ab29e43ae1e308be9bc6ed5984a7e33c7adc30e45e69bb54a1a",
+    "full": "5328a72ff996f3564e4824120fd1e581120897fcd13a2c3d60f34804774676b3",
+    "worst": "33251e0d2905470578c21a5ab894bec998df0cd0ed4c869d336ff71374fc4520",
 }
 
 
@@ -1100,29 +1101,39 @@ def test_claude_absent_while_claude_gpt_verdicts_unknown(issue_w44):
         assert "Claude" not in part
 
 
-def test_footer_source_and_unsubscribe_without_web_links(issue_w44):
-    assert render_mod.WEB_URL is None
+ISSUE_URL = "https://silber60.github.io/AI_news_log/issues/2026-W44/"
+ARCHIVE_URL = "https://silber60.github.io/AI_news_log/#archive"
+
+
+def test_site_urls_are_fixed():
+    # D-02 and the 04-01 Task 1 owner choice (anchor): baked into every sent email.
+    assert render_mod.issue_url(ISSUE_ID) == ISSUE_URL
+    assert render_mod.archive_url() == ARCHIVE_URL
+
+
+def test_email_footer_has_web_links_and_keeps_reply_line(issue_w44):
     out = render_html(issue_w44, "구독자님")
     footer = out[_section_pos(out, "footer") :]
     assert "출처: Hugging Face Papers" in footer
     assert "수신거부" in footer
-    txt = render_text(issue_w44, "구독자님")
-    for part in (out, txt):
-        assert "웹에서 보기" not in part
-        assert "지난 호 보기" not in part
-    assert "출처: Hugging Face Papers" in txt and "수신거부" in txt
-
-
-def test_web_links_appear_once_web_url_is_set(issue_w44, monkeypatch):
-    monkeypatch.setattr(render_mod, "WEB_URL", "https://example.github.io/archive/")
-    out = render_html(issue_w44, "구독자님")
-    footer = out[_section_pos(out, "footer") :]
-    assert "웹에서 보기" in footer and "지난 호 보기" in footer
+    assert re.search(rf'href="{re.escape(ISSUE_URL)}"[^>]*>웹에서 보기<', footer)
+    assert re.search(rf'href="{re.escape(ARCHIVE_URL)}"[^>]*>지난 호 보기<', footer)
     header = out[_section_pos(out, "header") : _section_pos(out, "hero")]
-    assert "웹에서 보기" in header
-    assert 'href="https://example.github.io/archive/"' in out
+    assert re.search(rf'href="{re.escape(ISSUE_URL)}"[^>]*>웹에서 보기<', header)
     txt = render_text(issue_w44, "구독자님")
-    assert "웹에서 보기" in txt and "지난 호 보기" in txt
+    assert "출처: Hugging Face Papers" in txt and "수신거부" in txt
+    assert f"웹에서 보기: {ISSUE_URL}" in txt
+    assert f"지난 호 보기: {ARCHIVE_URL}" in txt
+
+
+def test_web_issue_drops_reply_line_and_header_link(issue_w44):
+    out = render_mod.render_web_issue(issue_w44)
+    footer = out[_section_pos(out, "footer") :]
+    assert "수신거부" not in out
+    assert "구독 해지는 받으신 메일 아래쪽 링크에서 할 수 있어요." in footer
+    assert re.search(rf'href="{re.escape(ARCHIVE_URL)}"[^>]*>지난 호 보기<', footer)
+    assert "웹에서 보기" not in out
+    assert "구독자님, 안녕하세요." in out
 
 
 def test_worst_case_under_byte_limit(issue_w44):
