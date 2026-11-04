@@ -22,15 +22,22 @@ def _with_explainer(issue, topic: str = "Mixture of Experts"):
     )
 
 
-def test_committed_file_is_empty_version_1():
+def test_committed_file_is_version_1_with_valid_entries():
+    # The record grows on every mode=send (first entry: 2026-W44, 2026-11-04).
     d = json.loads((REPO / "data" / "explainer_topics.json").read_text(encoding="utf-8"))
-    assert d == {"version": 1, "topics": []}
+    assert d["version"] == 1 and isinstance(d["topics"], list)
+    ids = [t["issue_id"] for t in d["topics"]]
+    assert len(ids) == len(set(ids))  # idempotent per issue_id (D-15)
+    for t in d["topics"]:
+        assert set(t) == {"issue_id", "date", "topic"}
+        assert t["topic"].strip()
 
 
-def test_load_past_on_committed_file_is_empty(monkeypatch):
+def test_load_past_reads_the_committed_file(monkeypatch):
     monkeypatch.delenv("NEWSLETTER_TOPICS_PATH", raising=False)
     assert topics.topics_path() == REPO / "data" / "explainer_topics.json"
-    assert topics.load_past() == []
+    committed = json.loads(topics.topics_path().read_text(encoding="utf-8"))["topics"]
+    assert len(topics.load_past()) == len(committed)
 
 
 def test_missing_file_returns_empty_and_warns(tmp_path, caplog):
