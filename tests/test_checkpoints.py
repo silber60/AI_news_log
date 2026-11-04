@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 
 import pytest
 import respx
@@ -261,3 +262,68 @@ def test_empty_results_are_valid_checkpoints(hf_pages, archive_tmp):
     assert _formats(fake, TrendLLM) == _formats(fake, HighlightsLLM) == 0
     assert _formats(fake, ExplainerLLM) == 0
     assert (second.trend_ko, second.highlights, second.explainer) == (None, [], None)
+
+
+# ---------------------------------------------------------------- Task 3
+
+_ASSET_EXT = ("png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "css", "js")
+_TOKEN_RE = re.compile(r"\?t=[0-9a-f]{32}")
+
+
+def _addresses(text: str) -> list[str]:
+    """_EMAIL_RE matches, minus image/asset names such as logo@2x.png."""
+    from newsletter.__main__ import _EMAIL_RE
+
+    return [
+        m
+        for m in _EMAIL_RE.findall(text)
+        if m.rsplit("@", 1)[1].rsplit(".", 1)[-1].lower() not in _ASSET_EXT
+    ]
+
+
+def test_address_filter_ignores_asset_names():
+    assert _addresses("see https://x.io/img/logo@2x.png here") == []
+    assert _addresses("mail reader@example.com now") == ["reader@example.com"]
+    assert _TOKEN_RE.search("u?t=" + "a" * 32) and not _TOKEN_RE.search("u?t=abc")
+
+
+def test_built_archive_has_no_address_or_token(hf_pages, archive_tmp):
+    _build(hf_pages, FakeAnthropic())
+    files = [p for p in _week(archive_tmp).rglob("*") if p.is_file()]
+    assert {p.name for p in files} >= {"raw.json", "issue.json", "email.html", "analyze.json"}
+    for p in files:
+        text = p.read_text(encoding="utf-8")
+        assert _addresses(text) == [], p.name
+        assert not _TOKEN_RE.search(text), p.name
+
+
+def test_cli_force_stage_choices_match_pipeline():
+    from newsletter import __main__ as cli
+    from newsletter.pipeline import STAGES
+
+    assert cli.FORCE_STAGES == STAGES
+    action = next(
+        a
+        for a in cli._parser()._subparsers._group_actions[0].choices["build"]._actions
+        if a.dest == "force_stage"
+    )
+    assert tuple(action.choices) == ("", "none", *STAGES)
+    assert action.default == ""
+
+
+def test_cli_rejects_unknown_force_stage(capsys):
+    from newsletter.__main__ import main
+
+    with pytest.raises(SystemExit) as exc:
+        main(["build", "--week", ISSUE_ID, "--force-stage", "bogus"])
+    assert exc.value.code == 2
+
+
+def test_cli_passes_force_stage_to_run_build(monkeypatch, archive_tmp):
+    from newsletter import __main__ as cli
+    from newsletter import pipeline
+
+    seen = {}
+    monkeypatch.setattr(pipeline, "run_build", lambda week, **kw: seen.update(week=week, **kw))
+    assert cli.main(["build", "--week", ISSUE_ID, "--force-stage", "notes"]) == 0
+    assert seen == {"week": ISSUE_ID, "force_stage": "notes"}

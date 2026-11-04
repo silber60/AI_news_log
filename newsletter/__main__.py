@@ -1,7 +1,11 @@
-"""CLI: `python -m newsletter build --week YYYY-Www`,
+"""CLI: `python -m newsletter build --week YYYY-Www [--force-stage STAGE]`,
 `deliver --mode test|send [--allow-stale]`, `notify-failure --mode test|send`,
 `record-topic --mode preview|test|send`, `publish --mode preview|test|send`, `site`,
 `import-subscribers`.
+
+`build` reuses the per-stage checkpoints in archive/<week>/ (D-04), so a re-run makes
+no HF fetch and no Claude call. `--force-stage STAGE` recomputes that stage and every
+later one; blank or `none` reuses everything.
 
 `deliver --mode send` refuses an issue outside its KST send day (the Monday after
 the issue week) with StaleIssueError, before any secret or network use, unless
@@ -48,12 +52,33 @@ IMPORT = "import-subscribers"
 
 log = logging.getLogger("newsletter")
 
+# Mirrors newsletter.pipeline.STAGES (kept here so the CLI parser stays import-light;
+# a test asserts both lists match).
+FORCE_STAGES = (
+    "fetch",
+    "analyze",
+    "enrich",
+    "notes",
+    "trend",
+    "highlight",
+    "explainer",
+    "headline",
+    "polish",
+)
+FORCE_CHOICES = ("", "none", *FORCE_STAGES)
+
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="newsletter")
     sub = p.add_subparsers(dest="command", required=True)
     b = sub.add_parser("build", help="fetch, analyze, render and archive one week")
     b.add_argument("--week", default="", help="ISO week YYYY-Www (blank: previous week in KST)")
+    b.add_argument(
+        "--force-stage",
+        default="",
+        choices=FORCE_CHOICES,
+        help="recompute this stage and every later one (blank or none: reuse checkpoints)",
+    )
     d = sub.add_parser("deliver", help="send the current issue")
     d.add_argument("--mode", choices=["test", "send"], required=True)
     d.add_argument(
@@ -132,7 +157,7 @@ def _run(args: argparse.Namespace) -> None:
         from newsletter.pipeline import run_build
 
         week = args.week.strip() or previous_iso_week(datetime.now(KST))
-        run_build(week)
+        run_build(week, force_stage=args.force_stage)
     elif args.command == "deliver":
         from newsletter.delivery.deliver import run_deliver
 
