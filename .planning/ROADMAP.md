@@ -133,7 +133,16 @@ Plans:
   3. The footer shows sender info and an unsubscribe line, and each message carries a `List-Unsubscribe: <mailto:>` header
   4. Clicking "웹에서 보기" opens a de-personalized copy of the issue on GitHub Pages, and an archive index lists past issues
   5. The web issue shows what the email leaves out (Phase 2 D-02): each verdict's `reason_ko`, the Claude/GPT reason, and the code and weights licenses listed separately, with their evidence links
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Tracer: owner fixes the 지난 호 anchor; SITE_URL/issue_url, render_web_issue, `publish`/`site` CLI writing data/issues + docs/, merged publish + deploy-pages jobs, pages.yml, live footer links; owner switches Pages to GitHub Actions (checkpoint A) (wave 1)
+- [ ] 04-02-PLAN.md — Web issue: code-built 판정 근거 rows (reasons, code vs weights license, HF/GitHub evidence, 해당 없음 hidden), responsive web page, owner preview (wave 2)
+- [ ] 04-03-PLAN.md — Home page per Figma 25:356 with 지난 호 cards newest first, subscribe forms hidden by SUBSCRIBE_URL = None, owner preview (checkpoint B) (wave 2)
+- [ ] 04-04-PLAN.md — Unsubscribe backend: owner approves token scheme; HMAC token + fail-closed list fetch, apps_script/Code.gs + Korean setup guide; owner Google setup and /exec URL (checkpoint C) (wave 2)
+- [ ] 04-05-PLAN.md — Delivery: per-recipient 구독 해지 link, List-Unsubscribe (+Post) headers with the folding fix, send-mode filter that fails closed, new secrets in Deliver only (wave 3)
+- [ ] 04-06-PLAN.md — Pages confirm page /unsubscribe/ (button-only POST, token regex, noscript fallback), committed and freshness-guarded (wave 3)
+- [ ] 04-07-PLAN.md — DSGN-01 recorded as met (frame 7:22, rebrand banner 34:711), DSGN-02 / SC1 wording amended to the Phase 2 D-13 order, color-scheme metas, owner mode=test inbox check light/dark Gmail + Naver (checkpoint D), owner's own send proves the live issue page (wave 4)
 **UI hint**: yes
 
 ### Phase 4.1: Public Subscribe & Instant Welcome Issue (INSERTED)

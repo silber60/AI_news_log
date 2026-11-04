@@ -440,7 +440,7 @@ That is broken for receivers. Fix: after `set_content`/`add_alternative`, set `m
 ### Apps Script code (to commit as `apps_script/Code.gs`; no secrets in it)
 
 ```javascript
-// AI 주간 해달 브리프 — unsubscribe web app (Phase 4). Phase 4.1 adds subscribe.
+// 모닥로그 AI 리포트 — unsubscribe web app (Phase 4). Phase 4.1 adds subscribe.
 // Script properties: SHEET_ID, TOKEN_SECRET, LIST_KEY. Never log ids or keys.
 const SHEET = 'unsubscribes';
 const TOKEN_RE = /^[0-9a-f]{32}$/;
@@ -528,7 +528,7 @@ const CONFIRM_HTML = '<!doctype html><html lang="ko"><body style="font-family:sa
   + 'ok?"구독이 해지됐어요.":"링크가 올바르지 않아요.";}).unsubscribe(<?= t ?>);};</script>'
   + '<? } else { ?><p>링크가 올바르지 않아요.</p><? } ?></body></html>';
 const DONE_HTML = '<!doctype html><html lang="ko"><body style="font-family:sans-serif;padding:24px">'
-  + '<p><?= msg ?></p><p><a href="<?= site ?>" target="_top">AI 주간 해달 브리프 홈</a></p></body></html>';
+  + '<p><?= msg ?></p><p><a href="<?= site ?>" target="_top">모닥로그 AI 리포트 홈</a></p></body></html>';
 ```
 In the `CONFIRM_HTML` scriptlet, `<?= t ?>` inside a `<script>` context is auto-escaped by HtmlService contextual escaping [ASSUMED]. `t` is regex-limited to hex, so it is safe either way, but the executor should quote it as a JS string. `TextFinder`, `LockService`, `ContentService` and `HtmlService.createTemplate` are standard services [ASSUMED from training; the owner's `setup()`/`selfTest()` runs exercise them].
 
@@ -568,7 +568,7 @@ If `UNSUBSCRIBE_ENDPOINT` is set but `UNSUBSCRIBE_TOKEN_SECRET` is missing, rais
 
 ### Owner setup steps (draft for the checkpoint task)
 
-1. In the Google account that owns `SMTP_USER`, create a Google Sheet named `AI 해달 브리프 구독 관리`. Copy its ID from the URL (`/d/<ID>/edit`).
+1. In the Google account that owns `SMTP_USER`, create a Google Sheet named `모닥로그 AI 리포트 구독 관리`. Copy its ID from the URL (`/d/<ID>/edit`).
 2. In the Sheet, open 확장 프로그램 → Apps Script. Replace `Code.gs` with `apps_script/Code.gs` from the repo. Save.
 3. On a laptop, generate two secrets: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"` (run twice).
 4. In Apps Script, open 프로젝트 설정 → 스크립트 속성 and add `SHEET_ID`, `TOKEN_SECRET` (secret 1) and `LIST_KEY` (secret 2).
@@ -596,7 +596,7 @@ The per-recipient footer link is about 130 B (`…/unsubscribe/?t=` + 32 hex + m
   1. Add `<meta name="color-scheme" content="light">` and `<meta name="supported-color-schemes" content="light">`. Apple Mail/iOS Mail honor them and keep the light design. Gmail ignores them (harmless, about 90 B).
   2. Keep explicit `background-color` on every colored cell (already done). Never rely on a transparent background for meaning.
   3. Do not ship dark-mode-specific CSS. Gmail ignores it, and Naver is unknown, so it is untestable cost.
-  4. If the owner flags the otters as unreadable in dark mode, the fallback is a new `docs/assets/email/v2/` with a 2px light outline (D-09 immutability: never edit v1). Defer unless the checkpoint fails.
+  4. If the owner flags the otters as unreadable in dark mode, the fallback is a new `docs/assets/email/v3/` with a 2px light outline (D-09 immutability: v1 and v2 are both live in sent mail and never edited; v2 became the current set in commit 450e1c8). Defer unless the checkpoint fails.
 - Owner checklist (one `mode=test` send, after the footer/header plan):
   - [ ] Gmail web, light: layout, fonts, footer links open `/issues/<id>/` (404 is OK before the first send, D-03) and home
   - [ ] Gmail web: "원본 보기" shows `List-Unsubscribe` on one line with `<mailto:` and `<https://`, `List-Unsubscribe-Post`, and note whether `DKIM-Signature h=` includes `list-unsubscribe`
@@ -715,9 +715,9 @@ On A9: to remove the dependency, `doPost` can parse `e.postData.contents` as for
 
 ## Open Questions
 
-1. **Home page layout specifics (Figma 25:356).** The Figma MCP needs `/mcp` authorization in this session, so the frame was not read. Recommendation: the home-page plan starts with a `get_design_context`/screenshot of node 25:356 (after the owner authorizes the Figma MCP), or the owner pastes a screenshot. Section list from ROADMAP 4.1: nav, hero with form (hidden by `SUBSCRIBE_URL = None`), 매주 이런 걸 받아요 (without 바로 써볼 만한 것), sample issue preview (no otter at top), bottom CTA, footer with a privacy-policy link. The privacy-policy page itself belongs to 4.1, so link it only when it exists.
-2. **What should 지난 호 보기 open: home top or `#archive`?** Recommend `SITE_URL + "#archive"` so the reader lands on the cards. That is one-way per D-02 logic, so the anchor id `archive` must stay.
-3. **Should `data/issues/` overlap Phase 5 archive commit-back (D-20)?** Phase 5 may commit full `archive/<id>/` later. `data/issues/` stays the web source either way. No conflict.
+1. **RESOLVED (04-FIGMA-HOME.md + figma-25-356.png, pulled 2026-11-04 with the Figma MCP; the brand later changed to render.BRAND in 450e1c8, so the png is a layout reference only). Home page layout specifics (Figma 25:356).** The Figma MCP needs `/mcp` authorization in this session, so the frame was not read. Recommendation: the home-page plan starts with a `get_design_context`/screenshot of node 25:356 (after the owner authorizes the Figma MCP), or the owner pastes a screenshot. Section list from ROADMAP 4.1: nav, hero with form (hidden by `SUBSCRIBE_URL = None`), 매주 이런 걸 받아요 (without 바로 써볼 만한 것), sample issue preview (no otter at top), bottom CTA, footer with a privacy-policy link. The privacy-policy page itself belongs to 4.1, so link it only when it exists.
+2. **RESOLVED (owner decision at the 04-01 Task 1 checkpoint; recorded in 04-01-SUMMARY.md). What should 지난 호 보기 open: home top or `#archive`?** Recommend `SITE_URL + "#archive"` so the reader lands on the cards. That is one-way per D-02 logic, so the anchor id `archive` must stay.
+3. **RESOLVED (inline: no conflict, see answer). Should `data/issues/` overlap Phase 5 archive commit-back (D-20)?** Phase 5 may commit full `archive/<id>/` later. `data/issues/` stays the web source either way. No conflict.
 
 ## Environment Availability
 
