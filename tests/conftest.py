@@ -588,6 +588,13 @@ def no_github_token(monkeypatch):
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def no_runner_outputs(monkeypatch):
+    """05-01: a CI runner's GITHUB_OUTPUT or a shell SEND_PAUSED must not leak into tests."""
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    monkeypatch.delenv("SEND_PAUSED", raising=False)
+
+
 @pytest.fixture
 def fake_anthropic() -> FakeAnthropic:
     return FakeAnthropic()

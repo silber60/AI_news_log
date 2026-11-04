@@ -136,12 +136,36 @@ def _run_send(issue: Issue, user: str, password: str) -> dict:
     return result
 
 
+def _paused() -> bool:
+    """D-02: SEND_PAUSED reaches only scheduled runs (the workflow passes '' on dispatch)."""
+    return os.environ.get("SEND_PAUSED", "").strip().lower() == "true"
+
+
+def _finish(report: dict) -> dict:
+    """Write out/report.json and hand the outcome to the workflow (counts and ids only)."""
+    store.write_json(store.out_root() / "report.json", report)
+    output = os.environ.get("GITHUB_OUTPUT", "").strip()
+    if output:
+        with open(output, "a", encoding="utf-8") as f:
+            f.write(f"outcome={report['outcome']}\n")
+    return report
+
+
 def run_deliver(mode: str) -> dict:
+    """Order in send mode: pause, then secrets, then the lists, then SMTP (research Pattern 2)."""
     if mode not in ("test", "send"):
         raise DeliveryError(f"unsupported mode {mode}")
+    issue = load_current_issue()
+    if mode == "send" and _paused():
+        log.info("mode=send outcome=paused issue=%s", issue.issue_id)
+        return _finish({"outcome": "paused", "issue_id": issue.issue_id})
     user = _env("SMTP_USER")
     password = _env("SMTP_PASSWORD")
-    issue = load_current_issue()
     if mode == "test":
-        return _run_test(issue, user, password)
-    return _run_send(issue, user, password)
+        result = _run_test(issue, user, password)
+        outcome = "tested"
+    else:
+        result = _run_send(issue, user, password)
+        outcome = "sent"
+    _finish({**result, "outcome": outcome, "issue_id": issue.issue_id})
+    return result

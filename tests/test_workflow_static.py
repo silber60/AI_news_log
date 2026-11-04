@@ -121,9 +121,11 @@ def test_build_step_gets_only_anthropic_key():
 def test_delivery_secret_values_are_mode_gated():
     _, blocks = _split(_text(NEWSLETTER))
     deliver = _named(blocks, "Deliver")
-    assert "inputs.mode == 'test' && secrets.TEST_RECIPIENT || ''" in deliver
-    assert "inputs.mode == 'send' && secrets.SUBSCRIBERS_CSV || ''" in deliver
-    assert "inputs.mode == 'test' || inputs.mode == 'send'" in deliver
+    # Phase 5: the gates read env.MODE, which also covers scheduled runs (Pitfall 6).
+    assert "env.MODE == 'test' && secrets.TEST_RECIPIENT || ''" in deliver
+    assert "env.MODE == 'send' && secrets.SUBSCRIBERS_CSV || ''" in deliver
+    assert "if: ${{ env.MODE == 'test' || env.MODE == 'send' }}" in deliver
+    assert "inputs.mode" not in deliver
     notice = _named(blocks, "Failure notice")
     assert "failure() && inputs.mode != 'preview'" in notice
     assert "SUBSCRIBERS_CSV" not in notice
@@ -138,7 +140,7 @@ def test_unsubscribe_secrets_only_in_deliver():
     deliver = _named(blocks, "Deliver")
     assert "UNSUBSCRIBE_TOKEN_SECRET: ${{ secrets.UNSUBSCRIBE_TOKEN_SECRET }}" in deliver
     assert (
-        "UNSUBSCRIBE_LIST_KEY: ${{ inputs.mode == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}"
+        "UNSUBSCRIBE_LIST_KEY: ${{ env.MODE == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}"
         in deliver
     )
     notice = _named(blocks, "Failure notice")
@@ -216,7 +218,13 @@ def test_deploy_jobs_are_secret_free_and_checkout_free():
         assert "name: github-pages" in header
         assert "group: pages" in header and "cancel-in-progress: false" in header
         assert len(blocks) == 1 and DEPLOY_PAGES_PIN in blocks[0]
-    assert "needs: publish" in _jobs(_text(NEWSLETTER))["deploy-pages"][0]
+    header, _ = _jobs(_text(NEWSLETTER))["deploy-pages"]
+    assert "needs: [run, publish]" in header
+    cond = [line.strip() for line in header.splitlines() if line.strip().startswith("if:")]
+    assert len(cond) == 1
+    assert cond[0].startswith("if: ${{ !cancelled() && ")
+    assert "needs.run.outputs.outcome == 'sent'" in cond[0]
+    assert "needs.publish.result == 'success'" in cond[0]
 
 
 def test_publish_job_is_send_on_main_only_and_secret_free():
@@ -234,14 +242,20 @@ def test_publish_job_is_send_on_main_only_and_secret_free():
     checkout = [b for b in blocks if "actions/checkout@" in b]
     assert len(checkout) == 1
     assert "persist-credentials: false" in checkout[0]
-    assert 'record-topic --mode "$MODE"' in _named(blocks, "Append explainer topic")
-    assert 'newsletter publish --mode "$MODE"' in _named(blocks, "Publish web pages")
+    assert "MODE: ${{ needs.run.outputs.mode }}" in header
+    assert "OUTCOME: ${{ needs.run.outputs.outcome }}" in header
+    sent_only = "if: ${{ env.OUTCOME == 'sent' }}"
+    topic = _named(blocks, "Append explainer topic")
+    web = _named(blocks, "Publish web pages")
+    assert 'record-topic --mode "$MODE"' in topic and sent_only in topic
+    assert 'newsletter publish --mode "$MODE"' in web and sent_only in web
     commit = _named(blocks, "Commit record and pages")
     assert "git add -- data/explainer_topics.json data/issues docs" in commit
     assert "git config user.name silber60" in commit
     assert "git config user.email 81203897+silber60@users.noreply.github.com" in commit
     upload = blocks[-1]
     assert UPLOAD_PAGES_PIN in upload and "path: docs/" in upload
+    assert sent_only in upload  # Pitfall 4: a paused or failed week publishes nothing
 
 
 def test_pages_workflow_triggers_and_build():
@@ -324,7 +338,7 @@ def test_subscriber_list_key_send_gated_in_deliver_only():
     text = _text(NEWSLETTER)
     _, blocks = _split(text)
     deliver = _named(blocks, "Deliver")
-    line = "SUBSCRIBER_LIST_KEY: ${{ inputs.mode == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}"
+    line = "SUBSCRIBER_LIST_KEY: ${{ env.MODE == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}"
     assert line in deliver
     assert text.count("SUBSCRIBER_LIST_KEY") == deliver.count("SUBSCRIBER_LIST_KEY") == 2
     for block in blocks:
@@ -379,3 +393,63 @@ def test_import_workflow_permissions_read_only():
         assert "permissions:" not in header + "\n".join(blocks), name
     assert not any(": write" in ln for ln in text.splitlines())
     assert "write-all" not in text
+
+
+# ------------------------------------------------- schedule, pause and outcome (05-01)
+
+SEND_CRON = "0 8 * * 1"
+TEST_CRON = "0 6 * * 1"
+
+
+def _cron_lines(text: str) -> list[str]:
+    return [line.strip() for line in _code(text) if line.strip().startswith("- cron:")]
+
+
+def test_two_kst_crons():
+    code = _code(_text(NEWSLETTER))
+    crons = [i for i, line in enumerate(code) if line.strip().startswith("- cron:")]
+    assert [code[i].strip() for i in crons] == [
+        f'- cron: "{TEST_CRON}"',
+        f'- cron: "{SEND_CRON}"',
+    ]
+    for i in crons:
+        assert code[i + 1].strip() == 'timezone: "Asia/Seoul"'
+    assert sum("timezone:" in line for line in code) == 2
+    assert sum("cron:" in line for line in code) == 2
+
+
+def test_mode_mapping_sends_only_on_the_send_cron():
+    text = _text(NEWSLETTER)
+    run_header, _ = _jobs(text)["run"]
+    mode = [ln.strip() for ln in _code(run_header) if ln.strip().startswith("MODE:")]
+    expected = (
+        "MODE: ${{ github.event_name == 'schedule' && "
+        "(github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}"
+    )
+    assert mode == [expected]
+    # Pitfall 7: the send literal is the second cron string, and it appears exactly once.
+    literal = re.search(r"github\.event\.schedule == '([^']+)'", mode[0]).group(1)
+    assert literal == _cron_lines(text)[1].split('"')[1] == SEND_CRON
+    assert sum("github.event.schedule ==" in ln for ln in _code(text)) == 1
+
+
+def test_send_paused_only_in_deliver_and_schedule_only():
+    text = _text(NEWSLETTER)
+    _, blocks = _split(text)
+    deliver = _named(blocks, "Deliver")
+    line = "SEND_PAUSED: ${{ github.event_name == 'schedule' && vars.SEND_PAUSED || '' }}"
+    assert line in deliver
+    code = _code(text)
+    assert [ln.strip() for ln in code if "vars." in ln] == [line]
+    assert sum("SEND_PAUSED" in ln for ln in code) == 1
+
+
+def test_deliver_outcome_is_a_run_job_output():
+    text = _text(NEWSLETTER)
+    run_header, blocks = _jobs(text)["run"]
+    assert "    outputs:\n      mode: ${{ env.MODE }}\n" in run_header
+    assert "      outcome: ${{ steps.deliver.outputs.outcome }}" in run_header
+    assert "        id: deliver\n" in _named(blocks, "Deliver")
+    trigger = _named(blocks, "Trigger")
+    assert "SCHEDULE_CRON: ${{ github.event.schedule }}" in trigger
+    assert "secrets." not in trigger

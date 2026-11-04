@@ -1,7 +1,15 @@
 name: newsletter
 
-# Manual dispatch only in Phase 1 (AUTO-02). The Monday cron arrives in Phase 5.
+# Two Monday runs in KST (D-01): 06:00 builds the previous week and mails the owner a test,
+# 08:00 sends that issue to the subscribers. Manual dispatch keeps working for every mode.
+# UTC fallback if the timezone key is ever dropped: "0 21 * * 0" (test) and "0 23 * * 0" (send);
+# the send literal in MODE below must then change with it.
 on:
+  schedule:
+    - cron: "0 6 * * 1"
+      timezone: "Asia/Seoul"
+    - cron: "0 8 * * 1"
+      timezone: "Asia/Seoul"
   workflow_dispatch:
     inputs:
       mode:
@@ -34,10 +42,14 @@ jobs:
     timeout-minutes: 30
     # No secrets at job level: each secret is scoped to the step that needs it.
     env:
-      MODE: ${{ inputs.mode }}
+      # Only the exact 08:00 cron sends; any other schedule is a test (fail safe, D-01).
+      MODE: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}
       WEEK_INPUT: ${{ inputs.week }}  # reaches the shell via env only; validated in Python
       CLAUDE_MODEL: claude-sonnet-5-5
       PYTHONUNBUFFERED: "1"
+    outputs:
+      mode: ${{ env.MODE }}
+      outcome: ${{ steps.deliver.outputs.outcome }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -48,6 +60,10 @@ jobs:
           enable-cache: true
       - name: Install locked dependencies
         run: uv sync --frozen
+      - name: Trigger
+        env:
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+        run: echo "event=$GITHUB_EVENT_NAME schedule=$SCHEDULE_CRON mode=$MODE"
       - name: Build issue (content only; no delivery secrets)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -64,15 +80,18 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - name: Deliver
-        if: ${{ inputs.mode == 'test' || inputs.mode == 'send' }}
+        id: deliver
+        if: ${{ env.MODE == 'test' || env.MODE == 'send' }}
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          TEST_RECIPIENT: ${{ inputs.mode == 'test' && secrets.TEST_RECIPIENT || '' }}
-          SUBSCRIBERS_CSV: ${{ inputs.mode == 'send' && secrets.SUBSCRIBERS_CSV || '' }}
+          TEST_RECIPIENT: ${{ env.MODE == 'test' && secrets.TEST_RECIPIENT || '' }}
+          SUBSCRIBERS_CSV: ${{ env.MODE == 'send' && secrets.SUBSCRIBERS_CSV || '' }}
           UNSUBSCRIBE_TOKEN_SECRET: ${{ secrets.UNSUBSCRIBE_TOKEN_SECRET }}
-          UNSUBSCRIBE_LIST_KEY: ${{ inputs.mode == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}
-          SUBSCRIBER_LIST_KEY: ${{ inputs.mode == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}
+          UNSUBSCRIBE_LIST_KEY: ${{ env.MODE == 'send' && secrets.UNSUBSCRIBE_LIST_KEY || '' }}
+          SUBSCRIBER_LIST_KEY: ${{ env.MODE == 'send' && secrets.SUBSCRIBER_LIST_KEY || '' }}
+          # D-02: the pause switch reaches only scheduled runs; a dispatch always sends.
+          SEND_PAUSED: ${{ github.event_name == 'schedule' && vars.SEND_PAUSED || '' }}
         run: uv run python -m newsletter deliver --mode "$MODE"
       - name: Failure notice (test/send only, D-13)
         if: ${{ failure() && inputs.mode != 'preview' }}
@@ -91,7 +110,8 @@ jobs:
     permissions:
       contents: write
     env:
-      MODE: ${{ inputs.mode }}
+      MODE: ${{ needs.run.outputs.mode }}
+      OUTCOME: ${{ needs.run.outputs.outcome }}
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -108,8 +128,10 @@ jobs:
           name: issue-${{ github.run_id }}
           path: archive/
       - name: Append explainer topic
+        if: ${{ env.OUTCOME == 'sent' }}
         run: uv run python -m newsletter record-topic --mode "$MODE"
       - name: Publish web pages
+        if: ${{ env.OUTCOME == 'sent' }}
         run: uv run python -m newsletter publish --mode "$MODE"
       - name: Commit record and pages
         env:
@@ -129,11 +151,15 @@ jobs:
       # Uploaded from this working tree after the commit, so the artifact holds the new pages
       # (research Pitfall 9: a deploy job checking out github.sha would be stale).
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        if: ${{ env.OUTCOME == 'sent' }}
         with:
           path: docs/
 
   deploy-pages:
-    needs: publish
+    needs: [run, publish]
+    # !cancelled() replaces the implicit success(): after a full send the deploy must still run
+    # when a later run-job step failed but the always() publish job committed the pages.
+    if: ${{ !cancelled() && needs.run.outputs.outcome == 'sent' && needs.publish.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # No checkout and no secrets: it only deploys the artifact the publish job uploaded.
