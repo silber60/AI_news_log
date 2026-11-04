@@ -16,6 +16,7 @@ from conftest import (
 
 from newsletter.schema import ExplainerLLM, ItemImage
 from newsletter.stages import analyze, explainer
+from newsletter.store import PROMPTS_DIR
 
 
 @pytest.fixture(autouse=True)
@@ -302,3 +303,28 @@ def test_repeat_then_api_error_keeps_attempt_one(issue_w44, caplog):
         ex = explainer.write_explainer(issue_w44.items, PAST, fake)
     assert ex is not None and ex.related_ranks == [2]
     assert "explainer=repeat" in caplog.text
+
+
+# ------------------------------------------------------------------ prompt (HUMN-01, D-04, D-05)
+
+
+def test_system_prompt_is_explainer_plus_humanizer():
+    system = explainer.explainer_system_prompt()
+    head = (PROMPTS_DIR / "explainer.md").read_text(encoding="utf-8").strip()
+    humanizer = (PROMPTS_DIR / "humanizer_ko.md").read_text(encoding="utf-8").strip()
+    assert system == head + "\n\n" + humanizer
+
+
+def test_prompt_names_structure_past_topics_and_fallback():
+    text = (PROMPTS_DIR / "explainer.md").read_text(encoding="utf-8")
+    for needle in ("오늘의 포인트", "예를 들어", "<past_topics>", "<items>", "해요체"):
+        assert needle in text, needle
+    assert "`related_ranks`를 `[1]`로" in text
+    assert "<previous_output_problems>" in text
+    assert "데이터" in text
+
+
+def test_prompt_is_sent_as_the_system_block(issue_w44):
+    fake = FakeAnthropic()
+    explainer.write_explainer(issue_w44.items, [], fake)
+    assert fake.calls[0]["kw"]["system"][0]["text"] == explainer.explainer_system_prompt()
