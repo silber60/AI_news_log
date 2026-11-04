@@ -48,8 +48,9 @@ def test_publish_writes_data_and_both_pages(site, issue_w44):
     page = site / "docs" / "issues" / ISSUE_ID / "index.html"
     home = site / "docs" / "index.html"
     unsub = site / "docs" / "unsubscribe" / "index.html"
+    welcome = site / "docs" / "welcome" / "latest.json"
     assert data.is_file()
-    assert set(written) == {page, home, unsub}
+    assert set(written) == {page, home, unsub, welcome}
     assert issue_w44.headline_ko in page.read_text(encoding="utf-8")
     assert web.load_issues() == [issue_w44]
 
@@ -87,7 +88,7 @@ def test_cli_send_end_to_end(site, issue_w44, caplog):
     assert render.date_line(issue_w44) in home
     assert f"web=published issue={ISSUE_ID}" in caplog.text
     assert f"web=exists issue={ISSUE_ID}" in caplog.text
-    assert "web=site pages=3" in caplog.text
+    assert "web=site pages=4" in caplog.text
     assert issue_w44.headline_ko not in caplog.text
 
 
@@ -96,7 +97,7 @@ def test_cli_site_regenerates_without_archive(site, issue_w44, caplog):
     with caplog.at_level("INFO"):
         assert main(["site"]) == 0
     assert (site / "docs" / "issues" / ISSUE_ID / "index.html").is_file()
-    assert "web=site pages=3" in caplog.text
+    assert "web=site pages=4" in caplog.text
 
 
 def test_home_lists_newest_first(site, issue_w44):

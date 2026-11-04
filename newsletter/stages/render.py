@@ -12,6 +12,7 @@ import css_inline
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from markupsafe import Markup
 
+from newsletter.delivery import unsubscribe
 from newsletter.delivery.subscribers import DEFAULT_GREETING
 from newsletter.errors import RenderTooLarge
 from newsletter.schema import UNKNOWN, EvidenceLink, Issue, Item, LicenseInfo
@@ -23,6 +24,13 @@ from newsletter.store import TEMPLATES_DIR
 BRAND = "모닥로그 AI 리포트"
 # Gmail clips messages near 102 KB; stay well under it (DSGN-04). Bytes, not characters.
 MAX_EMAIL_BYTES = 90 * 1024
+# D-03, D-04 (04.1): the welcome mail is rendered once here and published as
+# docs/welcome/latest.json; Apps Script fills these two slots per reader. Only A-Z and
+# underscore, so Jinja autoescape and css_inline leave them alone (research Pitfall 5).
+GREETING_SLOT = "__MODAK_GREETING__"
+UNSUB_SLOT = "__MODAK_UNSUB_URL__"
+# Room for the fill: a name of up to 40 characters, HTML-escaped, plus the token link.
+WELCOME_MAX_BYTES = MAX_EMAIL_BYTES - 1024
 # Written on every presentation <table> (D-14, template-version 7), and cells inherit it,
 # so each byte counts once per table (~50 in the worst case, not ~215 cells as before).
 # The Korean-named duplicate of Malgun Gothic stays dropped (research Pitfall 6).
@@ -252,13 +260,27 @@ def archive_url() -> str:
 
 
 def _context(
-    issue: Issue, greeting: str, *, web: bool = False, unsubscribe_url: str | None = None
+    issue: Issue,
+    greeting: str,
+    *,
+    web: bool = False,
+    unsubscribe_url: str | None = None,
+    welcome: bool = False,
 ) -> dict:
     return {
         "issue": issue,
         "web": web,
+        # D-03: the welcome line row, email only.
+        "welcome": welcome and not web,
         # D-11: per-recipient link, email only; the web copy always passes None (D-06).
         "unsubscribe_url": None if web else unsubscribe_url,
+        # D-09: the email footer 구독하기 link for forwarded mail, only once the Apps Script
+        # endpoint is live. Read at call time, so setting the endpoint turns it on.
+        "subscribe_url": (
+            SITE_URL + "#subscribe"
+            if unsubscribe.UNSUBSCRIBE_ENDPOINT is not None and not web
+            else None
+        ),
         "greeting": greeting,
         "brand": BRAND,
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
@@ -283,9 +305,11 @@ def _context(
     }
 
 
-def render_html(issue: Issue, greeting: str, *, unsubscribe_url: str | None = None) -> str:
+def render_html(
+    issue: Issue, greeting: str, *, unsubscribe_url: str | None = None, welcome: bool = False
+) -> str:
     html = _html_env.get_template("email.html.j2").render(
-        **_context(issue, greeting, unsubscribe_url=unsubscribe_url)
+        **_context(issue, greeting, unsubscribe_url=unsubscribe_url, welcome=welcome)
     )
     html = _INLINER.inline(html)
     n = len(html.encode("utf-8"))
@@ -303,16 +327,35 @@ def render_web_issue(issue: Issue) -> str:
     )
 
 
-def render_text(issue: Issue, greeting: str, *, unsubscribe_url: str | None = None) -> str:
+def render_text(
+    issue: Issue, greeting: str, *, unsubscribe_url: str | None = None, welcome: bool = False
+) -> str:
     return _text_env.get_template("email.txt.j2").render(
-        **_context(issue, greeting, unsubscribe_url=unsubscribe_url)
+        **_context(issue, greeting, unsubscribe_url=unsubscribe_url, welcome=welcome)
     )
 
 
-def build_subject(issue: Issue, mode: Literal["preview", "test", "send"]) -> str:
-    """D-12 / DLVR-07: the issue headline; `[TEST] ` prefix only in test mode."""
+def render_welcome(issue: Issue) -> dict:
+    """D-03, D-04: the welcome mail with the greeting and unsubscribe link left as slots.
+    Raises RenderTooLarge (size only) when the html leaves no room for the fill."""
+    html = render_html(issue, GREETING_SLOT, unsubscribe_url=UNSUB_SLOT, welcome=True)
+    n = len(html.encode("utf-8"))
+    if n >= WELCOME_MAX_BYTES:
+        raise RenderTooLarge(f"bytes={n}")
+    return {
+        "subject": build_subject(issue, "welcome"),
+        "html": html,
+        "text": render_text(issue, GREETING_SLOT, unsubscribe_url=UNSUB_SLOT, welcome=True),
+    }
+
+
+def build_subject(issue: Issue, mode: Literal["preview", "test", "send", "welcome"]) -> str:
+    """D-12 / DLVR-07: the issue headline; `[TEST] ` prefix only in test mode,
+    `[환영] ` in the welcome mail (D-03)."""
     subject = issue.headline_ko
     if mode == "test":
         subject = "[TEST] " + subject
+    elif mode == "welcome":
+        subject = "[환영] " + subject
     # Header injection guard: no CR/LF may reach the Subject header.
     return subject.replace("\r", " ").replace("\n", " ")
