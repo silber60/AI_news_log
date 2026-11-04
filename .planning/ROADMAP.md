@@ -128,7 +128,7 @@ Plans:
 **Depends on**: Phase 3 (Figma frame work can start after Phase 1)
 **Requirements**: DSGN-01, DSGN-02, DSGN-05, DLVR-04, WEB-01, WEB-02
 **Success Criteria** (what must be TRUE):
-  1. Figma file `qyJcGii2MLHTbi4W9mPZkx` has a 640px web/email frame using the mobile design's fonts, colors and component styles, with sections in order: header + week range, greeting, 이번 주 바로 써볼 만한 것, 트렌드 총평, Top 10 cards, footer
+  1. Figma file `qyJcGii2MLHTbi4W9mPZkx` has a 640px web/email frame using the mobile design's fonts, colors and component styles; the email renders its sections in order: header + week range, greeting, 트렌드 총평, 이번 주 바로 써볼 만한 것, Top 3, AI 기술 쉽게 보기, 4위~10위, footer (Phase 2 D-13). Figma frame 7:22 is the earlier design reference with highlight before trend
   2. The email built from that design renders correctly in Naver Mail and Gmail (web and mobile app, light and dark), confirmed by real test sends
   3. The footer shows sender info and an unsubscribe line, and each message carries a `List-Unsubscribe: <mailto:>` header
   4. Clicking "웹에서 보기" opens a de-personalized copy of the issue on GitHub Pages, and an archive index lists past issues

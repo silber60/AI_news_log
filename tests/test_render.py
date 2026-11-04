@@ -1194,6 +1194,20 @@ def test_worst_case_under_byte_limit(issue_w44):
     assert n < MAX_EMAIL_BYTES
 
 
+@pytest.mark.parametrize("web", [False, True])
+def test_color_scheme_is_light_only(issue_w44, web):
+    """D-16, DSGN-05: ask clients to keep the light design; ship no dark-mode CSS."""
+    if web:
+        out = render_mod.render_web_issue(issue_w44)
+    else:
+        out = render_html(_worst_case(issue_w44), "구독자님", unsubscribe_url=UNSUB_URL_MAX)
+    head = out[: out.index("</head>")]
+    assert head.count('<meta name="color-scheme" content="light">') == 1
+    assert head.count('<meta name="supported-color-schemes" content="light">') == 1
+    assert "prefers-color-scheme" not in out
+    assert "color-scheme: dark" not in out
+
+
 def test_text_part_complete_and_asset_free(issue_w44):
     issue = issue_w44
     txt = render_text(issue, "구독자님")

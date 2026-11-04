@@ -14,7 +14,8 @@
     render.basis_rows), the headline page title, the 680px phone rule and the 지난 호 전체 보기 link;
     the 640 table gets the wrap class in web mode only, so the email bytes do not change.
     04-05 (still v9): the email footer adds the per-recipient 구독 해지 link when unsubscribe_url
-    is set (D-11, D-14); the 수신거부 reply line stays as a fallback. -#}
+    is set (D-11, D-14); the 수신거부 reply line stays as a fallback.
+    04-07 (still v9): light-only color-scheme metas in the head and no dark-mode CSS (D-16, DSGN-05). -#}
 {%- set ff = "font-family: " ~ font ~ ";" -%}
 {%- set img_style = "display: block; border: 0; outline: none; text-decoration: none;" -%}
 {%- set banner_style = img_style ~ " width: 100%; max-width: 640px; height: auto;" -%}
@@ -97,6 +98,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>{% if web %}{{ issue.headline_ko }} · {{ brand }}{% else %}{{ brand }} {{ issue.issue_id }}{% endif %}</title>
 <link rel="stylesheet" href="{{ web_font_url }}">
 <style>

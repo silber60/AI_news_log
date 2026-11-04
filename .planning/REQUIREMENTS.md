@@ -54,7 +54,7 @@
 ### Design & Template (DSGN)
 
 - [ ] **DSGN-01**: Figma file `qyJcGii2MLHTbi4W9mPZkx` contains a new 640px web/email newsletter frame derived from the existing mobile design's fonts, colors, and component styles
-- [ ] **DSGN-02**: Design sections in order: header + week range, personalized greeting, 이번 주 바로 써볼 만한 것, 트렌드 총평, Top 10 cards (rank, upvotes, badges, summary, links), footer
+- [ ] **DSGN-02**: Email sections in order: header + week range, personalized greeting, 트렌드 총평, 이번 주 바로 써볼 만한 것, Top 3 cards, AI 기술 쉽게 보기, 4위~10위 cards (rank, upvotes, badges, summary, links), footer (order per Phase 2 D-13, owner; the Phase 1.1 Figma frame 7:22 is the earlier design reference with highlight before trend)
 - [ ] **DSGN-03**: Email HTML is a hand-written Jinja2 table layout with all CSS inlined (no `<head>` style dependence), system Korean font fallback stack on every element, badges as colored text cells (no text images)
 - [ ] **DSGN-04**: Rendered HTML is under 90 KB (asserted at render time) and a plain-text alternative is generated from the same data
 - [ ] **DSGN-06**: Email HTML follows the Figma v2 draft (node 7:22): otter banner and closing banner, section order with Top 3 → AI 기술 쉽게 보기 → 4위~10위, orange/navy palette, no AI/auto-generated wording
