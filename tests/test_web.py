@@ -842,6 +842,11 @@ def test_search_compare_tab_uses_eval_results_only(site):
     assert 'cardData["model-index"]' in script
     assert "var MODEL = /^[\\w.-]+\\/[\\w.-]+$/;" in script  # model ids only
     assert "g.rows.length >= 2" in script  # a comparison needs two models
+    # A missing value (null in the model card) must not rank as a 0 score.
+    assert (
+        'if (raw === null || raw === undefined || raw === "" || typeof raw === "boolean") return;'
+        in script
+    )
     assert 'data-mode="compare"' in page and 'params.get("tab")' in script
     assert "innerHTML" not in script
 

@@ -209,7 +209,10 @@
           var ds = res && res.dataset ? String(res.dataset.name || res.dataset.type || "") : "";
           if (!ds) return;
           (Array.isArray(res.metrics) ? res.metrics : []).forEach(function (mt) {
-            var v = Number(mt && mt.value);
+            var raw = mt && mt.value;
+            // null, "" and booleans would read as 0 or 1: a missing score is not a score.
+            if (raw === null || raw === undefined || raw === "" || typeof raw === "boolean") return;
+            var v = Number(raw);
             var name = String((mt && (mt.name || mt.type)) || "");
             if (!name || !isFinite(v)) return;
             var key = ds + " · " + name;
