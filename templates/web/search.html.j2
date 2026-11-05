@@ -1,10 +1,10 @@
 {% extends "_base.html.j2" %}
 {#- /search/: look up other papers and models on Hugging Face (owner request 2026-11-05).
     One search fills two blocks at once (owner 2026-11-05):
-    - 성능 비교 (top): the public HF models API, only models whose model card carries
+    - 성능 비교 (below the papers, owner 2026-11-05): the public HF models API, only models whose model card carries
       evaluation results (filter=model-index), grouped by benchmark and metric so scores
       sit side by side. These are self-reported by the model authors.
-    - 논문 (below): the public HF Papers search API.
+    - 논문 (top): the public HF Papers search API.
     The browser calls the APIs directly (CORS allows this site's origin); nothing is stored
     and no key is used. Results are rendered with textContent only, never innerHTML. Links
     go only to huggingface.co and arxiv.org, and only for ids that match the expected
@@ -65,11 +65,6 @@
 <button type="submit">검색</button>
 </form>
 <p class="status" id="status" role="status"></p>
-<section class="block" id="cmpblock" hidden>
-<h2 class="block-title">성능 비교 <span id="cmpcount"></span></h2>
-<div id="compare"></div>
-<p class="note">모델 제작자가 모델 카드에 직접 적은 점수예요. 측정 조건이 다를 수 있으니 참고용으로 봐 주세요.</p>
-</section>
 <section class="block" id="paperblock" hidden>
 <div class="bar">
 <h2 class="block-title">논문 <span id="count"></span></h2>
@@ -80,6 +75,11 @@
 </select></label>
 </div>
 <ul class="results" id="results"></ul>
+</section>
+<section class="block" id="cmpblock" hidden>
+<h2 class="block-title">성능 비교 <span id="cmpcount"></span></h2>
+<div id="compare"></div>
+<p class="note">모델 제작자가 모델 카드에 직접 적은 점수예요. 측정 조건이 다를 수 있으니 참고용으로 봐 주세요.</p>
 </section>
 <noscript><p class="status">검색은 자바스크립트를 켜야 쓸 수 있어요.</p></noscript>
 </div>
@@ -258,8 +258,8 @@
     return groups.length;
   }
 
-  // One search fills both blocks: 성능 비교 on top (when any model card has scores),
-  // 논문 below. Either request may fail without hiding the other.
+  // One search fills both blocks: 논문 on top, 성능 비교 below (when any model card
+  // has scores). Either request may fail without hiding the other.
   function search(q) {
     clear();
     status.textContent = MSG.loading;

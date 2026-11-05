@@ -846,9 +846,9 @@ def test_search_compare_tab_uses_eval_results_only(site):
         'if (raw === null || raw === undefined || raw === "" || typeof raw === "boolean") return;'
         in script
     )
-    # One search fills both blocks; 성능 비교 sits above 논문 (owner 2026-11-05).
+    # One search fills both blocks; 논문 first, 성능 비교 below (owner 2026-11-05).
     assert "data-mode" not in page and "tab=compare" not in page
-    assert page.index('id="cmpblock"') < page.index('id="paperblock"')
+    assert page.index('id="paperblock"') < page.index('id="cmpblock"')
     assert "Promise.all([papers, models])" in script
     assert "innerHTML" not in script
 
@@ -862,7 +862,7 @@ def test_home_search_chapter_sits_between_get_and_sample(site):
     assert '<form class="find-card" action="search/" method="get" role="search">' in sec
     assert 'name="q"' in sec and "tab=compare" not in sec
     for text in (
-        "검색하면 성능 비교와 논문이 한 번에 나와요.",
+        "검색하면 논문과 성능 비교가 한 번에 나와요.",
         "Hugging Face Papers에 올라온 논문을 키워드로 찾을 수 있어요.",
         "평가 점수가 공개된 모델은 벤치마크별로 점수를 나란히 비교해 볼 수 있어요.",
     ):

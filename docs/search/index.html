@@ -102,11 +102,6 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 <button type="submit">검색</button>
 </form>
 <p class="status" id="status" role="status"></p>
-<section class="block" id="cmpblock" hidden>
-<h2 class="block-title">성능 비교 <span id="cmpcount"></span></h2>
-<div id="compare"></div>
-<p class="note">모델 제작자가 모델 카드에 직접 적은 점수예요. 측정 조건이 다를 수 있으니 참고용으로 봐 주세요.</p>
-</section>
 <section class="block" id="paperblock" hidden>
 <div class="bar">
 <h2 class="block-title">논문 <span id="count"></span></h2>
@@ -117,6 +112,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 </select></label>
 </div>
 <ul class="results" id="results"></ul>
+</section>
+<section class="block" id="cmpblock" hidden>
+<h2 class="block-title">성능 비교 <span id="cmpcount"></span></h2>
+<div id="compare"></div>
+<p class="note">모델 제작자가 모델 카드에 직접 적은 점수예요. 측정 조건이 다를 수 있으니 참고용으로 봐 주세요.</p>
 </section>
 <noscript><p class="status">검색은 자바스크립트를 켜야 쓸 수 있어요.</p></noscript>
 </div>
@@ -295,8 +295,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
     return groups.length;
   }
 
-  // One search fills both blocks: 성능 비교 on top (when any model card has scores),
-  // 논문 below. Either request may fail without hiding the other.
+  // One search fills both blocks: 논문 on top, 성능 비교 below (when any model card
+  // has scores). Either request may fail without hiding the other.
   function search(q) {
     clear();
     status.textContent = MSG.loading;
