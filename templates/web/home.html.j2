@@ -44,6 +44,17 @@
 .get-card img { margin: 0 auto 20px; }
 .get-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 .get-card p { font-size: 14px; color: #737373; }
+.find { background: #FFF6F0; padding: 80px 0; }
+.find h2 { font-size: 28px; font-weight: 700; line-height: 1.35; margin: 10px 0 16px; }
+.find .body { font-size: 16px; line-height: 1.75; color: #444444; margin-bottom: 20px; }
+.find-card { background: #FFFFFF; border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
+.find-card .tabs { display: flex; gap: 8px; margin-bottom: 14px; font-size: 13px; font-weight: 700; }
+.find-card .tabs span, .find-card .tabs a { border-radius: 999px; padding: 6px 14px; text-decoration: none; }
+.find-card .tabs .on { background: #FF6B00; color: #FFFFFF; }
+.find-card .tabs a { background: #F5F5F5; color: #808080; }
+.find-card .bar { display: flex; gap: 8px; }
+.find-card input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid #E6E6E6; border-radius: 10px; }
+.find-card button { font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 10px; padding: 0 20px; cursor: pointer; }
 .sample { background: #F5F5F5; padding: 80px 0; }
 .sample h2 { margin: 10px 0 16px; }
 .sample .body { font-size: 16px; line-height: 1.75; color: #444444; margin-bottom: 20px; }
@@ -78,7 +89,8 @@
   .hero { padding: 40px 0 48px; }
   .hero h1 { font-size: 26px; }
   .hero.solo .row, .cards, .archive-list { grid-template-columns: minmax(0, 1fr); }
-  .get, .sample, .archive, .cta { padding: 56px 0; }
+  .get, .find, .sample, .archive, .cta { padding: 56px 0; }
+  .find .wrap.row { grid-template-columns: minmax(0, 1fr); }
   .get h2, .sample h2, .archive h2, .cta h2 { font-size: 24px; }
   .preview { justify-self: stretch; width: 100%; }
   /* Owner 2026-11-04: on phones the section title and both items sit in one box,
@@ -118,7 +130,7 @@
 <section class="get" data-section="what-you-get">
 <div class="wrap">
 <div class="head">
-<h2>매주 이런 걸 받아요</h2>
+<h2>매주 이렇게 받아요</h2>
 <p class="sub">한 번 읽으면 이번 주 AI 흐름이 정리돼요</p>
 </div>
 <div class="cards">
@@ -133,6 +145,21 @@
 <p>이번 주 모델에 쓰인 기술 하나를 예시와 함께 풀어 설명해요.</p></div>
 </div>
 </div>
+</div>
+</section>
+
+<section class="find" data-section="search">
+<div class="wrap row">
+<div>
+<p class="eyebrow">다른 모델 찾아보기</p>
+<h2>궁금한 모델은<br>직접 검색해 봐요</h2>
+<p class="body">Hugging Face Papers에 올라온 논문을 키워드로 찾을 수 있어요.<br>평가 점수가 공개된 모델은 벤치마크별로 점수를 나란히 비교해 볼 수 있어요.</p>
+<a class="link" href="search/">검색하러 가기 →</a>
+</div>
+<form class="find-card" action="search/" method="get" role="search">
+<p class="tabs"><span class="on">논문 검색</span><a href="search/?tab=compare">성능 비교</a></p>
+<div class="bar"><input type="search" name="q" maxlength="200" placeholder="예: video generation, robot, RAG" aria-label="검색어" required><button type="submit">검색</button></div>
+</form>
 </div>
 </section>
 

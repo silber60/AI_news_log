@@ -1,23 +1,31 @@
 {% extends "_base.html.j2" %}
-{#- /search/: look up other papers and models on Hugging Face Papers (owner request
-    2026-11-05). The browser calls the public HF search API directly (CORS allows this
-    site's origin); nothing is stored and no key is used. Results are rendered with
-    textContent only, never innerHTML. Links go only to huggingface.co and arxiv.org,
-    and only for ids that match the arXiv id format. The query stays in ?q= so a search
-    can be shared. The newsletter itself does not change. #}
+{#- /search/: look up other papers and models on Hugging Face (owner request 2026-11-05).
+    Two tabs:
+    - 논문 검색: the public HF Papers search API.
+    - 성능 비교: the public HF models API, only models whose model card carries
+      evaluation results (filter=model-index), grouped by benchmark and metric so scores
+      sit side by side. These are self-reported by the model authors.
+    The browser calls the APIs directly (CORS allows this site's origin); nothing is stored
+    and no key is used. Results are rendered with textContent only, never innerHTML. Links
+    go only to huggingface.co and arxiv.org, and only for ids that match the expected
+    format. ?q= and ?tab=compare keep a search shareable. The newsletter does not change. #}
 
 {% block title %}다른 모델 찾아보기 · {{ brand }}{% endblock %}
 
 {% block style %}
 .find { padding: 64px 0 96px; }
 .find h1 { font-size: 30px; font-weight: 700; line-height: 1.35; margin-bottom: 10px; }
-.find .lead { font-size: 15px; color: #555555; margin-bottom: 24px; }
+.find .lead { font-size: 15px; color: #555555; margin-bottom: 20px; }
+.find .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.find .tabs button { font: inherit; font-size: 13px; font-weight: 700; border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer; background: #F5F5F5; color: #808080; }
+.find .tabs button[aria-pressed="true"] { background: #FF6B00; color: #FFFFFF; }
 .find form { display: flex; gap: 8px; }
 .find input[type="search"] { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid #D9D9D9; border-radius: 8px; }
-.find button { font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 8px; padding: 0 20px; cursor: pointer; }
+.find form button { font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 8px; padding: 0 20px; cursor: pointer; }
 .find .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 20px 0 8px; font-size: 13px; color: #737373; }
 .find select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid #D9D9D9; border-radius: 6px; background: #FFFFFF; }
 .find .status { font-size: 14px; color: #555555; margin: 24px 0; }
+.find .note { font-size: 13px; color: #737373; margin: 16px 0 0; }
 .results { list-style: none; padding: 0; margin: 0; }
 .result { border: 1px solid #E6E6E6; border-radius: 12px; padding: 18px 20px; margin-top: 12px; }
 .result h2 { font-size: 16px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
@@ -29,6 +37,16 @@
 .result .kw li { font-size: 12px; color: #FF6B00; background: #FFF3EB; border-radius: 999px; padding: 3px 10px; }
 .result .links { margin-top: 12px; font-size: 13px; font-weight: 500; }
 .result .links a { color: #FF6B00; text-decoration: none; margin-right: 16px; }
+.cmp { border: 1px solid #E6E6E6; border-radius: 12px; padding: 18px 20px; margin-top: 12px; overflow-x: auto; }
+.cmp h2 { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+.cmp .meta { font-size: 12px; color: #A3A3A3; margin-bottom: 10px; }
+.cmp table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cmp th { text-align: left; font-size: 12px; color: #808080; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid #EEEEEE; }
+.cmp td { padding: 8px; border-bottom: 1px solid #F3F3F3; color: #333333; word-break: break-all; }
+.cmp td:first-child, .cmp th:first-child { width: 40px; color: #A3A3A3; }
+.cmp td:last-child, .cmp th:last-child { text-align: right; white-space: nowrap; font-weight: 700; }
+.cmp td a { color: #222222; text-decoration: none; }
+.cmp td a:hover { color: #FF6B00; }
 @media (max-width: 767px) {
   .find { padding: 40px 0 64px; }
   .find h1 { font-size: 24px; }
@@ -40,14 +58,18 @@
 <main class="find" data-section="search">
 <div class="wrap">
 <h1>다른 모델 찾아보기</h1>
-<p class="lead">Hugging Face Papers에 올라온 논문과 모델을 키워드로 찾아요. 결과는 영어로 나와요.</p>
+<p class="lead">Hugging Face에 올라온 논문과 모델을 키워드로 찾아요. 결과는 영어로 나와요.</p>
+<div class="tabs" role="group" aria-label="검색 종류">
+<button type="button" data-mode="papers" aria-pressed="true">논문 검색</button>
+<button type="button" data-mode="compare" aria-pressed="false">성능 비교</button>
+</div>
 <form id="find" role="search" action="./" method="get">
 <input type="search" name="q" maxlength="200" placeholder="예: video generation, robot, RAG" aria-label="검색어" required>
 <button type="submit">검색</button>
 </form>
 <div class="bar" id="bar" hidden>
 <span id="count"></span>
-<label>정렬 <select id="sort">
+<label id="sortbox">정렬 <select id="sort">
 <option value="rel">관련도순</option>
 <option value="new">최신순</option>
 <option value="up">추천순</option>
@@ -55,6 +77,8 @@
 </div>
 <p class="status" id="status" role="status"></p>
 <ul class="results" id="results"></ul>
+<div id="compare"></div>
+<p class="note" id="note" hidden>모델 제작자가 모델 카드에 직접 적은 점수예요. 측정 조건이 다를 수 있으니 참고용으로 봐 주세요.</p>
 <noscript><p class="status">검색은 자바스크립트를 켜야 쓸 수 있어요.</p></noscript>
 </div>
 </main>
@@ -62,19 +86,33 @@
 (function () {
   var API = "{{ search_api }}";
   var LIMIT = {{ search_limit }};
+  var MODELS_API = "{{ models_api }}";
+  var MODELS_LIMIT = {{ models_limit }};
   var ID = /^\d{4}\.\d{4,5}$/;
+  var MODEL = /^[\w.-]+\/[\w.-]+$/;
+  var LOWER = /wer|cer|loss|perplexity|ppl|error/i;
+  var PLACEHOLDER = {
+    papers: "예: video generation, robot, RAG",
+    compare: "예: whisper, llama, embedding"
+  };
   var MSG = {
     loading: "찾고 있어요.",
     empty: "검색 결과가 없어요. 다른 키워드로 찾아보세요.",
+    emptyCompare: "평가 점수가 공개된 모델을 찾지 못했어요. 다른 키워드로 찾아보세요.",
     error: "Hugging Face에서 결과를 가져오지 못했어요. 잠시 뒤 다시 해 주세요."
   };
   var form = document.getElementById("find");
   var input = form.elements.q;
   var list = document.getElementById("results");
+  var cmp = document.getElementById("compare");
   var status = document.getElementById("status");
+  var note = document.getElementById("note");
   var bar = document.getElementById("bar");
   var count = document.getElementById("count");
+  var sortbox = document.getElementById("sortbox");
   var sort = document.getElementById("sort");
+  var tabs = document.querySelectorAll(".tabs button");
+  var mode = "papers";
   var items = [];
 
   function el(tag, cls, text) {
@@ -93,7 +131,17 @@
   function day(s) {
     return /^\d{4}-\d{2}-\d{2}/.test(s || "") ? s.slice(0, 10).replace(/-/g, ".") : "";
   }
-  function render() {
+  function clear() {
+    items = [];
+    list.textContent = "";
+    cmp.textContent = "";
+    bar.hidden = true;
+    note.hidden = true;
+    status.textContent = "";
+  }
+
+  // 논문 검색
+  function renderPapers() {
     list.textContent = "";
     var rows = items.slice();
     if (sort.value === "new") rows.sort(function (a, b) { return (b.date > a.date) - (b.date < a.date); });
@@ -117,7 +165,7 @@
       list.appendChild(li);
     });
   }
-  function pick(e) {
+  function pickPaper(e) {
     var p = (e && e.paper) || {};
     var id = String(p.id || "");
     if (!ID.test(id)) return null;
@@ -133,32 +181,129 @@
       kw: kw
     };
   }
-  function search(q) {
-    items = [];
-    list.textContent = "";
-    bar.hidden = true;
-    status.textContent = MSG.loading;
+  function searchPapers(q) {
     fetch(API + "?limit=" + LIMIT + "&q=" + encodeURIComponent(q))
       .then(function (r) { if (!r.ok) throw new Error("http"); return r.json(); })
       .then(function (d) {
-        items = (Array.isArray(d) ? d : []).map(pick).filter(Boolean);
+        items = (Array.isArray(d) ? d : []).map(pickPaper).filter(Boolean);
         if (!items.length) { status.textContent = MSG.empty; return; }
         status.textContent = "";
         count.textContent = "논문 " + items.length + "개";
+        sortbox.hidden = false;
         bar.hidden = false;
-        render();
+        renderPapers();
       })
       .catch(function () { status.textContent = MSG.error; });
   }
-  sort.addEventListener("change", render);
+
+  // 성능 비교: benchmark x metric groups from model-card evaluation results
+  function groupScores(models) {
+    var groups = {};
+    models.forEach(function (m) {
+      var id = String((m && m.id) || "");
+      if (!MODEL.test(id)) return;
+      var mi = m.cardData && m.cardData["model-index"];
+      if (!Array.isArray(mi)) return;
+      mi.forEach(function (entry) {
+        (Array.isArray(entry && entry.results) ? entry.results : []).forEach(function (res) {
+          var ds = res && res.dataset ? String(res.dataset.name || res.dataset.type || "") : "";
+          if (!ds) return;
+          (Array.isArray(res.metrics) ? res.metrics : []).forEach(function (mt) {
+            var v = Number(mt && mt.value);
+            var name = String((mt && (mt.name || mt.type)) || "");
+            if (!name || !isFinite(v)) return;
+            var key = ds + " · " + name;
+            var g = groups[key] || (groups[key] = { title: key, lower: LOWER.test(name), rows: [], seen: {} });
+            if (g.seen[id]) return;
+            g.seen[id] = true;
+            g.rows.push({ id: id, v: v });
+          });
+        });
+      });
+    });
+    return Object.keys(groups).map(function (k) { return groups[k]; })
+      .filter(function (g) { return g.rows.length >= 2; })
+      .sort(function (a, b) { return b.rows.length - a.rows.length; })
+      .slice(0, 6);
+  }
+  function renderCompare(groups) {
+    cmp.textContent = "";
+    groups.forEach(function (g) {
+      g.rows.sort(function (a, b) { return g.lower ? a.v - b.v : b.v - a.v; });
+      var box = el("section", "cmp");
+      box.appendChild(el("h2", null, g.title));
+      box.appendChild(el("p", "meta", "모델 " + g.rows.length + "개 · " + (g.lower ? "낮을수록 좋아요" : "높을수록 좋아요")));
+      var t = el("table");
+      var head = el("tr");
+      ["순위", "모델", "점수"].forEach(function (h) { head.appendChild(el("th", null, h)); });
+      var thead = el("thead");
+      thead.appendChild(head);
+      t.appendChild(thead);
+      var body = el("tbody");
+      g.rows.slice(0, 10).forEach(function (r, i) {
+        var tr = el("tr");
+        tr.appendChild(el("td", null, String(i + 1)));
+        var td = el("td");
+        td.appendChild(link("https://huggingface.co/" + r.id, r.id));
+        tr.appendChild(td);
+        tr.appendChild(el("td", null, String(Math.round(r.v * 100) / 100)));
+        body.appendChild(tr);
+      });
+      t.appendChild(body);
+      box.appendChild(t);
+      cmp.appendChild(box);
+    });
+  }
+  function searchCompare(q) {
+    fetch(MODELS_API + "?filter=model-index&sort=downloads&limit=" + MODELS_LIMIT
+      + "&expand[]=cardData&search=" + encodeURIComponent(q))
+      .then(function (r) { if (!r.ok) throw new Error("http"); return r.json(); })
+      .then(function (d) {
+        var groups = groupScores(Array.isArray(d) ? d : []);
+        if (!groups.length) { status.textContent = MSG.emptyCompare; return; }
+        status.textContent = "";
+        count.textContent = "벤치마크 " + groups.length + "개";
+        sortbox.hidden = true;
+        bar.hidden = false;
+        note.hidden = false;
+        renderCompare(groups);
+      })
+      .catch(function () { status.textContent = MSG.error; });
+  }
+
+  function search(q) {
+    clear();
+    status.textContent = MSG.loading;
+    if (mode === "compare") searchCompare(q); else searchPapers(q);
+  }
+  function setMode(m) {
+    mode = m === "compare" ? "compare" : "papers";
+    tabs.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === mode)); });
+    input.placeholder = PLACEHOLDER[mode];
+  }
+  function state(q) {
+    var s = "?q=" + encodeURIComponent(q);
+    if (mode === "compare") s += "&tab=compare";
+    history.replaceState(null, "", s);
+  }
+  tabs.forEach(function (b) {
+    b.addEventListener("click", function () {
+      setMode(b.getAttribute("data-mode"));
+      var q = input.value.trim();
+      if (q) { state(q); search(q); } else { clear(); }
+    });
+  });
+  sort.addEventListener("change", renderPapers);
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var q = input.value.trim();
     if (!q) return;
-    history.replaceState(null, "", "?q=" + encodeURIComponent(q));
+    state(q);
     search(q);
   });
-  var first = (new URLSearchParams(location.search).get("q") || "").trim().slice(0, 200);
+  var params = new URLSearchParams(location.search);
+  setMode(params.get("tab"));
+  var first = (params.get("q") || "").trim().slice(0, 200);
   if (first) { input.value = first; search(first); }
 })();
 </script>

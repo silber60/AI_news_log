@@ -244,7 +244,7 @@ def test_subscribe_hidden_while_url_is_none(site, issue_w44):
     web.publish(issue_w44)
     web.build_site()
     home = _home(site)
-    assert "<form" not in home
+    assert '<form class="form-card"' not in home  # the search form is always there
     assert "무료로 구독하기" not in home
     assert "구독하기" not in home
     footer = home[home.index('data-section="footer"') :]
@@ -257,7 +257,7 @@ def test_subscribe_forms_appear_once_url_is_set(site, issue_w44, monkeypatch):
     web.publish(issue_w44)
     web.build_site()
     home = _home(site)
-    assert home.count("<form") == 2
+    assert home.count('<form class="form-card"') == 2
     assert home.count(f'action="{url}"') == 2
     assert home.count("무료로 구독하기") == 2
     assert 'class="nav-cta"' in home
@@ -274,7 +274,7 @@ def test_archive_empty_state_line(site):
 
 # --- 04-03 Task 2: Figma 25:356 landing (D-04, D-15) ---
 
-SECTIONS = ["nav", "hero", "what-you-get", "sample", "archive", "cta", "footer"]
+SECTIONS = ["nav", "hero", "what-you-get", "search", "sample", "archive", "cta", "footer"]
 # Sentences written for the page; each must appear in the home and pass the humanizer.
 HOME_SENTENCES = [
     (
@@ -524,8 +524,9 @@ def _subscribe_home(site, monkeypatch, endpoint: str | None, issue=None) -> str:
 
 
 def _forms(html: str) -> list[str]:
-    parts = html.split("<form")[1:]
-    return ["<form" + p[: p.index("</form>")] for p in parts]
+    """The subscribe forms only; the search form (class find-card) is not one."""
+    parts = html.split('<form class="form-card"')[1:]
+    return ['<form class="form-card"' + p[: p.index("</form>")] for p in parts]
 
 
 def test_forms_post_every_field_to_the_endpoint(site, issue_w44, monkeypatch):
@@ -814,7 +815,10 @@ def test_archive_links_to_search(site):
 @pytest.mark.parametrize(
     "text",
     [
-        "Hugging Face Papers에 올라온 논문과 모델을 키워드로 찾아요.",
+        "Hugging Face에 올라온 논문과 모델을 키워드로 찾아요.",
+        "평가 점수가 공개된 모델을 찾지 못했어요.",
+        "모델 제작자가 모델 카드에 직접 적은 점수예요.",
+        "측정 조건이 다를 수 있으니 참고용으로 봐 주세요.",
         "결과는 영어로 나와요.",
         "찾고 있어요.",
         "검색 결과가 없어요.",
@@ -827,3 +831,32 @@ def test_archive_links_to_search(site):
 def test_search_copy_passes_humanizer(site, text):
     assert text in _search_page(site)
     assert humanize.lint(text) == []
+
+
+def test_search_compare_tab_uses_eval_results_only(site):
+    page = _search_page(site)
+    script = page[page.index("<script>") :]
+    assert 'var MODELS_API = "https://huggingface.co/api/models";' in script
+    assert '"?filter=model-index&sort=downloads&limit="' in script
+    assert "var MODELS_LIMIT = 50;" in script
+    assert 'cardData["model-index"]' in script
+    assert "var MODEL = /^[\\w.-]+\\/[\\w.-]+$/;" in script  # model ids only
+    assert "g.rows.length >= 2" in script  # a comparison needs two models
+    assert 'data-mode="compare"' in page and 'params.get("tab")' in script
+    assert "innerHTML" not in script
+
+
+def test_home_search_chapter_sits_between_get_and_sample(site):
+    web.build_site()
+    home = (site / "docs" / "index.html").read_text(encoding="utf-8")
+    assert home.index('data-section="what-you-get"') < home.index('data-section="search"')
+    assert home.index('data-section="search"') < home.index('data-section="sample"')
+    sec = home[home.index('data-section="search"') : home.index('data-section="sample"')]
+    assert '<form class="find-card" action="search/" method="get" role="search">' in sec
+    assert 'href="search/?tab=compare"' in sec and 'name="q"' in sec
+    for text in (
+        "Hugging Face Papers에 올라온 논문을 키워드로 찾을 수 있어요.",
+        "평가 점수가 공개된 모델은 벤치마크별로 점수를 나란히 비교해 볼 수 있어요.",
+    ):
+        assert text in sec
+        assert humanize.lint(text) == []

@@ -126,6 +126,9 @@ def _privacy_context() -> dict:
 # /search/ (owner request 2026-11-05): the browser queries the public HF Papers search API.
 SEARCH_API = "https://huggingface.co/api/papers/search"
 SEARCH_LIMIT = 30
+# 성능 비교 tab: only models whose card carries evaluation results (filter=model-index).
+MODELS_API = "https://huggingface.co/api/models"
+MODELS_LIMIT = 50
 
 
 def _search_context() -> dict:
@@ -137,6 +140,8 @@ def _search_context() -> dict:
         "subscribe_href": "../#subscribe",
         "search_api": SEARCH_API,
         "search_limit": SEARCH_LIMIT,
+        "models_api": MODELS_API,
+        "models_limit": MODELS_LIMIT,
     }
 
 
