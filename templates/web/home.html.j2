@@ -48,10 +48,7 @@
 .find h2 { font-size: 28px; font-weight: 700; line-height: 1.35; margin: 10px 0 16px; }
 .find .body { font-size: 16px; line-height: 1.75; color: #444444; margin-bottom: 20px; }
 .find-card { background: #FFFFFF; border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
-.find-card .tabs { display: flex; gap: 8px; margin-bottom: 14px; font-size: 13px; font-weight: 700; }
-.find-card .tabs span, .find-card .tabs a { border-radius: 999px; padding: 6px 14px; text-decoration: none; }
-.find-card .tabs .on { background: #FF6B00; color: #FFFFFF; }
-.find-card .tabs a { background: #F5F5F5; color: #808080; }
+.find-card .find-hint { font-size: 13px; font-weight: 700; color: #FF6B00; margin-bottom: 12px; }
 .find-card .bar { display: flex; gap: 8px; }
 .find-card input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid #E6E6E6; border-radius: 10px; }
 .find-card button { font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #FF6B00; border: 0; border-radius: 10px; padding: 0 20px; cursor: pointer; }
@@ -157,7 +154,7 @@
 <a class="link" href="search/">검색하러 가기 →</a>
 </div>
 <form class="find-card" action="search/" method="get" role="search">
-<p class="tabs"><span class="on">논문 검색</span><a href="search/?tab=compare">성능 비교</a></p>
+<p class="find-hint">검색하면 성능 비교와 논문이 한 번에 나와요.</p>
 <div class="bar"><input type="search" name="q" maxlength="200" placeholder="예: video generation, robot, RAG" aria-label="검색어" required><button type="submit">검색</button></div>
 </form>
 </div>
