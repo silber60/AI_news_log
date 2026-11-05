@@ -123,6 +123,23 @@ def _privacy_context() -> dict:
     }
 
 
+# /search/ (owner request 2026-11-05): the browser queries the public HF Papers search API.
+SEARCH_API = "https://huggingface.co/api/papers/search"
+SEARCH_LIMIT = 30
+
+
+def _search_context() -> dict:
+    """/search/ lives one level down, like /privacy/; its nav climbs with ../."""
+    return {
+        **_home_context([]),
+        "home_href": "../",
+        "archive_href": "../" + render.ARCHIVE_ANCHOR,
+        "subscribe_href": "../#subscribe",
+        "search_api": SEARCH_API,
+        "search_limit": SEARCH_LIMIT,
+    }
+
+
 def welcome_payload(issues: list[Issue]) -> dict:
     """D-03, D-04: what Apps Script fills and sends to a new reader (04.1-02 contract).
 
@@ -154,7 +171,7 @@ def welcome_payload(issues: list[Issue]) -> dict:
 
 def build_site() -> list[Path]:
     """Regenerate every issue page, the home page, the unsubscribe confirm page, the
-    privacy page and the welcome payload. Returns the written paths."""
+    privacy page, the search page and the welcome payload. Returns the written paths."""
     issues = load_issues()
     docs = docs_dir()
     written: list[Path] = []
@@ -172,6 +189,10 @@ def build_site() -> list[Path]:
     written.append(path)
     page = _web_env.get_template("privacy.html.j2").render(**_privacy_context())
     path = docs / "privacy" / "index.html"
+    store.write_text(path, page)
+    written.append(path)
+    page = _web_env.get_template("search.html.j2").render(**_search_context())
+    path = docs / "search" / "index.html"
     store.write_text(path, page)
     written.append(path)
     payload = welcome_payload(issues)

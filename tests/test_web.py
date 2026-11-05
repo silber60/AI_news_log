@@ -50,8 +50,9 @@ def test_publish_writes_data_and_both_pages(site, issue_w44):
     unsub = site / "docs" / "unsubscribe" / "index.html"
     welcome = site / "docs" / "welcome" / "latest.json"
     privacy = site / "docs" / "privacy" / "index.html"
+    search = site / "docs" / "search" / "index.html"
     assert data.is_file()
-    assert set(written) == {page, home, unsub, privacy, welcome}
+    assert set(written) == {page, home, unsub, privacy, search, welcome}
     assert issue_w44.headline_ko in page.read_text(encoding="utf-8")
     assert web.load_issues() == [issue_w44]
 
@@ -89,7 +90,7 @@ def test_cli_send_end_to_end(site, issue_w44, caplog):
     assert render.date_line(issue_w44) in home
     assert f"web=published issue={ISSUE_ID}" in caplog.text
     assert f"web=exists issue={ISSUE_ID}" in caplog.text
-    assert "web=site pages=5" in caplog.text
+    assert "web=site pages=6" in caplog.text
     assert issue_w44.headline_ko not in caplog.text
 
 
@@ -98,7 +99,7 @@ def test_cli_site_regenerates_without_archive(site, issue_w44, caplog):
     with caplog.at_level("INFO"):
         assert main(["site"]) == 0
     assert (site / "docs" / "issues" / ISSUE_ID / "index.html").is_file()
-    assert "web=site pages=5" in caplog.text
+    assert "web=site pages=6" in caplog.text
 
 
 def test_home_lists_newest_first(site, issue_w44):
@@ -130,7 +131,7 @@ def test_generated_pages_carry_no_personal_data(site, issue_w44):
     web.publish(issue_w44)
     web.build_site()
     files = _html_files(site)
-    assert len(files) == 4  # issue page, home, unsubscribe, privacy
+    assert len(files) == 5  # issue page, home, unsubscribe, privacy, search
     assert site / "docs" / "privacy" / "index.html" in files
     for p in files:
         text = p.read_text(encoding="utf-8")
@@ -778,3 +779,51 @@ def test_privacy_paragraphs_pass_humanizer(paragraph):
 @pytest.mark.parametrize("heading", [PRIVACY_HEADING, *(h for h, _ in PRIVACY_SECTIONS)])
 def test_privacy_headings_pass_humanizer(heading):
     assert not [c for c in humanize.lint(heading, kind="name") if c in humanize.HARD_CODES]
+
+
+# ----------------------------------------------- /search/ (owner request 2026-11-05)
+
+
+def _search_page(site) -> str:
+    web.build_site()
+    return (site / "docs" / "search" / "index.html").read_text(encoding="utf-8")
+
+
+def test_search_page_queries_hf_papers_safely(site):
+    page = _search_page(site)
+    assert "다른 모델 찾아보기" in page and render.BRAND in page
+    assert 'var API = "https://huggingface.co/api/papers/search";' in page
+    assert "var LIMIT = 30;" in page
+    script = page[page.index("<script>") :]
+    assert "innerHTML" not in script and "eval(" not in script
+    assert "textContent" in script and "encodeURIComponent(q)" in script
+    # Links only for arXiv-style ids, only to HF and arXiv.
+    assert "/^\\d{4}\\.\\d{4,5}$/" in script
+    hosts = set(re.findall(r'"(https://[a-z.]+)/', script))
+    assert hosts == {"https://huggingface.co", "https://arxiv.org"}
+    assert 'href="../"' in page and 'href="../#archive"' in page
+
+
+def test_archive_links_to_search(site):
+    web.build_site()
+    home = (site / "docs" / "index.html").read_text(encoding="utf-8")
+    archive = home[home.index('data-section="archive"') :]
+    assert '<a class="link" href="search/">다른 모델 찾아보기 →</a>' in archive
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Hugging Face Papers에 올라온 논문과 모델을 키워드로 찾아요.",
+        "결과는 영어로 나와요.",
+        "찾고 있어요.",
+        "검색 결과가 없어요.",
+        "다른 키워드로 찾아보세요.",
+        "Hugging Face에서 결과를 가져오지 못했어요.",
+        "잠시 뒤 다시 해 주세요.",
+        "검색은 자바스크립트를 켜야 쓸 수 있어요.",
+    ],
+)
+def test_search_copy_passes_humanizer(site, text):
+    assert text in _search_page(site)
+    assert humanize.lint(text) == []
