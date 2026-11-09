@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "issue_id": "2026-W45",
+  "stage": "explainer",
+  "data": {
+    "topic": "Agent harness: 모델을 일하게 만드는 실행 틀",
+    "body_ko": "모델이 에이전트로 일하도록 감싸는 실행 틀이에요. uni-robot-agent는 open-weight 모델이 로봇을 조작하게 하고 추가 학습도 지원해요. CoworkOS는 모델이 작업 전략을 정하면 런타임이 상태를 관리하고 Subagent에 일을 맡겨요. 여기에 계층형 workspace와 지속 semantic memory를 더했어요.",
+    "related_ranks": [
+      1,
+      4
+    ],
+    "point_ko": "모델 하나에 긴 작업을 이어서 맡길 수 있어요.",
+    "example_ko": "신입 사원에게 업무 매뉴얼과 메모장, 담당 선배를 붙여 주는 것과 비슷해요. 같은 사람도 이런 틀이 있으면 긴 일을 끊기지 않게 이어 갈 수 있어요.",
+    "image": {
+      "url": "https://raw.githubusercontent.com/Open-RUA/uni-robot-agent/HEAD/assets/brand/uni-robot-agent-cover.png",
+      "width": 576,
+      "height": 230
+    }
+  }
+}

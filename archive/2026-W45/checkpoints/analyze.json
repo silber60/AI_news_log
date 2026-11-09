@@ -1,0 +1,556 @@
+{
+  "version": 1,
+  "issue_id": "2026-W45",
+  "stage": "analyze",
+  "data": [
+    {
+      "rank": 1,
+      "paper_id": "2611.01560",
+      "title_en": "Democratizing Robot-Use Agents: A Unified Harness with Open Models",
+      "upvotes": 48,
+      "num_comments": 1,
+      "github_stars": 290,
+      "submitted_on_daily_at": "2026-11-03",
+      "affiliation": null,
+      "hf_url": "https://huggingface.co/papers/2611.01560",
+      "arxiv_url": "https://arxiv.org/abs/2611.01560",
+      "github_url": "https://github.com/Open-RUA/uni-robot-agent",
+      "project_url": "https://openrua.ai/uni-robot-agent",
+      "title_ko": "uni-robot-agent: open 모델로 로봇을 다루는 통합 harness",
+      "ai_type": "에이전트",
+      "summary_ko": "open-weight 모델이 로봇을 직접 다루게 해 주는 통합 harness예요.",
+      "summary_lines_ko": [
+        "open-weight 모델이 로봇을 조작하는 에이전트로 동작하게 하는 harness예요.",
+        "proprietary 모델에 의존하던 방식과 달리 open-weight 모델로 추가 학습까지 지원해요.",
+        "RoboDojo Score 31.39로 공개된 GPT-6 Astra-RoboProbe 결과를 넘었어요."
+      ],
+      "use_idea_ko": "로봇 조작 작업을 open 모델로 시험하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "로봇 조작 에이전트 harness",
+        "architecture_ko": "Qwen3.8-Flash-Next 등 open-weight 모델 기반 통합 harness",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "로봇 조작용 harness라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "로봇 하드웨어와 모델 학습이 필요해 묶어 둘 것이 없어요."
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.02857",
+      "title_en": "Solv3R: 3D Looped Transformer as a Multi-view Solver",
+      "upvotes": 18,
+      "num_comments": 3,
+      "github_stars": 212,
+      "submitted_on_daily_at": "2026-11-05",
+      "affiliation": null,
+      "hf_url": "https://huggingface.co/papers/2611.02857",
+      "arxiv_url": "https://arxiv.org/abs/2611.02857",
+      "github_url": "https://github.com/ubc-vision/solv3r",
+      "project_url": "https://ubc-vision.github.io/solv3r/",
+      "title_ko": "Solv3R: 반복 갱신으로 multi-view 3D 구조를 푸는 looped transformer",
+      "ai_type": "비전",
+      "summary_ko": "여러 장의 사진에서 카메라 위치와 3D 구조를 반복해서 다듬어 주는 모델이에요.",
+      "summary_lines_ko": [
+        "현재 추정 상태에서 이어서 multi-view geometry를 풀어 카메라 포즈와 장면 구조를 갱신해요.",
+        "반복 횟수와 무관한 update operator로 기존 view와 새 view를 함께 갱신해요.",
+        "한 solver로 offline, incremental 복원, relocalization, streaming을 처리해요."
+      ],
+      "use_idea_ko": "사진을 추가로 찍을 때마다 3D 지도를 이어서 넓히는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "multi-view geometry looped…",
+        "architecture_ko": "반복 횟수와 무관한 update operator를 쓰는 looped transformer…",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "3D 복원 모델이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 모델이라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.02501",
+      "title_en": "SpecPilot: Autonomous Algorithm Discovery and Systems Optimization for Speculative Decoding",
+      "upvotes": 20,
+      "num_comments": 2,
+      "github_stars": 177,
+      "submitted_on_daily_at": "2026-11-04",
+      "affiliation": "University of California, Berkeley",
+      "hf_url": "https://huggingface.co/papers/2611.02501",
+      "arxiv_url": "https://arxiv.org/abs/2611.02501",
+      "github_url": "https://github.com/StargazerX0/SpecPilot",
+      "project_url": "https://stargazerx0.github.io/specpilot-project-page/",
+      "title_ko": "SpecPilot: speculative decoding 최적화를 자동으로 찾는 에이전트",
+      "ai_type": "에이전트",
+      "summary_ko": "배포 환경마다 speculative decoding 속도를 높이는 알고리즘과 시스템 최적화를 자동으로 찾아 줘요.",
+      "summary_lines_ko": [
+        "에이전트가 반복하며 배포 환경별 speculative decoding 알고리즘과 시스템 최적화를 찾아내요.",
+        "cost model로 격차를 찾고 병렬 에이전트가 탐색하며, token forcing으로 reward hacking을…",
+        "학습이나 품질 손실 없이 요청 하나일 때 AR 대비 속도를 4.46배에서 10.87배로 올렸어요."
+      ],
+      "use_idea_ko": "LLM 서빙 서버의 응답 속도를 높이는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "speculative decoding 자동 최적화…",
+        "architecture_ko": "cost model, 병렬 에이전트, token forcing 검증, 구조화된 memory 결합",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "LLM 서빙 시스템과 GPU 최적화라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "GPU 서빙 시스템 최적화라 지시문으로 묶어 둘 내용이 없어요."
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2611.03178",
+      "title_en": "CoworkOS:Scaling Agent Coworkers for Real-world Automation",
+      "upvotes": 100,
+      "num_comments": 4,
+      "github_stars": 145,
+      "submitted_on_daily_at": "2026-11-03",
+      "affiliation": "Renmin University of China",
+      "hf_url": "https://huggingface.co/papers/2611.03178",
+      "arxiv_url": "https://arxiv.org/abs/2611.03178",
+      "github_url": "https://github.com/RUC-NLPIR/CoworkOS",
+      "project_url": "https://coworkos-ai.github.io",
+      "title_ko": "CoworkOS: 장시간 업무를 맡는 에이전트 하네스",
+      "ai_type": "에이전트",
+      "summary_ko": "문서, 슬라이드, CAD, Blender 작업을 에이전트와 사람이 함께 이어서 하게 해 주는 시스템이에요.",
+      "summary_lines_ko": [
+        "모델이 전략을 정하고 런타임이 상태를 관리하며 Subagent에 일을 맡기는 하네스예요.",
+        "작업 전략과 실행 관리를 나누고, 계층형 workspace와 지속 semantic memory를 도입했어요.",
+        "5라운드 post-training으로 8개 benchmark 평균이 33.19에서 42.95로 올랐어요."
+      ],
+      "use_idea_ko": "사람과 에이전트가 같은 슬라이드를 고쳐 가며 만드는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "장시간 업무용 에이전트 하네스",
+        "architecture_ko": "3계층 구조, Subagent 위임, 계층형 workspace와 semantic memory",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "기법 적용 가능",
+        "reason_ko": "작업을 하위 에이전트에 나눠 맡기는 흐름을 대화에서 따라 할 수 있어요."
+      },
+      "skill_gpt": {
+        "fit": "Claude Skill",
+        "reason_ko": "위임 규칙과 작업 로그 정리 방식을 지시문으로 적어 둘 수 있어요."
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.00859",
+      "title_en": "Wave Forcing: Towards Speed-of-Light Streaming Video Generation",
+      "upvotes": 125,
+      "num_comments": 6,
+      "github_stars": 130,
+      "submitted_on_daily_at": "2026-11-03",
+      "affiliation": "DENG Lab @ SJTU",
+      "hf_url": "https://huggingface.co/papers/2611.00859",
+      "arxiv_url": "https://arxiv.org/abs/2611.00859",
+      "github_url": "https://github.com/SJTU-DENG-Lab/WaveForcing",
+      "project_url": "https://sjtu-deng-lab.github.io/WaveForcing/",
+      "title_ko": "Wave Forcing: 실시간 스트리밍 장편 비디오 생성",
+      "ai_type": "이미지/비디오 생성",
+      "summary_ko": "텍스트 설명으로 끊김 없이 긴 영상을 실시간으로 계속 만들어 주는 비디오 생성 방법이에요.",
+      "summary_lines_ko": [
+        "청크 단위로 영상을 이어서 만들어 끊김 없이 긴 영상을 실시간으로 내보내요.",
+        "앞 청크의 노이즈 제거가 끝나기 전에 참조하고, 여러 GPU 복제본에 단계를 나눠 처리해요.",
+        "GPU 8장(H200)에서 4-step WF가 end-to-end 134.8 FPS를 기록했어요."
+      ],
+      "use_idea_ko": "실시간 라이브 영상 콘텐츠를 계속 만드는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "스트리밍 비디오 diffusion 생성 기법",
+        "architecture_ko": "chunk-wise causal attention 기반 DiT, Wave Parallelism 실행 런타임",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "대화에서 따라 할 것이 없는 비디오 생성 모델과 GPU 실행 시스템이에요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 모델과 GPU 런타임이라 묶어 둘 것이 없어요."
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.03126",
+      "title_en": "CUA-Master: Scaling Computer-use Agents through Open-World Recursive Improvements",
+      "upvotes": 48,
+      "num_comments": 2,
+      "github_stars": 124,
+      "submitted_on_daily_at": "2026-11-03",
+      "affiliation": null,
+      "hf_url": "https://huggingface.co/papers/2611.03126",
+      "arxiv_url": "https://arxiv.org/abs/2611.03126",
+      "github_url": "https://github.com/xlyu0106/CUA-Master",
+      "project_url": "https://xlyu0106.github.io/CUA-Master/",
+      "title_ko": "CUA-Master: 오픈월드 데이터로 컴퓨터 사용 에이전트 반복 개선",
+      "ai_type": "에이전트",
+      "summary_ko": "화면을 보고 컴퓨터를 직접 조작하는 에이전트를 학습 데이터 생성부터 반복 개선까지 키우는 방법이에요.",
+      "summary_lines_ko": [
+        "컴퓨터 화면을 보고 마우스, 키보드, 명령줄로 작업을 수행하는 에이전트를 학습시켜요.",
+        "에이전트가 만든 경험만 쓰지 않고, 강의 영상에서 실제 작업 흐름을 뽑아 학습 데이터로 써요.",
+        "CUA-Master-27B가 OSWorld Verified에서 80.2점을 기록했어요."
+      ],
+      "use_idea_ko": "사무용 프로그램 작업을 컴퓨터가 대신 처리하게 하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "컴퓨터 사용 에이전트 학습 프레임워크",
+        "architecture_ko": "이중 루프 반복 개선 구조, 데이터 합성과 snapshot-rollback retry 결합",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "직접 학습하는 27B 모델과 데이터 구축 파이프라인이라 대화에서 따라 할 부분이 적어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "학습 방법과 가중치 중심이라 지시문으로 묶어 둘 내용이 없어요."
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.07854",
+      "title_en": "Towards Foundation Decision Models: Drex",
+      "upvotes": 22,
+      "num_comments": 3,
+      "github_stars": 117,
+      "submitted_on_daily_at": "2026-11-06",
+      "affiliation": "Nace.AI",
+      "hf_url": "https://huggingface.co/papers/2611.07854",
+      "arxiv_url": "https://arxiv.org/abs/2611.07854",
+      "github_url": "https://github.com/nace-ai/drex-decision-models",
+      "project_url": "https://huggingface.co/nace-ai",
+      "title_ko": "Drex: 선택지별 확률을 바로 내는 decision model",
+      "ai_type": "LLM",
+      "summary_ko": "질문과 선택지를 넣으면 답을 길게 풀어 쓰지 않고 선택지별 확률을 바로 알려 주는 decision model이에요.",
+      "summary_lines_ko": [
+        "문서나 기록과 선택지를 받아 선택지별 확률 분포를 바로 출력해요.",
+        "autoregressive decoding 없이 확률 분포를 내서 출력 파싱과 지연 시간을 줄였어요.",
+        "Decision Index 0.4.1에서 Max가 비교한 decision model 중 가장 높은 67.52점을 기록했어요."
+      ],
+      "use_idea_ko": "문서 내용을 보고 승인이나 거절을 고르는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "오픈 decision model 모델군",
+        "architecture_ko": "8B, 9B, 27B, 35B(3B active) 모델군, 선택지 확률 분포 출력",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "직접 호스팅하는 별개 decision model이라 대화에서 따라 할 것이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 가중치라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.02102",
+      "title_en": "NorthCUA Technical Report: Turbocharging Computer-Use Agents through Experience at Scale",
+      "upvotes": 32,
+      "num_comments": 1,
+      "github_stars": 104,
+      "submitted_on_daily_at": "2026-11-03",
+      "affiliation": "beipo-ai",
+      "hf_url": "https://huggingface.co/papers/2611.02102",
+      "arxiv_url": "https://arxiv.org/abs/2611.02102",
+      "github_url": "https://github.com/beipo-ai/NorthCUA",
+      "project_url": "https://beipo.top/blog/northcua/",
+      "title_ko": "NorthCUA: 경험 축적으로 컴퓨터 사용 에이전트 성능 높이기",
+      "ai_type": "에이전트",
+      "summary_ko": "화면을 보고 데스크톱과 웹 소프트웨어 작업을 끝까지 수행하는 컴퓨터 사용 에이전트예요.",
+      "summary_lines_ko": [
+        "GUI를 보고 클릭과 입력으로 데스크톱과 웹 작업을 수행해요.",
+        "검증된 경험을 계속 모으고 재활용하는 Experience Flywheel로 학습해요.",
+        "오픈소스 모델 중 GUI grounding, 데스크톱, 웹 평가에서 최고 성적을 냈어요."
+      ],
+      "use_idea_ko": "사무용 소프트웨어 조작을 에이전트에게 맡기는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "컴퓨터 사용 에이전트 모델군",
+        "architecture_ko": "mid-training, 장기 SFT, 데스크톱과 웹 joint RL 단계 학습",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "직접 학습하고 호스팅해야 하는 GUI 에이전트 모델이에요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "학습 파이프라인과 가중치라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.40727",
+      "title_en": "VoxLock: Target-Speaker Extraction for Voice Agents Without an Enrollment Step",
+      "upvotes": 4,
+      "num_comments": 3,
+      "github_stars": 100,
+      "submitted_on_daily_at": "2026-11-02",
+      "affiliation": null,
+      "hf_url": "https://huggingface.co/papers/2610.40727",
+      "arxiv_url": "https://arxiv.org/abs/2610.40727",
+      "github_url": "https://github.com/arbazsiddiqui/voxlock",
+      "project_url": "https://www.arbazsiddiqui.me/voxlock/",
+      "title_ko": "VoxLock: 등록 없이 통화 상대 목소리만 남기는 음성 추출",
+      "ai_type": "음성",
+      "summary_ko": "통화 중 상대방 목소리만 남기고 주변 사람 말소리는 지워 주는 음성 추출 모델이에요.",
+      "summary_lines_ko": [
+        "통화 도중 잘라 낸 목소리 샘플로 상대방 음성만 뽑아 음성 인식기에 넘겨요.",
+        "사전 등록 단계 없이 통화 자체에서 뗀 목소리 샘플로 작동하도록 REAL-TSE를 fine-tuning했어요.",
+        "Krisp 265개 녹음 benchmark에서 WER을 23.21%에서 4.95%로 낮췄어요."
+      ],
+      "use_idea_ko": "콜센터 음성 에이전트가 주변 잡담을 빼고 통화 상대 말만 받아 적게 할 수 있어요.",
+      "model_info": {
+        "kind_ko": "실시간 target-speaker…",
+        "architecture_ko": "27M 파라미터 causal target-speaker extraction 모델, 8-bit 양자화",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "음성 신호를 처리하는 별개 모델이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 음성 모델 가중치라 묶어 둘 지시문이 없어요."
+      }
+    }
+  ]
+}

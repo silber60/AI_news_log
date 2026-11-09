@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "issue_id": "2026-W45",
+  "stage": "highlight",
+  "data": [
+    {
+      "rank": 9,
+      "tag": "데모",
+      "why_ko": "통화 중 상대방 목소리만 남기고 주변 사람 말소리를 지워 줘요.",
+      "how_ko": "데모에 여러 사람이 섞인 통화 녹음을 올려 상대 목소리만 남는지 들어 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/arbazsiddiqui/voxlock"
+    },
+    {
+      "rank": 7,
+      "tag": "데모",
+      "why_ko": "답을 길게 풀어 쓰지 않고 선택지별 확률을 바로 받아 볼 수 있어요.",
+      "how_ko": "데모에 문서 한 편과 선택지 몇 개를 넣어 확률이 어떻게 나뉘는지 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/multimodalart/jev-decision-index"
+    },
+    {
+      "rank": 5,
+      "tag": "데모",
+      "why_ko": "텍스트 설명만으로 끊김 없이 긴 영상을 실시간으로 이어서 만들어요.",
+      "how_ko": "데모에 장면 설명을 넣어 영상이 끊기지 않고 길게 이어지는지 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/akhaliq/wave-forcing"
+    }
+  ]
+}

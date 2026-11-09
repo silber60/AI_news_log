@@ -1,0 +1,268 @@
+모닥로그 AI 리포트
+#에이전트 #비전 #이미지/비디오생성
+2026.11.09 월요일
+
+🤖 오픈 모델로 로봇을 움직인다? 이번 주 AI 모델 9
+
+구독자님, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 9개를 골랐어요!
+
+========================================
+이번 주 흐름 한눈에 📈
+
+이번 주는 agent 관련 항목이 여러 편 올라왔어요. 1위 Democratizing Robot-Use Agents는 로봇을, 6위 CUA-Master와 8위 NorthCUA는 컴퓨터 화면을 직접 다루는 agent예요. 3위 SpecPilot과 4위 CoworkOS도 agent 계열이고, 5위 Wave Forcing은 streaming 비디오 생성을 다뤄요.
+
+========================================
+이번 주 바로 써볼 만한 것 ✨
+
+[데모] VoxLock: 등록 없이 통화 상대 목소리만 남기는 음성 추출
+왜 좋은지: 통화 중 상대방 목소리만 남기고 주변 사람 말소리를 지워 줘요.
+어떻게 써 볼지: 데모에 여러 사람이 섞인 통화 녹음을 올려 상대 목소리만 남는지 들어 보면 돼요.
+데모 써보기: https://huggingface.co/spaces/arbazsiddiqui/voxlock
+
+[데모] Drex: 선택지별 확률을 바로 내는 decision model
+왜 좋은지: 답을 길게 풀어 쓰지 않고 선택지별 확률을 바로 받아 볼 수 있어요.
+어떻게 써 볼지: 데모에 문서 한 편과 선택지 몇 개를 넣어 확률이 어떻게 나뉘는지 보면 돼요.
+데모 써보기: https://huggingface.co/spaces/multimodalart/jev-decision-index
+
+[데모] Wave Forcing: 실시간 스트리밍 장편 비디오 생성
+왜 좋은지: 텍스트 설명만으로 끊김 없이 긴 영상을 실시간으로 이어서 만들어요.
+어떻게 써 볼지: 데모에 장면 설명을 넣어 영상이 끊기지 않고 길게 이어지는지 보면 돼요.
+데모 써보기: https://huggingface.co/spaces/akhaliq/wave-forcing
+
+========================================
+이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️
+GitHub star 기준
+
+----------------------------------------
+1위 ㅣ 에이전트 ㅣ ★ 290
+uni-robot-agent: open 모델로 로봇을 다루는 통합 harness
+Democratizing Robot-Use Agents: A Unified Harness with Open Models
+
+open-weight 모델이 로봇을 직접 다루게 해 주는 통합 harness예요.
+· open-weight 모델이 로봇을 조작하는 에이전트로 동작하게 하는 harness예요.
+· proprietary 모델에 의존하던 방식과 달리 open-weight 모델로 추가 학습까지 지원해요.
+· RoboDojo Score 31.39로 공개된 GPT-6 Astra-RoboProbe 결과를 넘었어요.
+💡 로봇 조작 작업을 open 모델로 시험하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 로봇 조작 에이전트 harness
+구조: Qwen3.8-Flash-Next 등 open-weight 모델 기반 통합 harness
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요
+라이선스: https://github.com/Open-RUA/uni-robot-agent/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.01560
+arXiv: https://arxiv.org/abs/2611.01560
+코드: https://github.com/Open-RUA/uni-robot-agent
+프로젝트: https://openrua.ai/uni-robot-agent
+
+----------------------------------------
+2위 ㅣ 비전 ㅣ ★ 212
+Solv3R: 반복 갱신으로 multi-view 3D 구조를 푸는 looped transformer
+Solv3R: 3D Looped Transformer as a Multi-view Solver
+
+여러 장의 사진에서 카메라 위치와 3D 구조를 반복해서 다듬어 주는 모델이에요.
+· 현재 추정 상태에서 이어서 multi-view geometry를 풀어 카메라 포즈와 장면 구조를 갱신해요.
+· 반복 횟수와 무관한 update operator로 기존 view와 새 view를 함께 갱신해요.
+· 한 solver로 offline, incremental 복원, relocalization, streaming을 처리해요.
+💡 사진을 추가로 찍을 때마다 3D 지도를 이어서 넓히는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: multi-view geometry looped…
+구조: 반복 횟수와 무관한 update operator를 쓰는 looped transformer…
+공개 범위: 가중치 · GitHub · 데모
+
+🧪 바로 써볼 수 있어요
+
+논문: https://huggingface.co/papers/2611.02857
+arXiv: https://arxiv.org/abs/2611.02857
+코드: https://github.com/ubc-vision/solv3r
+프로젝트: https://ubc-vision.github.io/solv3r/
+
+----------------------------------------
+3위 ㅣ 에이전트 ㅣ ★ 177
+SpecPilot: speculative decoding 최적화를 자동으로 찾는 에이전트
+SpecPilot: Autonomous Algorithm Discovery and Systems Optimization for Speculative Decoding
+
+배포 환경마다 speculative decoding 속도를 높이는 알고리즘과 시스템 최적화를 자동으로 찾아 줘요.
+· 에이전트가 반복하며 배포 환경별 speculative decoding 알고리즘과 시스템 최적화를 찾아내요.
+· cost model로 격차를 찾고 병렬 에이전트가 탐색하며, token forcing으로 reward hacking을…
+· 학습이나 품질 손실 없이 요청 하나일 때 AR 대비 속도를 4.46배에서 10.87배로 올렸어요.
+💡 LLM 서빙 서버의 응답 속도를 높이는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: speculative decoding 자동 최적화…
+구조: cost model, 병렬 에이전트, token forcing 검증, 구조화된 memory 결합
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요
+라이선스: https://github.com/StargazerX0/SpecPilot/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.02501
+arXiv: https://arxiv.org/abs/2611.02501
+코드: https://github.com/StargazerX0/SpecPilot
+프로젝트: https://stargazerx0.github.io/specpilot-project-page/
+
+========================================
+AI 기술 쉽게 보기 🔍
+
+[오늘의 포인트] 모델 하나에 긴 작업을 이어서 맡길 수 있어요.
+
+Agent harness: 모델을 일하게 만드는 실행 틀
+
+모델이 에이전트로 일하도록 감싸는 실행 틀이에요. uni-robot-agent는 open-weight 모델이 로봇을 조작하게 하고 추가 학습도 지원해요. CoworkOS는 모델이 작업 전략을 정하면 런타임이 상태를 관리하고 Subagent에 일을 맡겨요. 여기에 계층형 workspace와 지속 semantic memory를 더했어요.
+
+[예를 들어] 신입 사원에게 업무 매뉴얼과 메모장, 담당 선배를 붙여 주는 것과 비슷해요. 같은 사람도 이런 틀이 있으면 긴 일을 끊기지 않게 이어 갈 수 있어요.
+
+========================================
+놓치기 아까운 4위부터 9위까지 👀
+GitHub star 기준
+
+----------------------------------------
+4위 ㅣ 에이전트 ㅣ ★ 145
+CoworkOS: 장시간 업무를 맡는 에이전트 하네스
+CoworkOS:Scaling Agent Coworkers for Real-world Automation
+
+문서, 슬라이드, CAD, Blender 작업을 에이전트와 사람이 함께 이어서 하게 해 주는 시스템이에요.
+· 모델이 전략을 정하고 런타임이 상태를 관리하며 Subagent에 일을 맡기는 하네스예요.
+· 작업 전략과 실행 관리를 나누고, 계층형 workspace와 지속 semantic memory를 도입했어요.
+· 5라운드 post-training으로 8개 benchmark 평균이 33.19에서 42.95로 올랐어요.
+💡 사람과 에이전트가 같은 슬라이드를 고쳐 가며 만드는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 장시간 업무용 에이전트 하네스
+구조: 3계층 구조, Subagent 위임, 계층형 workspace와 semantic memory
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요 · 🤖 Claude/GPT 기법 적용
+라이선스: https://github.com/RUC-NLPIR/CoworkOS/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.03178
+arXiv: https://arxiv.org/abs/2611.03178
+코드: https://github.com/RUC-NLPIR/CoworkOS
+프로젝트: https://coworkos-ai.github.io
+
+----------------------------------------
+5위 ㅣ 이미지/비디오 생성 ㅣ ★ 130
+Wave Forcing: 실시간 스트리밍 장편 비디오 생성
+Wave Forcing: Towards Speed-of-Light Streaming Video Generation
+
+텍스트 설명으로 끊김 없이 긴 영상을 실시간으로 계속 만들어 주는 비디오 생성 방법이에요.
+· 청크 단위로 영상을 이어서 만들어 끊김 없이 긴 영상을 실시간으로 내보내요.
+· 앞 청크의 노이즈 제거가 끝나기 전에 참조하고, 여러 GPU 복제본에 단계를 나눠 처리해요.
+· GPU 8장(H200)에서 4-step WF가 end-to-end 134.8 FPS를 기록했어요.
+💡 실시간 라이브 영상 콘텐츠를 계속 만드는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 스트리밍 비디오 diffusion 생성 기법
+구조: chunk-wise causal attention 기반 DiT, Wave Parallelism 실행 런타임
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요
+라이선스: https://huggingface.co/SJTU-DENG-Lab/WaveForcing-1.3B
+
+논문: https://huggingface.co/papers/2611.00859
+arXiv: https://arxiv.org/abs/2611.00859
+코드: https://github.com/SJTU-DENG-Lab/WaveForcing
+프로젝트: https://sjtu-deng-lab.github.io/WaveForcing/
+
+----------------------------------------
+6위 ㅣ 에이전트 ㅣ ★ 124
+CUA-Master: 오픈월드 데이터로 컴퓨터 사용 에이전트 반복 개선
+CUA-Master: Scaling Computer-use Agents through Open-World Recursive Improvements
+
+화면을 보고 컴퓨터를 직접 조작하는 에이전트를 학습 데이터 생성부터 반복 개선까지 키우는 방법이에요.
+· 컴퓨터 화면을 보고 마우스, 키보드, 명령줄로 작업을 수행하는 에이전트를 학습시켜요.
+· 에이전트가 만든 경험만 쓰지 않고, 강의 영상에서 실제 작업 흐름을 뽑아 학습 데이터로 써요.
+· CUA-Master-27B가 OSWorld Verified에서 80.2점을 기록했어요.
+💡 사무용 프로그램 작업을 컴퓨터가 대신 처리하게 하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 컴퓨터 사용 에이전트 학습 프레임워크
+구조: 이중 루프 반복 개선 구조, 데이터 합성과 snapshot-rollback retry 결합
+크기: 27.4B 파라미터
+공개 범위: 가중치 · GitHub
+
+🧪 바로 써볼 수 있어요 · 🖥️ 서버 GPU 약 66GB
+
+논문: https://huggingface.co/papers/2611.03126
+arXiv: https://arxiv.org/abs/2611.03126
+코드: https://github.com/xlyu0106/CUA-Master
+프로젝트: https://xlyu0106.github.io/CUA-Master/
+
+----------------------------------------
+7위 ㅣ LLM ㅣ ★ 117
+Drex: 선택지별 확률을 바로 내는 decision model
+Towards Foundation Decision Models: Drex
+
+질문과 선택지를 넣으면 답을 길게 풀어 쓰지 않고 선택지별 확률을 바로 알려 주는 decision model이에요.
+· 문서나 기록과 선택지를 받아 선택지별 확률 분포를 바로 출력해요.
+· autoregressive decoding 없이 확률 분포를 내서 출력 파싱과 지연 시간을 줄였어요.
+· Decision Index 0.4.1에서 Max가 비교한 decision model 중 가장 높은 67.52점을 기록했어요.
+💡 문서 내용을 보고 승인이나 거절을 고르는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 오픈 decision model 모델군
+구조: 8B, 9B, 27B, 35B(3B active) 모델군, 선택지 확률 분포 출력
+크기: 9B 파라미터
+공개 범위: 가중치 · GitHub · 데모
+
+🧪 바로 써볼 수 있어요 · 🖥️ 개인 GPU 약 22GB
+
+논문: https://huggingface.co/papers/2611.07854
+arXiv: https://arxiv.org/abs/2611.07854
+코드: https://github.com/nace-ai/drex-decision-models
+프로젝트: https://huggingface.co/nace-ai
+
+----------------------------------------
+8위 ㅣ 에이전트 ㅣ ★ 104
+NorthCUA: 경험 축적으로 컴퓨터 사용 에이전트 성능 높이기
+NorthCUA Technical Report: Turbocharging Computer-Use Agents through Experience at Scale
+
+화면을 보고 데스크톱과 웹 소프트웨어 작업을 끝까지 수행하는 컴퓨터 사용 에이전트예요.
+· GUI를 보고 클릭과 입력으로 데스크톱과 웹 작업을 수행해요.
+· 검증된 경험을 계속 모으고 재활용하는 Experience Flywheel로 학습해요.
+· 오픈소스 모델 중 GUI grounding, 데스크톱, 웹 평가에서 최고 성적을 냈어요.
+💡 사무용 소프트웨어 조작을 에이전트에게 맡기는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 컴퓨터 사용 에이전트 모델군
+구조: mid-training, 장기 SFT, 데스크톱과 웹 joint RL 단계 학습
+크기: 396.8B 파라미터 (외 2개 모델)
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요 · 🖥️ GPU 여러 장 필요 (약 953GB)
+라이선스: https://huggingface.co/beipo-ai/NorthCUA-Pro
+
+논문: https://huggingface.co/papers/2611.02102
+arXiv: https://arxiv.org/abs/2611.02102
+코드: https://github.com/beipo-ai/NorthCUA
+프로젝트: https://beipo.top/blog/northcua/
+
+----------------------------------------
+9위 ㅣ 음성 ㅣ ★ 100
+VoxLock: 등록 없이 통화 상대 목소리만 남기는 음성 추출
+VoxLock: Target-Speaker Extraction for Voice Agents Without an Enrollment Step
+
+통화 중 상대방 목소리만 남기고 주변 사람 말소리는 지워 주는 음성 추출 모델이에요.
+· 통화 도중 잘라 낸 목소리 샘플로 상대방 음성만 뽑아 음성 인식기에 넘겨요.
+· 사전 등록 단계 없이 통화 자체에서 뗀 목소리 샘플로 작동하도록 REAL-TSE를 fine-tuning했어요.
+· Krisp 265개 녹음 benchmark에서 WER을 23.21%에서 4.95%로 낮췄어요.
+💡 콜센터 음성 에이전트가 주변 잡담을 빼고 통화 상대 말만 받아 적게 할 수 있어요.
+🧩 모델 정보
+유형: 실시간 target-speaker…
+구조: 27M 파라미터 causal target-speaker extraction 모델, 8-bit 양자화
+크기: 27M 파라미터
+학습 데이터: openslr/librispeech_asr, edinburghcstr/ami
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요 · 🖥️ 개인 GPU 약 1GB
+라이선스: https://huggingface.co/arbazsiddiqui/voxlock
+
+논문: https://huggingface.co/papers/2610.40727
+arXiv: https://arxiv.org/abs/2610.40727
+코드: https://github.com/arbazsiddiqui/voxlock
+프로젝트: https://www.arbazsiddiqui.me/voxlock/
+
+========================================
+이번 주 리포트는 여기까지! 다음 주 월요일에 또 만나요 👋
+
+모닥로그 AI 리포트
+매주 월요일 오전 8시에 보내드려요. 출처: Hugging Face Papers
+상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. 실제 사용 전 원문을 확인해 주세요.
+더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.
+지난 호 보기: https://silber60.github.io/AI_news_log/#archive
+구독하기: https://silber60.github.io/AI_news_log/#subscribe

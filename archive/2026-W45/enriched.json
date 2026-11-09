@@ -1,0 +1,333 @@
+{
+  "issue_id": "2026-W45",
+  "count": 9,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2611.01560",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/Open-RUA/uni-robot-agent/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/Open-RUA/uni-robot-agent/blob/main/LICENSE",
+        "https://github.com/Open-RUA/uni-robot-agent"
+      ]
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.02857",
+      "model_id": "jgkwak/solv3r",
+      "linked_models": [
+        {
+          "id": "jgkwak/solv3r",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "hugging-apps/solv3r"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "nvidia-license",
+        "license_link": "LICENSE"
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/ubc-vision/solv3r/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/jgkwak/solv3r",
+        "https://huggingface.co/spaces/hugging-apps/solv3r",
+        "https://huggingface.co/jgkwak/solv3r/blob/main/LICENSE",
+        "https://github.com/ubc-vision/solv3r/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.02501",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/StargazerX0/SpecPilot/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/StargazerX0/SpecPilot/blob/main/LICENSE",
+        "https://github.com/StargazerX0/SpecPilot"
+      ]
+    },
+    {
+      "rank": 4,
+      "paper_id": "2611.03178",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/RUC-NLPIR/CoworkOS/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/RUC-NLPIR/CoworkOS/blob/main/LICENSE",
+        "https://github.com/RUC-NLPIR/CoworkOS"
+      ]
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.00859",
+      "model_id": "SJTU-DENG-Lab/WaveForcing-1.3B",
+      "linked_models": [
+        {
+          "id": "SJTU-DENG-Lab/WaveForcing-1.3B",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "akhaliq/wave-forcing",
+        "hugging-apps/wave-forcing"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:Wan-AI/Wan2.1-T2V-1.3B",
+        "base_model:finetune:Wan-AI/Wan2.1-T2V-1.3B"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/SJTU-DENG-Lab/WaveForcing/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/SJTU-DENG-Lab/WaveForcing-1.3B",
+        "https://huggingface.co/spaces/akhaliq/wave-forcing",
+        "https://github.com/SJTU-DENG-Lab/WaveForcing/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.03126",
+      "model_id": "yxl66666/CUAMaster-27B",
+      "linked_models": [
+        {
+          "id": "yxl66666/CUAMaster-27B",
+          "gated": false
+        }
+      ],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": {
+        "license": null,
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 27356728560,
+        "parameters": {
+          "BF16": 27356728560
+        }
+      },
+      "base_model_tags": [],
+      "github_license": {
+        "status": "none",
+        "spdx_id": null,
+        "name": null,
+        "html_url": null
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/yxl66666/CUAMaster-27B"
+      ]
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.07854",
+      "model_id": "nace-ai/drex-v1.5",
+      "linked_models": [
+        {
+          "id": "nace-ai/drex-v1.5",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "multimodalart/jev-decision-index",
+        "muratcanlaloglu/TurkishDecisionBenchmark",
+        "hugging-apps/drex-decision-model"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "nace-ai-open-rail-m",
+        "license_link": "LICENSE"
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 8953803264,
+        "parameters": {
+          "BF16": 8953803264
+        }
+      },
+      "base_model_tags": [
+        "base_model:XiaomiMiMo/MiMo-V2.6-Distill-Qwen-9B",
+        "base_model:finetune:XiaomiMiMo/MiMo-V2.6-Distill-Qwen-9B"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/nace-ai/drex-decision-models/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/nace-ai/drex-v1.5",
+        "https://huggingface.co/spaces/multimodalart/jev-decision-index",
+        "https://huggingface.co/nace-ai/drex-v1.5/blob/main/LICENSE",
+        "https://github.com/nace-ai/drex-decision-models/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.02102",
+      "model_id": "beipo-ai/NorthCUA-Pro",
+      "linked_models": [
+        {
+          "id": "beipo-ai/NorthCUA-Pro",
+          "gated": false
+        },
+        {
+          "id": "beipo-ai/NorthCUA-Mini",
+          "gated": false
+        },
+        {
+          "id": "beipo-ai/NorthCUA-Nano",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "fastgpu/vram-and-gpu-cost-calculator",
+        "hsinjululu/huggingface-official-benchmark-leaderboards",
+        "hugging-apps/northcua-mini",
+        "quantid/huggingface-official-benchmark-leaderboards",
+        "quantid/measurement-lab",
+        "hugging-apps/northcua-nano",
+        "JUDY1024618/vram-and-gpu-cost-calculator",
+        "2023Ryan/vram-and-gpu-cost-calculator"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 396802360816,
+        "parameters": {
+          "BF16": 396802360816
+        }
+      },
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/beipo-ai/NorthCUA/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/beipo-ai/NorthCUA-Pro",
+        "https://huggingface.co/spaces/fastgpu/vram-and-gpu-cost-calculator",
+        "https://github.com/beipo-ai/NorthCUA/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.40727",
+      "model_id": "arbazsiddiqui/voxlock",
+      "linked_models": [
+        {
+          "id": "arbazsiddiqui/voxlock",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "arbazsiddiqui/voxlock"
+      ],
+      "datasets": [
+        "openslr/librispeech_asr",
+        "edinburghcstr/ami"
+      ],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 27258122,
+        "parameters": {
+          "F32": 27258122
+        }
+      },
+      "base_model_tags": [
+        "base_model:Wespeaker/wespeaker-voxceleb-ecapa-tdnn512",
+        "base_model:finetune:Wespeaker/wespeaker-voxceleb-ecapa-tdnn512"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/arbazsiddiqui/voxlock/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/arbazsiddiqui/voxlock",
+        "https://huggingface.co/spaces/arbazsiddiqui/voxlock",
+        "https://github.com/arbazsiddiqui/voxlock/blob/main/LICENSE"
+      ]
+    }
+  ]
+}

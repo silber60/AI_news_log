@@ -1,0 +1,369 @@
+{
+  "issue_id": "2026-W45",
+  "count": 9,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2611.01560",
+      "upvotes": 48,
+      "numComments": 1,
+      "submittedOnDailyAt": "2026-11-03T00:00:00+00:00",
+      "github_stars": 290,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.01560",
+          "title": "Democratizing Robot-Use Agents: A Unified Harness with Open Models",
+          "summary": "Robot-use Agents (RUAs) have shown promising zero-shot manipulation capabilities, but reliance on frontier, proprietary models limits research into further training. To democratize RUA research, we introduce uni-robot-agent, a unified harness for competitive open-weight robot use that supports further training. Without privileged inputs, an out-of-the-box Qwen3.8-Flash-Next achieves a RoboDojo Score of 31.39, surpassing the published GPT-6 Astra-RoboProbe result of 28.97 and many VLA/WAM baselines, and performs competitively on 19 real-world tasks. Our analysis across model generations, families, and sizes links effective robot use to four general capabilities, suggesting that future RUA training should develop them jointly.",
+          "upvotes": 48,
+          "publishedAt": "2026-11-01T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-03T00:00:00.000Z",
+          "ai_summary": "Uni-robot-agent enables open-weight robot-use agents to surpass proprietary models in zero-shot manipulation and suggests joint development of four core capabilities for future training.",
+          "ai_keywords": [
+            "Robot-use Agents",
+            "zero-shot manipulation",
+            "open-weight",
+            "uni-robot-agent",
+            "Qwen3.8-Flash-Next",
+            "RoboDojo Score",
+            "VLA",
+            "WAM",
+            "real-world tasks"
+          ],
+          "githubRepo": "https://github.com/Open-RUA/uni-robot-agent",
+          "githubStars": 290,
+          "projectPage": "https://openrua.ai/uni-robot-agent"
+        },
+        "title": "Democratizing Robot-Use Agents: A Unified Harness with Open Models",
+        "numComments": 1
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.02857",
+      "upvotes": 18,
+      "numComments": 3,
+      "submittedOnDailyAt": "2026-11-05T00:00:00+00:00",
+      "github_stars": 212,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.02857",
+          "title": "Solv3R: 3D Looped Transformer as a Multi-view Solver",
+          "summary": "Classical structure-from-motion reconstruction proceeds iteratively, refining camera poses and scene geometry from a current estimate. This allows maps to easily expand without recomputing already computed views, or geometry estimates to improve as more observations are provided. Most geometric foundation models, however, predict entire geometry in a single forward pass or update a recurrent state as frames arrive sequentially, making this expansion and refinement non-trivial. We introduce Solv3R, a looped transformer that learns to continue solving multi-view geometry from its current state. Importantly, its update operator is independent of the iteration count, allowing previously refined and newly introduced views to be jointly updated regardless of how ``solved'' they are. We train the operator to preserve accurate reconstructions under continued iteration and correct inaccurate states, enabling refinement of fixed image collections and integration of new observations. Representations of solved views can also be cached once and reused as geometric context across iterations, enabling compact and efficient key-value caching. We analyze the solver dynamics and compare it with the state-of-the-art, demonstrating that a single learned solver supports offline reconstruction, incremental reconstruction, relocalization, and streaming without task-specific training or modules. The code and models will be made publicly available at https://ubc-vision.github.io/solv3r/.",
+          "upvotes": 18,
+          "publishedAt": "2026-11-02T09:59:45.000Z",
+          "submittedOnDailyAt": "2026-11-05T00:00:00.000Z",
+          "ai_summary": "Solv3R is a looped transformer that iteratively refines multi-view geometry from its current state, supporting incremental updates, caching, and multiple reconstruction tasks without specialized modules.",
+          "ai_keywords": [
+            "structure-from-motion",
+            "multi-view geometry",
+            "looped transformer",
+            "update operator",
+            "key-value caching",
+            "relocalization",
+            "streaming reconstruction"
+          ],
+          "githubRepo": "https://github.com/ubc-vision/solv3r",
+          "githubStars": 212,
+          "projectPage": "https://ubc-vision.github.io/solv3r/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/635035fedc10894a3f66ea79/UrZokT3Jy-H4c8Nh8-Gh_.mp4"
+          ]
+        },
+        "title": "Solv3R: 3D Looped Transformer as a Multi-view Solver",
+        "numComments": 3
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.02501",
+      "upvotes": 20,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-04T00:00:00+00:00",
+      "github_stars": 177,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.02501",
+          "title": "SpecPilot: Autonomous Algorithm Discovery and Systems Optimization for Speculative Decoding",
+          "summary": "Speculative decoding accelerates memory-bound LLM decoding with a lightweight drafter, and parallel drafters extend this speedup by drafting a whole block in one forward pass. However, it remains unclear whether their released systems (stock) attain the full speedup that parallel drafting permits. We identify three challenges. First, with one request, each step accepts few tokens but reads every target weight. Second, with batching, per-request verification work roughly halves the speedup over autoregressive (AR) decoding. Third, speculative decoding is deployment-specific, and no universal optimization fits every serving regime, drafter, target model and GPU. To address these challenges, we present SpecPilot, an autonomous agentic loop that discovers algorithms and systems optimizations for each deployment. In each round, a cost model locates the largest gaps between the current system and its ceiling. Parallel agents explore directions and integrate the successful ones. Token forcing checks every output token against stock to detect reward hacking. A structured memory carries validated mechanisms to new rounds and deployments. SpecPilot discovered a general lossless 12-bit weight format, tree verification for hybrid recurrent targets, two-level verification and three batching mechanisms. We evaluate it across four target models, three drafters, two GPU platforms and five benchmarks. Without training or quality loss, it raises the speedup over AR from stock's 4.46times to 10.87times with one request, and from 1.94times to 3.93times with batching.",
+          "upvotes": 20,
+          "publishedAt": "2026-11-02T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-04T00:00:00.000Z",
+          "ai_summary": "SpecPilot autonomously discovers deployment-specific algorithms and system optimizations to maximize speculative decoding speedups across diverse models, drafters, and serving regimes without quality loss.",
+          "ai_keywords": [
+            "speculative decoding",
+            "parallel drafters",
+            "token verification",
+            "batching mechanisms",
+            "weight quantization",
+            "tree verification",
+            "autonomous optimization",
+            "LLM decoding"
+          ],
+          "githubRepo": "https://github.com/StargazerX0/SpecPilot",
+          "githubStars": 177,
+          "projectPage": "https://stargazerx0.github.io/specpilot-project-page/"
+        },
+        "title": "SpecPilot: Autonomous Algorithm Discovery and Systems Optimization for Speculative Decoding",
+        "numComments": 2,
+        "organization": {
+          "name": "UCBerkeley",
+          "fullname": "University of California, Berkeley"
+        }
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2611.03178",
+      "upvotes": 100,
+      "numComments": 4,
+      "submittedOnDailyAt": "2026-11-03T00:00:00+00:00",
+      "github_stars": 145,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.03178",
+          "title": "CoworkOS:Scaling Agent Coworkers for Real-world Automation",
+          "summary": "Rapid advances in cowork agents are shifting human-AI collaboration toward real-world automation, delivering software, designs, and other artifacts. However, such productivity work demands both high-quality delivery on complex productivity tasks and continued monitoring and decision-making over long horizons, a combination that remains an open challenge. We introduce CoworkOS, a general-purpose harness for long-horizon work that separates task strategy from execution management: the model decides actions, delegation, and acceptance, while the runtime maintains state and feedback. Its three-layer architecture enables direct execution or delegation to Subagents, synchronously or asynchronously, under stable responsibilities. Through a shared application layer, humans and agents inspect and revise the same evolving documents, presentations, CAD models, and Blender scenes, so human-in-the-loop participation can enter both through conversation and through direct modification of the work itself. To sustain continuity across agents and sessions, CoworkOS further introduces hierarchical workspaces and persistent semantic memory, so working files, key decisions, and long-running Job logs remain shareable, reusable, and resumable after interruption. Across 12 benchmarks and 6 categories of real-world applications, CoworkOS proves highly competitive with frontier agent applications such as Codex and DeepSeek Harness. As a sustained-work case study, CoworkOS uses GLM-5.3 as its backbone to conduct RSI-driven automated post-training on Qwen3.6-35B-A3B. Over five rounds, the model's average score across eight benchmarks rose from 33.19 to 42.95 (+9.76). Looking ahead, we believe CoworkOS opens a meaningful path toward general cowork-agent intelligence.",
+          "upvotes": 100,
+          "publishedAt": "2026-11-02T14:15:11.000Z",
+          "submittedOnDailyAt": "2026-11-03T00:00:00.000Z",
+          "ai_summary": "CoworkOS is a long-horizon agent harness that separates strategy from execution, supports human-in-the-loop collaboration via shared artifacts, and improves model performance through sustained automated post-training.",
+          "ai_keywords": [
+            "cowork agents",
+            "long-horizon work",
+            "Subagents",
+            "hierarchical workspaces",
+            "persistent semantic memory",
+            "human-in-the-loop",
+            "automated post-training"
+          ],
+          "githubRepo": "https://github.com/RUC-NLPIR/CoworkOS",
+          "githubStars": 145,
+          "projectPage": "https://coworkos-ai.github.io",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/61cd4b833dd34ba1985e0753/MtYdVA_zvSVOUJqPXPO_3.mp4"
+          ]
+        },
+        "title": "CoworkOS:Scaling Agent Coworkers for Real-world Automation",
+        "numComments": 4,
+        "organization": {
+          "name": "RUC",
+          "fullname": "Renmin University of China"
+        }
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.00859",
+      "upvotes": 125,
+      "numComments": 6,
+      "submittedOnDailyAt": "2026-11-03T00:00:00+00:00",
+      "github_stars": 130,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.00859",
+          "title": "Wave Forcing: Towards Speed-of-Light Streaming Video Generation",
+          "summary": "Real-time long-video generation requires continuous output with consistent appearance and natural motion. Existing chunk-wise autoregressive methods face challenges in both generation efficiency and long-video quality: serialized denoising and history-cache refresh require two forward passes even with one-step denoising, and longer rollouts can degrade quality and cause camera drift. We propose Wave Forcing (WF), which co-designs generation, training, and execution for continuous video output with multi-step denoising. WF uses chunk-wise causal attention to access earlier, cleaner chunks before their denoising is complete, and distributes staggered denoising and cache-refresh stages across full-model replicas to achieve 1F1C: one output chunk per concurrent forward round after pipeline fill. To adapt the model to this continuous generation process, we develop a three-stage training procedure that successively introduces mixed-noise denoising, motion supervision, and causal adaptation using self-generated history. To execute this process efficiently, Wave Runtime (WaveRT) uses Wave Parallelism (WP) for early K/V delivery and communication-computation overlap, together with optimized kernels and pipelined VAE decoding. Experiments on Wan2.1-T2V-1.3B show that 5-step WF maintains overall quality comparable to Rolling Forcing while achieving higher Dynamic Degree on both short and long videos. Our system efficiency experiments show that 4-step WF achieves 147.6 DiT FPS and 134.8 end-to-end FPS on eight H200 GPUs, yielding 7.07x the single-GPU end-to-end throughput. In DiT-only tests with matched SageAttention+W8A8 backends, denoising steps, and GPU counts, WP delivers up to 2.53x the throughput of the faster of the Ulysses and Ring context-parallel baselines across six model scales (1.3B-14B).",
+          "upvotes": 125,
+          "publishedAt": "2026-10-31T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-03T00:00:00.000Z",
+          "ai_summary": "Wave Forcing enables efficient continuous long-video generation with consistent appearance and natural motion through co-designed generation, training, and execution, achieving high throughput and quality.",
+          "ai_keywords": [
+            "chunk-wise causal attention",
+            "multi-step denoising",
+            "Wave Forcing",
+            "Wave Runtime",
+            "Wave Parallelism",
+            "mixed-noise denoising",
+            "motion supervision",
+            "causal adaptation",
+            "pipeline fill",
+            "DiT FPS"
+          ],
+          "githubRepo": "https://github.com/SJTU-DENG-Lab/WaveForcing",
+          "githubStars": 130,
+          "projectPage": "https://sjtu-deng-lab.github.io/WaveForcing/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/66d05337e62d6bbf50186c2f/SeJtHKJBPEqtEbxHWnPts.qt",
+            "https://cdn-uploads.huggingface.co/production/uploads/66d05337e62d6bbf50186c2f/eZsYRuhIWR7TmU-OUhhI5.qt"
+          ]
+        },
+        "title": "Wave Forcing: Towards Speed-of-Light Streaming Video Generation",
+        "numComments": 6,
+        "organization": {
+          "name": "SJTU-DENG-Lab",
+          "fullname": "DENG Lab @ SJTU"
+        }
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.03126",
+      "upvotes": 48,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-03T00:00:00+00:00",
+      "github_stars": 124,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.03126",
+          "title": "CUA-Master: Scaling Computer-use Agents through Open-World Recursive Improvements",
+          "summary": "Despite recent advances in CUAs, their development remains constrained by the limited diversity, controllability, and reliability of interaction data. Moreover, conventional optimization pipelines lack iterative feedback, while existing recursive improvement approaches often rely on self-generated experiences, limiting ability expansion and yielding diminishing returns. To address these challenges, we introduce CUA-Master, a nested double-loop recursive improvement framework. At the system level, an outer world-data-model flywheel continuously incorporates open-world corpus and leverages evolving model weaknesses to guide subsequent data construction and optimization iterations. At the data level, an inner flywheel couples open-world seeding and autocatalytic propagation. The former mines authentic workflows as seed tasks from instructional videos, and employs visual-semantic dual-path trajectory reconstruction; The latter transforms these seeds into reusable primitives for controllable synthesis of diverse, complex, and verifiable tasks. To enable efficient and reliable trajectory collection, we further introduce a feedback-guided snapshot-rollback retry mechanism in various real environments. Extensive experiments demonstrate that CUA-Master-27B achieves competitive performance across GUI-only and GUI-CLI hybrid benchmarks, scoring 80.2 on OSWorld Verified, 36.9 on OSWorld 2.0, 43.9 on WeaveBench, and 25.0 on Agents' Last Exam. Our framework also substantially improves the quality and efficiency of data synthesis, and exhibits continuous gains across recursive iterations.",
+          "upvotes": 48,
+          "publishedAt": "2026-11-02T13:41:14.000Z",
+          "submittedOnDailyAt": "2026-11-03T00:00:00.000Z",
+          "ai_summary": "CUA-Master uses nested recursive loops with open-world data and feedback-driven retries to continuously improve computer-use agents across diverse benchmarks.",
+          "ai_keywords": [
+            "CUA-Master",
+            "nested double-loop recursive improvement",
+            "world-data-model flywheel",
+            "open-world corpus",
+            "visual-semantic dual-path trajectory reconstruction",
+            "autocatalytic propagation",
+            "reusable primitives",
+            "feedback-guided snapshot-rollback retry",
+            "GUI-CLI hybrid benchmarks"
+          ],
+          "githubRepo": "https://github.com/xlyu0106/CUA-Master",
+          "githubStars": 124,
+          "projectPage": "https://xlyu0106.github.io/CUA-Master/"
+        },
+        "title": "CUA-Master: Scaling Computer-use Agents through Open-World Recursive Improvements",
+        "numComments": 2
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.07854",
+      "upvotes": 22,
+      "numComments": 3,
+      "submittedOnDailyAt": "2026-11-06T00:00:00+00:00",
+      "github_stars": 117,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.07854",
+          "title": "Towards Foundation Decision Models: Drex",
+          "summary": "Autoregressive approaches with large language models, such as long chain-of-thought reasoning, have become the default for new AI applications because they reach higher accuracy on a wide range of tasks. In production, however, they give inconsistent answers, require parsing of outputs, and add cost and latency. Decision models address this: given a question and a set of options supplied by the user, they return a probability distribution over the options without autoregressive decoding. We present Drex, a family of four open decision models with 8B (DLM), 9B (v1.5), 35B with 3B active (v2.0), and 27B (Max) parameters. Each request consists of a state (a document, record, or agent context, optionally with images) and questions about it, each asking for a choice among options, a yes/no judgment, or a score on an ordered scale. Training combines supervised fine-tuning with reinforcement learning from adjusted feedback (RLAF), plus vision tuning for Max. Ablations show that RLAF improves accuracy and that consistency losses improve robustness to option order. On Decision Index 0.4.1, Max sets a new state of the art among the decision models we compare (67.52 on the public suite vs. 60.70 for Jev 1.14.0). On Decision Bench v4, it is statistically tied with d3-turbo and GPT-6 Sol and trails Claude Opus 5.5 by 1.6 points, and it has the highest accuracy among decision models on DecideBench. Max answers a typical request in 183 ms, against about 2.0 s for GPT-6 Sol and 3.5 s for Claude Opus 5.5, and its outputs are stable under option reordering. All four models are open source: https://github.com/nace-ai/drex-decision-models",
+          "upvotes": 22,
+          "publishedAt": "2026-11-05T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-06T00:00:00.000Z",
+          "ai_summary": "Drex open decision models return probability distributions over user-supplied options without autoregressive decoding, using supervised fine-tuning, RLAF, and consistency losses to improve accuracy, robustness, and latency.",
+          "ai_keywords": [
+            "autoregressive approaches",
+            "large language models",
+            "long chain-of-thought reasoning",
+            "autoregressive decoding",
+            "decision models",
+            "probability distribution over options",
+            "supervised fine-tuning",
+            "reinforcement learning from adjusted feedback",
+            "RLAF",
+            "vision tuning",
+            "consistency losses",
+            "robustness to option order",
+            "option reordering"
+          ],
+          "githubRepo": "https://github.com/nace-ai/drex-decision-models",
+          "githubStars": 117,
+          "projectPage": "https://huggingface.co/nace-ai",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/61e859153d146c00f37a6599/lpDrwDTvUzusIZZK7y-fE.mp4"
+          ]
+        },
+        "title": "Towards Foundation Decision Models: Drex",
+        "numComments": 3,
+        "organization": {
+          "name": "nace-ai",
+          "fullname": "Nace.AI"
+        }
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.02102",
+      "upvotes": 32,
+      "numComments": 1,
+      "submittedOnDailyAt": "2026-11-03T00:00:00+00:00",
+      "github_stars": 104,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.02102",
+          "title": "NorthCUA Technical Report: Turbocharging Computer-Use Agents through Experience at Scale",
+          "summary": "Scaling computer-use agents from individual actions to complex software work requires experience that connects decisions to complete outcomes. We present NorthCUA, an integrated system for turbocharging computer-use agents through experience at scale. Its Experience Flywheel supplies diverse executable tasks to the NorthCUA Harness, which sustains long interactions, records decisions, and checks task outcomes. The Flywheel uses these records to curate verified trajectories. For unsolved tasks, recursive self-improvement evolves reusable skills and preserves verified milestones so later attempts build on earlier progress. Staged Learning combines this experience with grounding data from the Flywheel to develop GUI competence through mid-training and long-horizon supervised fine-tuning. The policy then learns from fresh attempts in the same Harness through joint desktop-web reinforcement learning, closing the loop between experience production and policy improvement. The resulting Nano, Mini, and Pro family achieves state-of-the-art results among open-source models across GUI grounding, desktop execution, and Web interaction under the reported evaluation settings. For more responsive Web workflows, NorthCUA-Ultrafast pairs direct action selection with open-ended generation on pre-RL Nano, offering a measured quality-latency tradeoff. Together, these advances establish NorthCUA as a high-performing model family and a reusable foundation for agents that carry complex software work from intent to completion.",
+          "upvotes": 32,
+          "publishedAt": "2026-11-01T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-03T00:00:00.000Z",
+          "ai_summary": "NorthCUA scales computer-use agents via an experience flywheel, recursive self-improvement, staged learning, and reinforcement learning to achieve state-of-the-art open-source GUI and web interaction results.",
+          "ai_keywords": [
+            "computer-use agents",
+            "Experience Flywheel",
+            "recursive self-improvement",
+            "reusable skills",
+            "verified milestones",
+            "Staged Learning",
+            "supervised fine-tuning",
+            "reinforcement learning",
+            "GUI grounding",
+            "desktop execution",
+            "Web interaction"
+          ],
+          "githubRepo": "https://github.com/beipo-ai/NorthCUA",
+          "githubStars": 104,
+          "projectPage": "https://beipo.top/blog/northcua/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/654dbac9938fbf1e696be8aa/KuQMuSoCPG3rkQDRellr8.mp4"
+          ]
+        },
+        "title": "NorthCUA Technical Report: Turbocharging Computer-Use Agents through Experience at Scale",
+        "numComments": 1,
+        "organization": {
+          "name": "beipo-ai",
+          "fullname": "beipo-ai"
+        }
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2610.40727",
+      "upvotes": 4,
+      "numComments": 3,
+      "submittedOnDailyAt": "2026-11-02T00:00:00+00:00",
+      "github_stars": 100,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.40727",
+          "title": "VoxLock: Target-Speaker Extraction for Voice Agents Without an Enrollment Step",
+          "summary": "A voice agent's speech recognizer transcribes everyone near the microphone, including people other than the caller. I fine-tuned a public causal target-speaker extraction model (REAL-TSE, 27M parameters) on one GPU to work from a voice sample cut from the call itself, and released it as VoxLock. I score it by what a recognizer writes on real recordings. On Krisp's 265-recording benchmark it reaches 4.95% WER against 23.21% unprocessed and lets 9 background words into the transcript over 85 minutes of background-only speech. Its WER is not significantly different from Krisp's best filters and is significantly lower than the other commercial and open systems I tested. On 400 AMI meeting windows built and frozen before scoring, it cuts WER from 42.95% to 10.63%. The 8-bit model runs a live call on 77% of one CPU thread with 24 ms of algorithmic latency. Model, code and per-file scores are open.",
+          "upvotes": 4,
+          "publishedAt": "2026-10-29T10:16:03.000Z",
+          "submittedOnDailyAt": "2026-11-02T00:00:00.000Z",
+          "ai_summary": "A fine-tuned causal target-speaker extraction model achieves near-commercial speech recognition accuracy on real recordings with low CPU usage and latency.",
+          "ai_keywords": [
+            "causal target-speaker extraction",
+            "REAL-TSE",
+            "VoxLock",
+            "WER",
+            "8-bit model",
+            "algorithmic latency"
+          ],
+          "githubRepo": "https://github.com/arbazsiddiqui/voxlock",
+          "githubStars": 100,
+          "projectPage": "https://www.arbazsiddiqui.me/voxlock/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/6465e54d63e7e09dd02f01bc/HCcZI6QUaOqiQyac_nJeN.mp4",
+            "https://cdn-uploads.huggingface.co/production/uploads/6465e54d63e7e09dd02f01bc/AJhAcHL9edzg7AkBBQPKR.png"
+          ]
+        },
+        "title": "VoxLock: Target-Speaker Extraction for Voice Agents Without an Enrollment Step",
+        "numComments": 3
+      }
+    }
+  ]
+}
