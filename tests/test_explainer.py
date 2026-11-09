@@ -92,14 +92,13 @@ def test_happy_path_stores_fields_and_copies_image(issue_w44):
 def test_image_from_first_related_item_with_one(issue_w44):
     items = [it.model_copy(update={"image": None}) for it in issue_w44.items]
     items[3] = items[3].model_copy(update={"image": _image()})
-    ex = explainer.write_explainer(items, [], FakeAnthropic([_resp(related_ranks=[2, 4, 1])]))
+    ex = explainer.write_explainer(items, [], FakeAnthropic([_resp(related_ranks=[1, 4, 2])]))
     assert ex.image == _image()
 
 
 def test_image_none_when_no_related_item_has_one(issue_w44):
-    ex = explainer.write_explainer(
-        issue_w44.items, [], FakeAnthropic([_resp(related_ranks=[2, 3])])
-    )
+    items = [it.model_copy(update={"image": None}) for it in issue_w44.items]
+    ex = explainer.write_explainer(items, [], FakeAnthropic([_resp(related_ranks=[1, 3])]))
     assert ex is not None and ex.image is None
 
 
@@ -226,47 +225,76 @@ def test_numbers_must_come_from_the_items_except_in_the_example(issue_w44):
     assert "ex_number" not in _codes("example_ko", "요리사 10명 중 둘만 요리해요.", items)
 
 
-# ------------------------------------------------------------------ repeat rule (D-05, D-12)
+# ------------------------------------------------------------------ rank order (owner 2026-11-09)
 
 PAST = ["MoE: 전문가 혼합 구조"]
+FRESH = "LoRA: 가볍게 고쳐 쓰는 방법"
 
 
-def test_repeat_fallback_rank1_is_accepted_without_retry(issue_w44, caplog):
-    fake = FakeAnthropic([_resp(related_ranks=[1])])
+def test_first_call_targets_rank_one(issue_w44):
+    fake = FakeAnthropic()
+    ex = explainer.write_explainer(issue_w44.items, [], fake)
+    assert ex is not None and ex.related_ranks[0] == 1
+    assert len(fake.calls) == 1
+    assert "<target_rank>1</target_rank>" in fake.user_texts()[0]
+
+
+def test_repeat_moves_to_the_next_rank(issue_w44, caplog):
+    fake = FakeAnthropic([_resp(related_ranks=[1]), _resp(topic=FRESH, related_ranks=[2])])
+    with caplog.at_level(logging.INFO):
+        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.topic == FRESH and ex.related_ranks == [2]
+    assert len(fake.calls) == 2
+    texts = fake.user_texts()
+    assert "<target_rank>1</target_rank>" in texts[0] and "<target_rank>2</target_rank>" in texts[1]
+    assert "previous_output_problems" not in texts[1]  # a new rank, not a retry
+    assert "explainer rank=1 reason=repeat" in caplog.text
+    assert "explainer=claude rank=2" in caplog.text
+
+
+def test_repeat_twice_goes_to_rank_three(issue_w44):
+    fake = FakeAnthropic(
+        [_resp(related_ranks=[1]), _resp(related_ranks=[2]), _resp(topic=FRESH, related_ranks=[3])]
+    )
+    ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.related_ranks == [3]
+    assert len(fake.calls) == 3
+
+
+def test_all_tried_ranks_repeat_keeps_the_first(issue_w44, caplog):
+    fake = FakeAnthropic([_resp(related_ranks=[r]) for r in range(1, 6)])
     with caplog.at_level(logging.INFO):
         ex = explainer.write_explainer(issue_w44.items, PAST, fake)
     assert ex is not None and ex.related_ranks == [1]
-    assert len(fake.calls) == 1
+    assert len(fake.calls) == explainer.MAX_RANK_TRIES == 5
+    assert "explainer=repeat rank=1" in caplog.text
 
 
-def test_repeat_with_other_ranks_triggers_one_retry(issue_w44):
-    fresh = "LoRA: 가볍게 고쳐 쓰는 방법"
-    fake = FakeAnthropic([_resp(related_ranks=[1, 2]), _resp(topic=fresh)])
-    ex = explainer.write_explainer(issue_w44.items, PAST, fake)
-    assert ex is not None and ex.topic == fresh
-    assert len(fake.calls) == 2
-    retry = fake.user_texts()[1]
-    assert "previous_output_problems" in retry
-    assert "past_topics" in retry.split("<previous_output_problems>", 1)[1]
-
-
-def test_repeat_on_attempt_two_is_accepted_and_logged(issue_w44, caplog):
-    fake = FakeAnthropic([_resp(related_ranks=[2, 3]), _resp(related_ranks=[2, 3])])
+def test_result_must_start_with_the_target_rank(issue_w44, caplog):
+    fake = FakeAnthropic([_resp(related_ranks=[2, 1]), _resp(related_ranks=[1, 2])])
     with caplog.at_level(logging.INFO):
-        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
-    assert ex is not None and ex.topic == DEFAULT_EXPLAINER_TOPIC
+        ex = explainer.write_explainer(issue_w44.items, [], fake)
+    assert ex is not None and ex.related_ranks == [1, 2]
     assert len(fake.calls) == 2
-    assert "explainer=repeat" in caplog.text
-    assert "ex_repeat" in caplog.text  # attempt 1 reason
+    assert "ex_target" in caplog.text
 
 
-def test_repeat_plus_other_problem_on_attempt_two_gives_none(issue_w44, caplog):
-    bad = _resp(related_ranks=[2], point_ko="계산이 9876배 줄어요.")
+def test_format_failure_stops_instead_of_paying_for_more_ranks(issue_w44, caplog):
+    bad = _resp(point_ko="계산이 9876배 줄어요.")
     fake = FakeAnthropic([bad, bad])
     with caplog.at_level(logging.INFO):
-        assert explainer.write_explainer(issue_w44.items, PAST, fake) is None
+        assert explainer.write_explainer(issue_w44.items, [], fake) is None
+    assert len(fake.calls) == 2
     assert "explainer=none reason=ex_number" in caplog.text
-    assert "ex_repeat" not in caplog.text.split("explainer=none", 1)[1]
+
+
+def test_repeat_then_api_error_keeps_the_first_repeat(issue_w44, caplog):
+    req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    fake = FakeAnthropic([_resp(related_ranks=[1]), anthropic.APIConnectionError(request=req)])
+    with caplog.at_level(logging.WARNING):
+        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
+    assert ex is not None and ex.related_ranks == [1]
+    assert "explainer=repeat" in caplog.text
 
 
 def test_field_failure_twice_gives_none_and_logs_codes_only(issue_w44, caplog):
@@ -278,31 +306,6 @@ def test_field_failure_twice_gives_none_and_logs_codes_only(issue_w44, caplog):
     for text in (DEFAULT_EXPLAINER_TOPIC, DEFAULT_EXPLAINER_POINT, "하나예요", "전문가"):
         assert text not in caplog.text
     assert "하나예요" not in fake.user_texts()[1]
-
-
-def test_repeat_then_unusable_retry_keeps_attempt_one(issue_w44, caplog):
-    refusal = make_parsed(None, stop_reason="refusal")
-    fake = FakeAnthropic([_resp(related_ranks=[2, 3]), refusal])
-    with caplog.at_level(logging.INFO):
-        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
-    assert ex is not None and ex.related_ranks == [2, 3]
-    assert "explainer=repeat" in caplog.text
-
-
-def test_repeat_then_failing_retry_keeps_attempt_one(issue_w44):
-    bad = _resp(topic="LoRA: 가볍게 고치기", point_ko="계산이 9876배 줄어요.")
-    fake = FakeAnthropic([_resp(related_ranks=[2, 3]), bad])
-    ex = explainer.write_explainer(issue_w44.items, PAST, fake)
-    assert ex is not None and ex.topic == DEFAULT_EXPLAINER_TOPIC
-
-
-def test_repeat_then_api_error_keeps_attempt_one(issue_w44, caplog):
-    req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
-    fake = FakeAnthropic([_resp(related_ranks=[2]), anthropic.APIConnectionError(request=req)])
-    with caplog.at_level(logging.WARNING):
-        ex = explainer.write_explainer(issue_w44.items, PAST, fake)
-    assert ex is not None and ex.related_ranks == [2]
-    assert "explainer=repeat" in caplog.text
 
 
 # ------------------------------------------------------------------ prompt (HUMN-01, D-04, D-05)
@@ -319,7 +322,7 @@ def test_prompt_names_structure_past_topics_and_fallback():
     text = (PROMPTS_DIR / "explainer.md").read_text(encoding="utf-8")
     for needle in ("오늘의 포인트", "예를 들어", "<past_topics>", "<items>", "해요체"):
         assert needle in text, needle
-    assert "`related_ranks`를 `[1]`로" in text
+    assert "<target_rank>" in text and "다음 순위로 넘길지는 코드가 정합니다" in text
     assert "<previous_output_problems>" in text
     assert "데이터" in text
 

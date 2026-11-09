@@ -1,20 +1,20 @@
 """AI 기술 쉽게 보기 (EXPL-01/02, D-04, D-05, D-12).
 
-One Claude call reads this week's items (titles, type, summaries, kind and
-architecture; no verdicts, no URLs) and the past-topic list, and explains one
-technique the items use. Code checks every field (length, sentence count,
-해요체, URL, hype, authorship, unknown digit names, invented numbers) and the
-related ranks, retries once with problem codes, and returns None on any
-remaining failure, so the section stays hidden.
+Rank order (owner request 2026-11-09, replaces the old one-retry repeat rule):
+each call names a target rank, starting with #1, and Claude explains a technique
+that item uses (related_ranks starts with that rank). When the topic matches a
+past one (topics.is_repeat), the next rank is tried, then the next, up to
+MAX_RANK_TRIES ranks. If every tried rank repeats, the first result is kept
+and logged as explainer=repeat, so a repeat never empties the section.
 
-Repeat rule (amended D-12): a topic matching a past one (topics.is_repeat) is
-accepted on attempt 1 only for the D-05 fallback related_ranks == [1]; any
-other repeat triggers the retry with ex_repeat. A repeat on attempt 2 is
-accepted and logged as explainer=repeat, because D-05 only prefers a new topic.
-A repeat is never the reason for returning None.
-Code copies the image from the first related item that has one; Claude never
-supplies it. The explainer never fails the build. Logs carry attempt numbers
-and reason codes only, never the topic or any body text.
+Claude reads this week's items (titles, type, summaries, kind and architecture;
+no verdicts, no URLs) and the past-topic list. Code checks every field (length,
+sentence count, 해요체, URL, hype, authorship, unknown digit names, invented
+numbers) and the related ranks; a failing result gets one retry with problem
+codes for the same rank, and two failures return None, so the section stays
+hidden. Code copies the image from the first related item that has one; Claude
+never supplies it. The explainer never fails the build. Logs carry ranks,
+attempt numbers and reason codes only, never the topic or any body text.
 """
 
 import logging
@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 
 MAX_PAST_SHOWN = 52
 MAX_RELATED = 3
+MAX_RANK_TRIES = 5  # ranks tried for a new topic; caps Claude calls on repeat weeks
 _TEXT_FIELDS = ("topic", "point_ko", "body_ko", "example_ko")
 # field -> (code, char limit, min sentences, max sentences); topic is a noun phrase.
 _SHAPE = {
@@ -37,10 +38,6 @@ _SHAPE = {
     "body_ko": ("ex_body", humanize.EXPLAINER_BODY_LIMIT, 3, 4),
     "example_ko": ("ex_example", humanize.EXPLAINER_EXAMPLE_LIMIT, 1, 2),
 }
-_REPEAT_MSG = (
-    "topic이 past_topics의 주제와 겹침. 새 기술을 고르고, 모두 다룬 주제라면 "
-    "1위 항목의 핵심 기술을 새 각도로 설명하고 related_ranks를 [1]로 둘 것"
-)
 # The analogy may use everyday numbers ("요리사 10명"); the other prose may not invent any.
 _NUMBER_FIELDS = ("point_ko", "body_ko")
 
@@ -67,7 +64,7 @@ def _fields(it: Item) -> list[tuple[str, str]]:
     ]
 
 
-def items_block(items: list[Item], past: list[str]) -> str:
+def items_block(items: list[Item], past: list[str], target: int | None = None) -> str:
     lines = ["<items>"]
     for it in items:
         lines.append(f"rank: {it.rank}")
@@ -79,6 +76,9 @@ def items_block(items: list[Item], past: list[str]) -> str:
     shown = [headline._clean(t) for t in past[:MAX_PAST_SHOWN]]
     lines += [t for t in shown if t] or ["(없음)"]
     lines.append("</past_topics>")
+    if target is not None:
+        lines.append("")
+        lines.append(f"<target_rank>{target}</target_rank>")
     return "\n".join(lines)
 
 
@@ -150,12 +150,15 @@ def check_field(field: str, text: str, items: list[Item]) -> list[tuple[str, str
     return errs
 
 
-def check(out: ExplainerLLM, items: list[Item]) -> list[tuple[str, str]]:
+def check(out: ExplainerLLM, items: list[Item], target: int | None = None) -> list[tuple[str, str]]:
     """Field and rank rules for one result (the repeat rule is in write_explainer)."""
     errs: list[tuple[str, str]] = []
     for f in _TEXT_FIELDS:
         errs += check_field(f, getattr(out, f), items)
-    return errs + check_ranks(out.related_ranks, len(items))
+    errs += check_ranks(out.related_ranks, len(items))
+    if target is not None and out.related_ranks[:1] != [target]:
+        errs.append(("ex_target", f"related_ranks가 target_rank {target}로 시작하지 않음"))
+    return errs
 
 
 def _to_explainer(out: ExplainerLLM, items: list[Item]) -> Explainer:
@@ -175,14 +178,13 @@ def _codes(problems: list[tuple[str, str]]) -> str:
     return "+".join(code for code, _ in problems) or "unknown"
 
 
-def write_explainer(items: list[Item], past: list[str], client) -> Explainer | None:
-    """One explainer for this week, at most two attempts, then None."""
-    block = items_block(items, past)
-    system = explainer_system_prompt()
+def _for_rank(
+    items: list[Item], past: list[str], target: int, client, system: str
+) -> tuple[ExplainerLLM | None, str]:
+    """One valid explainer about item `target` (at most two attempts), or (None, codes).
+    The codes are "api_error" when the API failed, so the caller stops trying ranks."""
+    block = items_block(items, past, target)
     problems: list[tuple[str, str]] = []
-    # Attempt 1's result when its only problem was ex_repeat: it is kept if the
-    # retry yields nothing usable, so a repeat alone never empties the section.
-    repeat_only: ExplainerLLM | None = None
     for attempt in (1, 2):
         try:
             resp = analyze._request(
@@ -193,42 +195,52 @@ def write_explainer(items: list[Item], past: list[str], client) -> Explainer | N
             )
         except anthropic.APIError as e:
             status = getattr(e, "status_code", None)
-            if repeat_only is not None:
-                log.warning("explainer=repeat attempt=1 retry=api_error status=%s", status)
-                return _to_explainer(repeat_only, items)
-            log.warning("explainer=none reason=api_error status=%s attempt=%d", status, attempt)
-            return None
+            log.warning("explainer rank=%d attempt=%d api_error status=%s", target, attempt, status)
+            return None, "api_error"
         except ValueError:  # client-side schema validation
             problems = [("schema", "출력이 스키마와 맞지 않음")]
-            log.warning("explainer attempt=%d reason=schema", attempt)
+            log.warning("explainer rank=%d attempt=%d reason=schema", target, attempt)
             continue
         if resp.stop_reason in ("refusal", "max_tokens"):
             problems = [
                 (f"stop_{resp.stop_reason}", f"응답이 stop_reason={resp.stop_reason}로 끝남")
             ]
-            log.info("explainer attempt=%d reason=%s", attempt, _codes(problems))
+            log.info("explainer rank=%d attempt=%d reason=%s", target, attempt, _codes(problems))
             continue
         out = resp.parsed_output
         if not isinstance(out, ExplainerLLM):
             problems = [("no_output", "구조화된 출력이 비어 있음")]
-            log.info("explainer attempt=%d reason=no_output", attempt)
+            log.info("explainer rank=%d attempt=%d reason=no_output", target, attempt)
             continue
         out = _normalize(out)
-        problems = check(out, items)
-        repeat = topics.is_repeat(out.topic, past)
-        fallback = out.related_ranks == [1]
-        if repeat and attempt == 1 and not fallback:
-            if not problems:
-                repeat_only = out
-            problems.append(("ex_repeat", _REPEAT_MSG))
+        problems = check(out, items, target)
         if not problems:
-            if repeat and attempt == 2:
-                log.warning("explainer=repeat attempt=%d", attempt)
-            log.info("explainer=claude attempt=%d repeat=%s", attempt, "yes" if repeat else "no")
+            return out, ""
+        log.info("explainer rank=%d attempt=%d reason=%s", target, attempt, _codes(problems))
+    return None, _codes(problems)
+
+
+def write_explainer(items: list[Item], past: list[str], client) -> Explainer | None:
+    """One explainer for this week: rank #1 first, the next rank when the topic
+    repeats a past one, up to MAX_RANK_TRIES ranks."""
+    system = explainer_system_prompt()
+    first_repeat: ExplainerLLM | None = None
+    reason = "no_rank"
+    for target in [it.rank for it in items][:MAX_RANK_TRIES]:
+        out, reason = _for_rank(items, past, target, client, system)
+        if out is None:
+            break  # a format or API failure: stop here instead of paying for more ranks
+        if not topics.is_repeat(out.topic, past):
+            log.info("explainer=claude rank=%d repeat=no", target)
             return _to_explainer(out, items)
-        log.info("explainer attempt=%d reason=%s", attempt, _codes(problems))
-    if repeat_only is not None:
-        log.warning("explainer=repeat attempt=1 retry=%s", _codes(problems))
-        return _to_explainer(repeat_only, items)
-    log.info("explainer=none reason=%s", _codes(problems))
+        log.info("explainer rank=%d reason=repeat", target)
+        if first_repeat is None:
+            first_repeat = out
+    if first_repeat is not None:
+        log.warning("explainer=repeat rank=%d", first_repeat.related_ranks[0])
+        return _to_explainer(first_repeat, items)
+    if reason == "api_error":
+        log.warning("explainer=none reason=api_error")
+    else:
+        log.info("explainer=none reason=%s", reason)
     return None

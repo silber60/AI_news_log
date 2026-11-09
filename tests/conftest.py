@@ -427,6 +427,10 @@ def default_explainer(kw: dict) -> ExplainerLLM:
     text = _user_text(kw)
     m = re.search(r"<items>(.*?)</items>", text, re.DOTALL)
     ranks = [int(r) for r in re.findall(r"^rank: (\d+)$", m.group(1) if m else "", re.MULTILINE)]
+    t = re.search(r"<target_rank>(\d+)</target_rank>", text)
+    if t:  # rank-order explainer (2026-11-09): related_ranks starts with the target
+        target = int(t.group(1))
+        ranks = [target] + [r for r in ranks if r != target]
     return ExplainerLLM(
         topic=DEFAULT_EXPLAINER_TOPIC,
         point_ko=DEFAULT_EXPLAINER_POINT,
