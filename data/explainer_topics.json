@@ -5,6 +5,11 @@
       "issue_id": "2026-W44",
       "date": "2026-11-02",
       "topic": "Diffusion: 노이즈에서 단계별로 만드는 생성 방식"
+    },
+    {
+      "issue_id": "2026-W45",
+      "date": "2026-11-09",
+      "topic": "Agent harness: 모델을 일하게 만드는 실행 틀"
     }
   ]
 }
