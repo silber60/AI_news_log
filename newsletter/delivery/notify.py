@@ -111,9 +111,13 @@ def build_report(mode: str, issue_id: str, status: dict, report: dict) -> tuple[
             return f"[발송 거부] {SENDER_NAME} {issue_id}", _stale_text(issue_id, status)
     elif mode == "test" and outcome == "tested":
         return None
+    elif mode == "send" and outcome == "already_sent":
+        return None  # a backup run after a full send: the 08:17 report already went out
     elif mode == "send" and outcome == "sent":
         return f"[발송 완료] {SENDER_NAME} {issue_id}", _sent_text(issue_id, report)
     elif mode == "send" and outcome == "paused":
+        if os.environ.get("BACKUP_RUN") == "true":
+            return None  # one [일시정지] mail per paused week, from the 08:17 run
         return f"[일시정지] {SENDER_NAME} {issue_id}", PAUSED_TEXT
     return f"[실패] {SENDER_NAME} {issue_id}", build_notice_text(mode, issue_id, status)
 

@@ -111,7 +111,8 @@ def test_send_writes_ledger_and_rerun_sends_nothing(current_issue, send_env, fak
     assert second["sent"] == 0 and second["skipped_ledger"] == 2
     assert sum(len(s.sent) for s in fake_smtp.instances) == 2
     report = store.read_json(store.out_root() / "report.json")
-    assert report["outcome"] == "sent"
+    # A re-run after a full send mails nobody and is recorded as already_sent (backup crons).
+    assert report["outcome"] == "already_sent"
     assert report["sent"] == 0 and report["skipped_ledger"] == 2
 
     raw = _ledger_path().read_text(encoding="utf-8")

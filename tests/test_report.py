@@ -5,6 +5,7 @@ import re
 import pytest
 
 from newsletter import store
+from newsletter.delivery import notify
 from newsletter.stages.render import SITE_URL
 
 ISSUE_ID = "2026-W44"
@@ -270,3 +271,14 @@ def test_bodies_hold_no_personal_data(report_env, monkeypatch):
         assert not HEX64.search(body)
         assert "?t=" not in body
         assert NAME not in body
+
+
+def test_backup_run_after_full_send_mails_nothing():
+    assert notify.build_report("send", "2026-W45", {}, {"outcome": "already_sent"}) is None
+
+
+def test_paused_is_reported_once_per_week(monkeypatch):
+    monkeypatch.delenv("BACKUP_RUN", raising=False)
+    assert notify.build_report("send", "2026-W45", {}, {"outcome": "paused"}) is not None
+    monkeypatch.setenv("BACKUP_RUN", "true")
+    assert notify.build_report("send", "2026-W45", {}, {"outcome": "paused"}) is None

@@ -196,6 +196,8 @@ def run_deliver(mode: str, *, allow_stale: bool = False) -> dict:
         outcome = "tested"
     else:
         result = _run_send(issue, user, password)
-        outcome = "sent"
+        # A backup run after a full send finds everyone in the ledger: nothing went out.
+        already = result.get("sent") == 0 and result.get("skipped_ledger", 0) > 0
+        outcome = "already_sent" if already else "sent"
     _finish({**result, "outcome": outcome, "issue_id": issue.issue_id})
     return result

@@ -1,14 +1,21 @@
 name: newsletter
 
-# Two Monday runs in KST (D-01): 06:00 builds the previous week and mails the owner a test,
-# 08:00 sends that issue to the subscribers. Manual dispatch keeps working for every mode.
-# UTC fallback if the timezone key is ever dropped: "0 21 * * 0" (test) and "0 23 * * 0" (send);
-# the send literal in MODE below must then change with it.
+# Monday runs in KST (D-01): 05:47 builds the previous week and mails the owner a test;
+# 08:17 sends that issue to the subscribers, and 10:17 / 12:47 are backup sends. On
+# 2026-11-09 GitHub ran the 06:00 cron 3.5 h late and dropped the 08:00 one, so the crons
+# avoid the top of the hour and a backup retries the send. The ledger (DLVR-05) makes a
+# backup after a full send mail nobody; its outcome is already_sent and it sends no report.
+# Manual dispatch keeps working for every mode. The send literals in MODE below must
+# match these cron strings exactly.
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "47 5 * * 1"
       timezone: "Asia/Seoul"
-    - cron: "0 8 * * 1"
+    - cron: "17 8 * * 1"
+      timezone: "Asia/Seoul"
+    - cron: "17 10 * * 1"
+      timezone: "Asia/Seoul"
+    - cron: "47 12 * * 1"
       timezone: "Asia/Seoul"
   workflow_dispatch:
     inputs:
@@ -55,8 +62,10 @@ jobs:
     timeout-minutes: 30
     # No secrets at job level: each secret is scoped to the step that needs it.
     env:
-      # Only the exact 08:00 cron sends; any other schedule is a test (fail safe, D-01).
-      MODE: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}
+      # Only the listed send crons send; any other schedule is a test (fail safe, D-01).
+      MODE: ${{ github.event_name == 'schedule' && (contains(fromJSON('["17 8 * * 1", "17 10 * * 1", "47 12 * * 1"]'), github.event.schedule) && 'send' || 'test') || inputs.mode }}
+      # The 10:17 and 12:47 runs are backups: a paused week is reported once, by 08:17.
+      BACKUP_RUN: ${{ github.event_name == 'schedule' && github.event.schedule != '17 8 * * 1' && 'true' || '' }}
       WEEK_INPUT: ${{ inputs.week }}  # reaches the shell via env only; validated in Python
       ALLOW_STALE: ${{ inputs.allow_stale }}  # '' on a schedule; only the literal true counts
       FORCE_STAGE: ${{ inputs.force_stage }}  # '' on a schedule = reuse every checkpoint (D-04)

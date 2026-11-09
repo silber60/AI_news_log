@@ -3,6 +3,7 @@
 No YAML library: the checks read lines and step blocks so they stay dependency-free.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -463,40 +464,42 @@ def test_import_workflow_permissions_read_only():
 
 # ------------------------------------------------- schedule, pause and outcome (05-01)
 
-SEND_CRON = "0 8 * * 1"
-TEST_CRON = "0 6 * * 1"
+SEND_CRONS = ["17 8 * * 1", "17 10 * * 1", "47 12 * * 1"]
+SEND_CRON = SEND_CRONS[0]
+TEST_CRON = "47 5 * * 1"
 
 
 def _cron_lines(text: str) -> list[str]:
     return [line.strip() for line in _code(text) if line.strip().startswith("- cron:")]
 
 
-def test_two_kst_crons():
+def test_kst_crons_off_the_hour_with_backup_sends():
+    # 2026-11-09: GitHub ran 06:00 3.5 h late and dropped 08:00; crons now avoid :00 and
+    # two backup sends retry (the ledger keeps them from mailing anyone twice).
     code = _code(_text(NEWSLETTER))
     crons = [i for i, line in enumerate(code) if line.strip().startswith("- cron:")]
-    assert [code[i].strip() for i in crons] == [
-        f'- cron: "{TEST_CRON}"',
-        f'- cron: "{SEND_CRON}"',
-    ]
+    assert [code[i].strip() for i in crons] == [f'- cron: "{c}"' for c in [TEST_CRON, *SEND_CRONS]]
     for i in crons:
         assert code[i + 1].strip() == 'timezone: "Asia/Seoul"'
-    assert sum("timezone:" in line for line in code) == 2
-    assert sum("cron:" in line for line in code) == 2
+        assert not code[i].split('"')[1].startswith("0 ")
+    assert sum("timezone:" in line for line in code) == 4
 
 
-def test_mode_mapping_sends_only_on_the_send_cron():
+def test_mode_mapping_sends_only_on_the_send_crons():
     text = _text(NEWSLETTER)
     run_header, _ = _jobs(text)["run"]
     mode = [ln.strip() for ln in _code(run_header) if ln.strip().startswith("MODE:")]
+    assert len(mode) == 1
+    listed = re.search(r"fromJSON\('(\[[^']+\])'\)", mode[0]).group(1)
+    assert json.loads(listed) == SEND_CRONS == [c.split('"')[1] for c in _cron_lines(text)[1:]]
+    assert TEST_CRON not in mode[0]
+    assert mode[0].endswith("&& 'send' || 'test') || inputs.mode }}")
+    backup = [ln.strip() for ln in _code(run_header) if ln.strip().startswith("BACKUP_RUN:")]
     expected = (
-        "MODE: ${{ github.event_name == 'schedule' && "
-        "(github.event.schedule == '0 8 * * 1' && 'send' || 'test') || inputs.mode }}"
+        "BACKUP_RUN: ${{ github.event_name == 'schedule' && "
+        "github.event.schedule != '17 8 * * 1' && 'true' || '' }}"
     )
-    assert mode == [expected]
-    # Pitfall 7: the send literal is the second cron string, and it appears exactly once.
-    literal = re.search(r"github\.event\.schedule == '([^']+)'", mode[0]).group(1)
-    assert literal == _cron_lines(text)[1].split('"')[1] == SEND_CRON
-    assert sum("github.event.schedule ==" in ln for ln in _code(text)) == 1
+    assert backup == [expected]
 
 
 def test_send_paused_only_in_deliver_and_schedule_only():
@@ -553,8 +556,8 @@ def test_deliver_passes_allow_stale_only_for_literal_true():
     assert "ALLOW_STALE" not in "\n".join(b for b in blocks if b != deliver)
 
 
-def test_no_actions_write_and_two_crons_in_code():
+def test_no_actions_write_and_four_crons_in_code():
     # Owner answer A3: the weekly commit is the keepalive; no re-enable step, no actions: write.
     code = _code(_text(NEWSLETTER))
     assert not any("actions: write" in line for line in code)
-    assert sum("cron:" in line for line in code) == 2
+    assert sum("cron:" in line for line in code) == 4  # one test + three send (2026-11-09)
