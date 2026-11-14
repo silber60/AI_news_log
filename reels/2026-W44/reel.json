@@ -3,7 +3,7 @@
   "sections": [
     {
       "id": "intro",
-      "seconds": 3,
+      "seconds": 4,
       "chapter": {
         "no": "W44",
         "title": "2026.11.02"
@@ -67,10 +67,16 @@
               }
             ]
           },
-          "caption": {
-            "ko": "이번 주 핫한 AI 모델 TOP 10!",
-            "en": "This week's top 10 hottest AI models!"
-          }
+          "captions": [
+            {
+              "ko": "AI 연구원 출신이 알려주는",
+              "en": "A former AI researcher breaks down"
+            },
+            {
+              "ko": "이번 주 핫한 AI 모델 TOP 10!",
+              "en": "this week's top 10 hottest AI models!"
+            }
+          ]
         }
       ]
     },
@@ -308,7 +314,7 @@
     },
     {
       "id": "diffusion",
-      "seconds": 8,
+      "seconds": 7,
       "chapter": {
         "no": "AI 기술",
         "title": "Diffusion"
