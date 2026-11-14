@@ -52,3 +52,24 @@ test('no blur while resting, blur while moving', () => {
   assert.deepEqual({ ...C.blurAt(tl, 200) }, { bx: 0, by: 0 });
   assert.ok(C.blurAt(tl, 264).bx > 0);
 });
+
+test('captions without at on a later panel use that panel window', () => {
+  const r = clone(W44);
+  const p2 = r.sections[1].panels[1]; delete p2.caption;
+  p2.captions = [{ ko: '가', en: 'a' }, { ko: '나', en: 'b' }];
+  const s = C.buildTimeline(r).sections[1];
+  assert.deepEqual([...s.captions.map(c => c.start)], [120, 264, 327, 390]);
+  assert.deepEqual([...C.validate(r)], []);
+});
+test('caption at must be inside its section', () => {
+  const r = clone(W44); r.sections[4].panels[0].captions[1].at = 7;
+  assert.match(C.validate(r).join(), /at/);
+});
+test('captions must stay up at least 2 seconds', () => {
+  const r = clone(W44); r.sections[4].panels[0].captions[1].at = 5.5;
+  assert.match(C.validate(r).join(), /2s/);
+});
+test('section too short for its panels', () => {
+  const r = clone(W44); r.sections[1].seconds = 2; r.sections[2].seconds = 24;
+  assert.match(C.validate(r).join(), /too short/);
+});

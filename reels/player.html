@@ -157,10 +157,23 @@ var ReelCore = (function () {
         if (TEMPLATES.indexOf(p.template) < 0) err.push('section ' + id + ': unknown template \'' + p.template + '\'');
         var caps = p.captions || (p.caption ? [p.caption] : []);
         if (!caps.length) err.push('section ' + id + ' panel ' + (pi + 1) + ': no caption');
-        caps.forEach(function (c) { if (!c || !c.ko || !c.en) err.push('section ' + id + ' panel ' + (pi + 1) + ': caption needs ko and en'); });
+        caps.forEach(function (c) {
+          if (!c || !c.ko || !c.en) err.push('section ' + id + ' panel ' + (pi + 1) + ': caption needs ko and en');
+          if (c && typeof c.at === 'number' && (c.at < 0 || c.at >= s.seconds))
+            err.push('section ' + id + ': caption at ' + c.at + ' is outside 0..' + s.seconds + 's');
+        });
       });
+      var minFrames = ENTRY + MOVE * Math.max(0, ps.length - 1) + 30 * ps.length;   // at least 1s on each panel
+      if (ps.length >= 1 && ps.length <= 3 && Math.round((s.seconds || 0) * FPS) < minFrames)
+        err.push('section ' + id + ': ' + s.seconds + 's is too short for ' + ps.length + ' panels (min ' + (minFrames / FPS).toFixed(1) + 's)');
     });
     if (Math.abs(sum - 60) > 1e-9) err.push('section seconds sum to ' + sum + ', must be 60');
+    if (!err.length) {
+      // every caption must stay on screen at least 2s (spec failure criterion)
+      buildTimeline(reel).captions.forEach(function (c) {
+        if (c.end - c.start < 2 * FPS) err.push('caption "' + c.ko + '" is up ' + ((c.end - c.start) / FPS).toFixed(2) + 's, under 2s');
+      });
+    }
     return err;
   }
 
@@ -185,16 +198,20 @@ var ReelCore = (function () {
         cur = leave + MOVE;
       });
       var caps = [];
+      // A panel's caption window runs from its switch point (halfway through the move into it;
+      // section start for panel 0) to the next panel's switch point (section end for the last).
+      function winStart(pi) { return pi === 0 ? start : panels[pi].arrive - MOVE / 2; }
       ps.forEach(function (p, pi) {
+        var ws = winStart(pi), we = pi + 1 < ps.length ? winStart(pi + 1) : end;
         if (p.captions) {
           var n = p.captions.length;
           p.captions.forEach(function (c, ci) {
-            var at = typeof c.at === 'number' ? c.at : ci * s.seconds / n;
-            caps.push({ ko: c.ko, en: c.en, start: start + Math.round(at * fps) });
+            // `at` is seconds from the section start; without it, split the panel's own window evenly
+            var st = typeof c.at === 'number' ? start + Math.round(c.at * fps) : ws + Math.round(ci * (we - ws) / n);
+            caps.push({ ko: c.ko, en: c.en, start: st });
           });
         } else if (p.caption) {
-          // caption i>0 switches halfway through the move into its panel
-          caps.push({ ko: p.caption.ko, en: p.caption.en, start: pi === 0 ? start : panels[pi].arrive - MOVE / 2 });
+          caps.push({ ko: p.caption.ko, en: p.caption.en, start: ws });
         }
       });
       caps.sort(function (a, b) { return a.start - b.start; });
@@ -672,7 +689,7 @@ var PLACEHOLDER = {
       var b2 = el(B, null, { position: 'absolute', left: '50px', right: '50px', bottom: '50px', height: '110px', background: ACC, color: '#fff', border: '3.5px solid #222', borderRadius: '26px',
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '44px', fontWeight: '700' }, ig.button || '');
       line(B, 50, 320, 560); line(B, 50, 352, 420);
-      return { A: A, B: B, b1: b1, b2: b2, ring: ring };
+      return { A: A, B: B, b1: b1, b2: b2, ring: ring, label: ig.button || '' };
     },
     update: function (s, lf) {
       var f = E(prog(lf, 46, 16));
@@ -680,7 +697,9 @@ var PLACEHOLDER = {
       s.A.style.visibility = f < 0.5 ? 'visible' : 'hidden'; s.B.style.visibility = f >= 0.5 ? 'visible' : 'hidden';
       var p1 = prog(lf, 26, 8); s.b1.style.transform = 'scale(' + (1 - 0.08 * Math.sin(Math.PI * p1)) + ')';
       var p2 = prog(lf, 92, 8); s.b2.style.transform = 'scale(' + (1 - 0.06 * Math.sin(Math.PI * p2)) + ')';
-      if (lf >= 96) { s.b2.textContent = '팔로잉 ✓'; s.b2.style.background = '#222'; } else { s.b2.textContent = s.b2._t || (s.b2._t = s.b2.textContent); s.b2.style.background = ACC; }
+      var done = lf >= 96, txt = done ? '팔로잉 ✓' : s.label;   // pure function of lf: seek order must not matter
+      if (s.b2.textContent !== txt) s.b2.textContent = txt;
+      s.b2.style.background = done ? '#222' : ACC;
       s.ring.style.transform = 'rotate(' + (lf * 1.5) + 'deg)'; s.ring.firstChild.style.transform = 'rotate(' + (-lf * 1.5) + 'deg)';
     }
   });
@@ -859,8 +878,21 @@ var PLACEHOLDER = {
     build();
     return Promise.all([document.fonts.ready, loadImg(OTTER.magnifier), loadImg(OTTER.chalkboard), loadImg('assets/otter-wave.png')]);
   }).then(function () {
-    return document.fonts.load('700 64px "IBM Plex Sans KR"');
+    // Google Fonts splits Plex KR into unicode-range slices that load lazily; load every glyph the
+    // reel uses, at every weight, before declaring ready (else early frames use fallback metrics).
+    var text = ' 0123456789★✓⚠→▶·생성팔로잉', walk = function (v) {
+      if (typeof v === 'string') text += v; else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { walk(v[k]); });
+    };
+    walk(reel);
+    return Promise.all(['400', '500', '600', '700'].map(function (w) { return document.fonts.load(w + ' 40px "IBM Plex Sans KR"', text); }));
+  }).then(function (faces) {
+    // empty face lists mean Plex never loaded (offline / blocked) and text would render in a fallback font
+    return document.fonts.load('700 40px "IBM Plex Sans KR"', '가').then(function (k) {
+      window.__fontOk = faces.every(function (f) { return f.length > 0; }) && k.length > 0;
+    });
   }).then(function () {
+    fitCache = {};   // re-measure captions with the real font
+    document.fonts.addEventListener('loadingdone', function () { fitCache = {}; capA._key = capB._key = null; });
     render(0); window.__ready = true;
     requestAnimationFrame(tick);
   }).catch(function (e) {
