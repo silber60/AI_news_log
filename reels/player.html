@@ -26,6 +26,7 @@
   .panel { position:absolute; width:960px; height:680px; border-radius:48px; background:#FBFBF9; border:3px solid #fff;
     box-shadow:0 24px 64px rgba(0,0,0,.09); overflow:hidden; }
   .panel .inner { position:absolute; inset:0; }
+  .panel svg { display:block; }
   #vignette { position:absolute; inset:0; pointer-events:none;
     background:linear-gradient(180deg, rgba(0,0,0,.07) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,.14) 100%); }
 
@@ -802,8 +803,11 @@ var PLACEHOLDER = {
 
     // caption dissolve
     var ca = C.captionAt(tl, f);
-    setCap(capA, ca.cur); capA.style.opacity = 1 - ca.mix;
-    setCap(capB, ca.mix > 0 ? ca.next : null); capB.style.opacity = ca.mix;
+    // out-then-in (not overlapping): two pills of different text overlapping read as noise
+    setCap(capA, ca.cur); capA.style.opacity = Math.max(0, 1 - 2 * ca.mix);
+    setCap(capB, ca.mix > 0.5 ? ca.next : null); capB.style.opacity = Math.max(0, 2 * ca.mix - 1);
+    capA.style.transform = 'translateY(' + (-12 * Math.min(1, 2 * ca.mix)) + 'px)';
+    capB.style.transform = 'translateY(' + (12 * (1 - Math.max(0, 2 * ca.mix - 1))) + 'px)';
 
     // progress
     var pe = si > 0 ? C.IN_OUT(C.clamp01(k / 12)) : 1;
