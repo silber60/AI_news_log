@@ -4,8 +4,103 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>모닥로그 릴스 플레이어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root { --bg:#F5F5F2; --ink:#222222; --acc:#FF6B00; --soft:#FFF1E6; --line:#D6D6D1; --muted:#737373; --deep:#8A3A00; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:#111111; color:#fff; overflow:hidden;
+    font-family:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
+  #wrap { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  #viewport { position:relative; overflow:hidden; border-radius:6px; }
+  #stage { position:absolute; left:0; top:0; width:1080px; height:1920px; transform-origin:0 0; overflow:hidden; background:var(--bg); color:var(--ink); }
+  body.capture #wrap { display:block; }
+  body.capture #viewport { width:1080px; height:1920px; border-radius:0; }
+  body.capture #controls { display:none; }
+
+  /* camera layer */
+  #cam { position:absolute; inset:0; overflow:hidden; background-color:var(--bg);
+    background-image:linear-gradient(rgba(0,0,0,.045) 2px, transparent 2px), linear-gradient(90deg, rgba(0,0,0,.045) 2px, transparent 2px); }
+  #world { position:absolute; left:0; top:0; width:0; height:0; transform-origin:0 0; }
+  .panel { position:absolute; width:960px; height:680px; border-radius:48px; background:#FBFBF9; border:3px solid #fff;
+    box-shadow:0 24px 64px rgba(0,0,0,.09); overflow:hidden; }
+  .panel .inner { position:absolute; inset:0; }
+  #vignette { position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(180deg, rgba(0,0,0,.07) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,.14) 100%); }
+
+  /* HUD */
+  .row { position:absolute; left:0; width:1080px; display:flex; align-items:center; justify-content:center; }
+  #chapterRow { top:170px; height:130px; }
+  .chap { position:absolute; display:flex; align-items:center; gap:24px; background:var(--ink); color:#fff; border-radius:999px;
+    padding:26px 52px; box-shadow:0 14px 36px rgba(0,0,0,.18); white-space:nowrap; }
+  .chap .no { font-weight:700; font-size:46px; }
+  .chap .dv { width:3px; height:40px; background:rgba(255,255,255,.35); }
+  .chap .ti { font-weight:600; font-size:46px; }
+  #captionRow { top:1040px; height:192px; }
+  .cap { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; background:#2A2A2A; border-radius:36px;
+    padding:16px 56px; border:2px solid rgba(0,0,0,.25); box-shadow:0 16px 40px rgba(0,0,0,.2); white-space:nowrap; max-width:1040px; }
+  .cap .ko { font-weight:700; font-size:64px; line-height:84px; color:var(--acc); }
+  .cap .en { font-weight:600; font-size:34px; line-height:44px; color:rgba(255,255,255,.88); }
+  #progress { position:absolute; left:160px; top:1252px; width:760px; height:60px; }
+  #progress .track { position:absolute; left:0; top:19px; width:760px; height:22px; border-radius:11px; background:#E3E3DE; box-shadow:inset 0 2px 4px rgba(0,0,0,.08); }
+  #progress .bar { position:absolute; left:0; top:19px; height:22px; border-radius:11px; background:var(--acc); }
+  #progress .dot { position:absolute; top:24px; width:12px; height:12px; border-radius:50%; background:#B8B8B2; }
+  #progress .dot.on { background:rgba(255,255,255,.9); }
+  #progress .knob { position:absolute; top:2px; width:56px; height:56px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(0,0,0,.2); }
+  #otterShadow { position:absolute; left:390px; top:1686px; width:300px; height:40px; border-radius:50%; background:rgba(0,0,0,.12); filter:blur(18px); }
+  .otter { position:absolute; left:340px; top:1318px; width:400px; height:400px; object-fit:contain; }
+
+  #msg { position:absolute; left:60px; right:60px; top:860px; padding:32px; border-radius:24px; background:#C62828; color:#fff;
+    font-size:40px; font-weight:700; text-align:center; display:none; z-index:10; }
+  #warn { position:absolute; left:0; right:0; top:0; padding:18px 30px; background:#FFD54F; color:#222; font-size:28px; font-weight:600; display:none; z-index:10; white-space:pre-line; }
+
+  #controls { display:flex; gap:10px; align-items:center; }
+  button { font:inherit; font-size:15px; color:#fff; background:#1e1e1e; border:1px solid #333; border-radius:999px; padding:9px 18px; cursor:pointer; }
+  button:hover { border-color:#555; }
+  button.on { background:#0061F5; border-color:#0061F5; }
+  #fc { font-variant-numeric:tabular-nums; font-size:13px; color:#9a9a9a; min-width:150px; text-align:right; }
+
+  /* shared template pieces */
+  .t-card { position:absolute; background:#fff; border:3.5px solid var(--ink); border-radius:32px; }
+  .t-circle { position:absolute; border-radius:50%; background:var(--acc); border:3.5px solid var(--ink); display:flex; align-items:center; justify-content:center; }
+  .t-title { position:absolute; font-weight:700; color:var(--ink); white-space:nowrap; }
+  .t-sub { position:absolute; font-weight:500; color:var(--muted); white-space:nowrap; }
+  .t-line { position:absolute; height:14px; border-radius:7px; background:var(--line); }
+  .t-chip { position:absolute; display:flex; align-items:center; gap:12px; padding:14px 28px; border-radius:999px; background:var(--soft);
+    color:var(--deep); font-weight:600; font-size:32px; white-space:nowrap; }
+  .t-ph { position:absolute; inset:60px; border:4px dashed #bbb; border-radius:28px; display:flex; align-items:center; justify-content:center;
+    font-size:44px; color:#999; font-weight:600; }
+</style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="mb" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+    <feGaussianBlur id="mbBlur" stdDeviation="0 0" edgeMode="duplicate"/>
+  </filter>
+</svg>
+<div id="wrap">
+  <div id="viewport">
+    <div id="stage">
+      <div id="cam"><div id="world"></div></div>
+      <div id="vignette"></div>
+      <div class="row" id="chapterRow"></div>
+      <div class="row" id="captionRow"></div>
+      <div id="progress"><div class="track"></div><div class="bar"></div><div class="knob"></div></div>
+      <div id="otterShadow"></div>
+      <img class="otter" id="otterA" alt=""><img class="otter" id="otterB" alt="">
+      <div id="warn"></div>
+      <div id="msg"></div>
+    </div>
+  </div>
+  <div id="controls">
+    <button id="play" class="on">일시정지</button>
+    <button id="slow">0.25배속</button>
+    <button id="restart">처음부터</button>
+    <span id="fc">0 / 0</span>
+  </div>
+</div>
+
 <script id="core">
 // Pure timing / camera / caption math. No DOM. Tested by reels/tests/core.test.mjs.
 var ReelCore = (function () {
@@ -163,6 +258,233 @@ var ReelCore = (function () {
     panelCenter: panelCenter };
 })();
 if (typeof window !== 'undefined') window.ReelCore = ReelCore;
+</script>
+
+<script id="templates">
+// Scene templates: registerTemplate(name, { mount(el, props) -> state, update(state, lf) })
+// lf = local frame; 0 is 9 frames (0.3s) before the camera arrives at the panel.
+var TEMPLATES = {};
+function registerTemplate(name, def) { TEMPLATES[name] = def; }
+var TPL = (function () {
+  var C = ReelCore;
+  function el(parent, cls, css, html) {
+    var d = document.createElement('div');
+    if (cls) d.className = cls;
+    if (css) Object.assign(d.style, css);
+    if (html != null) d.innerHTML = html;
+    parent.appendChild(d); return d;
+  }
+  function px(v) { return v + 'px'; }
+  var ICON = {
+    pen: '<path d="M9 39l3-11L31 9l8 8-19 19z"/><path d="M27 13l8 8"/>',
+    check: '<circle cx="24" cy="24" r="15"/><path d="M17 24l5 5 9-10"/>',
+    loop: '<path d="M11 21a14 14 0 0 1 25-7"/><path d="M37 7v8h-8"/><path d="M37 27a14 14 0 0 1-25 7"/><path d="M11 41v-8h8"/>',
+    image: '<rect x="7" y="10" width="34" height="28" rx="5"/><circle cx="18" cy="20" r="3.5"/><path d="M8 35l11-10 8 7 5-5 9 8"/>',
+    spark: '<path d="M24 6l4.5 13.5L42 24l-13.5 4.5L24 42l-4.5-13.5L6 24l13.5-4.5z"/>',
+    chat: '<path d="M8 10h32v22H21l-9 8v-8H8z"/>',
+    camera: '<rect x="5" y="14" width="27" height="21" rx="5"/><path d="M32 21l11-6v19l-11-6"/>',
+    star: '<path d="M24 7l5 11 12 1-9 8 3 12-11-7-11 7 3-12-9-8 12-1z"/>',
+    hair: '<path d="M12 40c0-18 6-30 12-30s12 12 12 30"/><path d="M18 40c0-14 3-22 6-22s6 8 6 22"/>',
+    mail: '<rect x="6" y="11" width="36" height="26" rx="4"/><path d="M7 13l17 13 17-13"/>',
+    insta: '<rect x="8" y="8" width="32" height="32" rx="9"/><circle cx="24" cy="24" r="7.5"/><circle cx="33.5" cy="14.5" r="1.6"/>'
+  };
+  function icon(name, size, color, fill) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 48 48" fill="' + (fill || 'none') + '" stroke="' + (color || '#222') +
+      '" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">' + (ICON[name] || '') + '</svg>';
+  }
+  function chip(parent, text, x, y) {
+    return el(parent, 't-chip', { left: px(x), top: px(y) }, icon('star', 30, '#FF6B00', '#FF6B00') + '<span>' + text.replace(/^★\s*/, '') + '</span>');
+  }
+  var E = C.IN_OUT, cl = C.clamp01, lerp = C.lerp;
+  var BACK = C.bezier(0.34, 1.56, 0.64, 1);   // overshoot pop
+  return { el: el, px: px, icon: icon, chip: chip, E: E, cl: cl, lerp: lerp, BACK: BACK };
+})();
+
+// Placeholder used for any template not implemented yet.
+var PLACEHOLDER = {
+  mount: function (root, props, name) { TPL.el(root, 't-ph', null, name); return {}; },
+  update: function () {}
+};
+</script>
+
+<script id="player">
+(function () {
+  var C = ReelCore, FPS = 30, PAUSE_MS = 1000;
+  var qs = new URLSearchParams(location.search);
+  var week = qs.get('week') || '2026-W44', capture = qs.get('capture') === '1';
+  if (capture) document.body.classList.add('capture');
+
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $('stage'), viewport = $('viewport'), cam = $('cam'), world = $('world'), blurEl = $('mbBlur');
+  var chapterRow = $('chapterRow'), captionRow = $('captionRow'), prog = $('progress');
+  var bar = prog.querySelector('.bar'), knob = prog.querySelector('.knob');
+  var otterA = $('otterA'), otterB = $('otterB'), fc = $('fc');
+  var OTTER = { magnifier: 'assets/otter-magnifier.png', chalkboard: 'assets/otter-chalkboard.png' };
+
+  var reel, tl, panels = [], dots = [], chapA, chapB, capA, capB;
+  window.__ready = false; window.__errors = [];
+
+  function fit() {
+    if (capture) { stage.style.transform = 'none'; return; }
+    var k = Math.min(window.innerWidth / 1080, (window.innerHeight - 64) / 1920);
+    viewport.style.width = 1080 * k + 'px'; viewport.style.height = 1920 * k + 'px';
+    stage.style.transform = 'scale(' + k + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function fail(text) { var m = $('msg'); m.textContent = text; m.style.display = 'block'; }
+
+  function makeChap() {
+    var d = document.createElement('div'); d.className = 'chap';
+    d.innerHTML = '<span class="no"></span><span class="dv"></span><span class="ti"></span>';
+    chapterRow.appendChild(d); return d;
+  }
+  function setChap(d, ch) {
+    if (d._key === ch) return; d._key = ch;
+    d.querySelector('.no').textContent = ch.no || ''; d.querySelector('.ti').textContent = ch.title || '';
+  }
+  function makeCap() {
+    var d = document.createElement('div'); d.className = 'cap';
+    d.innerHTML = '<div class="ko"></div><div class="en"></div>';
+    captionRow.appendChild(d); return d;
+  }
+  var fitCache = {};
+  function setCap(d, c) {
+    if (!c) { d.style.visibility = 'hidden'; return; }
+    d.style.visibility = 'visible';
+    if (d._key === c) return; d._key = c;
+    var ko = d.querySelector('.ko'), en = d.querySelector('.en');
+    ko.textContent = c.ko; en.textContent = c.en;
+    var size = fitCache[c.ko + '|' + c.en];
+    if (size == null) {            // shrink Korean (and English) so the pill stays within 968px
+      ko.style.fontSize = '64px'; en.style.fontSize = '34px';
+      var w = Math.max(ko.scrollWidth, en.scrollWidth), max = 968 - 112 - 4;   // padding 56×2 + border 2×2
+      size = w > max ? max / w : 1; fitCache[c.ko + '|' + c.en] = size;
+    }
+    ko.style.fontSize = (64 * size).toFixed(1) + 'px'; ko.style.lineHeight = (84 * size).toFixed(1) + 'px';
+    en.style.fontSize = (34 * Math.max(size, 0.8)).toFixed(1) + 'px';
+  }
+
+  function build() {
+    tl = C.buildTimeline(reel);
+    window.__total = tl.total;
+    tl.sections.forEach(function (s, si) {
+      s.panels.forEach(function (p, pi) {
+        var c = C.panelCenter(si, pi);
+        var d = document.createElement('div'); d.className = 'panel';
+        d.style.left = (c[0] - 480) + 'px'; d.style.top = (c[1] - 340) + 'px';
+        var inner = document.createElement('div'); inner.className = 'inner'; d.appendChild(inner);
+        world.appendChild(d);
+        var def = TEMPLATES[p.template] || PLACEHOLDER;
+        var st = def.mount(inner, p.props || {}, p.template) || {};
+        panels.push({ si: si, el: d, def: def, st: st, arrive: p.arrive });
+      });
+    });
+    var n = tl.sections.length;
+    for (var i = 0; i < n; i++) {
+      var dt = document.createElement('div'); dt.className = 'dot';
+      dt.style.left = (24 + i * (n > 1 ? 712 / (n - 1) : 0) - 6) + 'px';
+      prog.insertBefore(dt, knob); dots.push(dt);
+    }
+    chapA = makeChap(); chapB = makeChap(); capA = makeCap(); capB = makeCap();
+  }
+
+  function dotX(i) { var n = tl.sections.length; return 24 + i * (n > 1 ? 712 / (n - 1) : 0); }
+
+  function render(f) {
+    f = Math.max(0, Math.min(tl.total - 1, Math.floor(f)));
+    var si = C.sectionAt(tl, f), sec = tl.sections[si], k = f - sec.start;
+
+    // camera
+    var c = C.cameraAt(tl, f);
+    world.style.transform = 'translate(' + (C.CX - c.x * c.s) + 'px,' + (C.CY - c.y * c.s) + 'px) scale(' + c.s + ')';
+    var g = 60 * c.s;
+    cam.style.backgroundSize = g + 'px ' + g + 'px';
+    cam.style.backgroundPosition = (C.CX - c.x * c.s) + 'px ' + (C.CY - c.y * c.s) + 'px';
+    var b = C.blurAt(tl, f);
+    if (b.bx === 0 && b.by === 0) cam.style.filter = 'none';
+    else { blurEl.setAttribute('stdDeviation', b.bx.toFixed(2) + ' ' + b.by.toFixed(2)); cam.style.filter = 'url(#mb)'; }
+
+    // panels: only nearby sections are shown and updated
+    panels.forEach(function (p) {
+      var near = Math.abs(p.si - si) <= 1;
+      p.el.style.display = near ? 'block' : 'none';
+      if (near) p.def.update(p.st, f - (p.arrive - 9));
+    });
+
+    // chapter: slide up on section change (12 frames)
+    var e = si > 0 ? C.IN_OUT(C.clamp01(k / 12)) : 1;
+    setChap(chapA, sec.chapter);
+    chapA.style.transform = 'translateY(' + (40 * (1 - e)) + 'px)'; chapA.style.opacity = e;
+    if (e < 1) {
+      setChap(chapB, tl.sections[si - 1].chapter); chapB.style.display = 'flex';
+      chapB.style.transform = 'translateY(' + (-40 * e) + 'px)'; chapB.style.opacity = 1 - e;
+    } else chapB.style.display = 'none';
+
+    // caption dissolve
+    var ca = C.captionAt(tl, f);
+    setCap(capA, ca.cur); capA.style.opacity = 1 - ca.mix;
+    setCap(capB, ca.mix > 0 ? ca.next : null); capB.style.opacity = ca.mix;
+
+    // progress
+    var pe = si > 0 ? C.IN_OUT(C.clamp01(k / 12)) : 1;
+    var x = C.lerp(dotX(Math.max(0, si - 1)), dotX(si), pe);
+    bar.style.width = (x + 12) + 'px'; knob.style.left = (x - 28) + 'px';
+    dots.forEach(function (d, i) { d.classList.toggle('on', i <= si); });
+
+    // otter: crossfade on change (8 frames), gentle 4px bob
+    var bob = 4 * Math.sin(2 * Math.PI * f / 60);
+    var cur = OTTER[sec.otter] || OTTER.magnifier, prev = si > 0 ? (OTTER[tl.sections[si - 1].otter] || OTTER.magnifier) : cur;
+    var oe = prev !== cur ? C.clamp01(k / 8) : 1;
+    if (otterA.getAttribute('src') !== cur) otterA.setAttribute('src', cur);
+    otterA.style.opacity = oe; otterA.style.transform = 'translateY(' + bob + 'px)';
+    if (oe < 1) { if (otterB.getAttribute('src') !== prev) otterB.setAttribute('src', prev); otterB.style.display = 'block'; otterB.style.opacity = 1 - oe; otterB.style.transform = otterA.style.transform; }
+    else otterB.style.display = 'none';
+
+    fc.textContent = f + ' / ' + tl.total + '  blur ' + b.bx.toFixed(1) + ',' + b.by.toFixed(1);
+    return { section: sec.id, caption: ca.cur && ca.cur.ko, s: c.s, bx: b.bx, by: b.by };
+  }
+
+  // playback (30fps frame clock, 0.25x, restart, 1s pause then loop)
+  var playing = !capture, speed = 1, frame = 0, last = null, pauseUntil = 0;
+  var playBtn = $('play'), slowBtn = $('slow');
+  function setPlaying(v) { playing = v; playBtn.textContent = v ? '일시정지' : '재생'; playBtn.classList.toggle('on', v); }
+  playBtn.onclick = function () { setPlaying(!playing); };
+  slowBtn.onclick = function () { speed = speed === 1 ? 0.25 : 1; slowBtn.classList.toggle('on', speed !== 1); };
+  $('restart').onclick = function () { frame = 0; pauseUntil = 0; render(0); };
+  function tick(now) {
+    if (last === null) last = now;
+    var dt = now - last; last = now;
+    if (playing) {
+      if (pauseUntil) { if (now >= pauseUntil) { pauseUntil = 0; frame = 0; } }
+      else { frame += dt / 1000 * FPS * speed; if (frame >= tl.total) { frame = tl.total - 1; pauseUntil = now + PAUSE_MS; } }
+      render(frame);
+    }
+    requestAnimationFrame(tick);
+  }
+  window.__seek = function (f) { setPlaying(false); frame = f; return render(f); };
+
+  function loadImg(src) { return new Promise(function (res) { var i = new Image(); i.onload = i.onerror = res; i.src = src; }); }
+
+  fetch(week + '/reel.json').then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function (j) {
+    reel = j;
+    var errs = C.validate(reel); window.__errors = errs;
+    if (errs.length) { var w = $('warn'); w.textContent = '⚠ ' + errs.join('\n⚠ '); w.style.display = 'block'; }
+    build();
+    return Promise.all([document.fonts.ready, loadImg(OTTER.magnifier), loadImg(OTTER.chalkboard), loadImg('assets/otter-wave.png')]);
+  }).then(function () {
+    return document.fonts.load('700 64px "IBM Plex Sans KR"');
+  }).then(function () {
+    render(0); window.__ready = true;
+    requestAnimationFrame(tick);
+  }).catch(function (e) {
+    fail('reel.json을 읽지 못했어요: ' + week + '/reel.json (' + e.message + ')');
+    window.__errors = ['load failed: ' + e.message]; window.__ready = true;
+  });
+})();
 </script>
 </body>
 </html>
