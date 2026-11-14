@@ -11,7 +11,7 @@ if (!m) throw new Error('player.html has no <script id="core">');
 const ctx = {};
 vm.runInNewContext(m[1], ctx);
 const C = ctx.ReelCore;
-const W44 = JSON.parse(readFileSync(new URL('2026-W44/reel.json', root), 'utf8'));
+const W44 = JSON.parse(readFileSync(new URL('tests/fixture.reel.json', root), 'utf8'));
 const clone = o => JSON.parse(JSON.stringify(o));
 
 test('bezier ends and midpoint', () => {
@@ -40,8 +40,8 @@ test('model section panel arrivals', () => {
 });
 test('captions follow panels', () => {
   const tl = C.buildTimeline(W44);
-  assert.equal(C.captionAt(tl, 200).cur.ko, '긴 추론 학습은 흔들려요');
-  assert.equal(C.captionAt(tl, 290).cur.ko, 'Critic이 점수를 매겨 잡아 줘요');
+  assert.equal(C.captionAt(tl, 200).cur.ko, W44.sections[1].panels[0].caption.ko);
+  assert.equal(C.captionAt(tl, 290).cur.ko, W44.sections[1].panels[1].caption.ko);
 });
 test('caption at override', () => {
   const s = C.buildTimeline(W44).sections[4];

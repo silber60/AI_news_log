@@ -3,8 +3,11 @@
   "sections": [
     {
       "id": "intro",
-      "seconds": 4,
-      "chapter": { "no": "W44", "title": "2026.11.02" },
+      "seconds": 3,
+      "chapter": {
+        "no": "W44",
+        "title": "2026.11.02"
+      },
       "panels": [
         {
           "template": "stack-cards",
@@ -12,138 +15,330 @@
             "eyebrow": "모닥로그 AI 리포트",
             "title": "GitHub 스타 Top 10",
             "cards": [
-              { "rank": 1, "name": "S3AC", "kind": "LLM" },
-              { "rank": 2, "name": "HairDeck", "kind": "이미지" },
-              { "rank": 3, "name": "Hy-Nomas", "kind": "영상" },
-              { "rank": 4, "name": "SAE 탐지기", "kind": "LLM" },
-              { "rank": 5, "name": "HiP3R", "kind": "비전" },
-              { "rank": 6, "name": "VibeGame", "kind": "에이전트" },
-              { "rank": 7, "name": "RSIHub", "kind": "에이전트" },
-              { "rank": 8, "name": "RoboHarness", "kind": "에이전트" },
-              { "rank": 9, "name": "OpenESM", "kind": "LLM" },
-              { "rank": 10, "name": "IDM", "kind": "이미지" }
+              {
+                "rank": 1,
+                "name": "S3AC",
+                "kind": "LLM"
+              },
+              {
+                "rank": 2,
+                "name": "HairDeck",
+                "kind": "이미지"
+              },
+              {
+                "rank": 3,
+                "name": "Hy-Nomas",
+                "kind": "영상"
+              },
+              {
+                "rank": 4,
+                "name": "SAE 탐지기",
+                "kind": "LLM"
+              },
+              {
+                "rank": 5,
+                "name": "HiP3R",
+                "kind": "비전"
+              },
+              {
+                "rank": 6,
+                "name": "VibeGame",
+                "kind": "에이전트"
+              },
+              {
+                "rank": 7,
+                "name": "RSIHub",
+                "kind": "에이전트"
+              },
+              {
+                "rank": 8,
+                "name": "RoboHarness",
+                "kind": "에이전트"
+              },
+              {
+                "rank": 9,
+                "name": "OpenESM",
+                "kind": "LLM"
+              },
+              {
+                "rank": 10,
+                "name": "IDM",
+                "kind": "이미지"
+              }
             ]
           },
-          "caption": { "ko": "이번 주 핫한 AI 모델", "en": "This week's hottest AI models" }
+          "caption": {
+            "ko": "이번 주 핫한 AI 모델 TOP 10!",
+            "en": "This week's top 10 hottest AI models!"
+          }
         }
       ]
     },
     {
       "id": "s3ac",
       "seconds": 13,
-      "chapter": { "no": "01", "title": "S3AC" },
+      "chapter": {
+        "no": "01",
+        "title": "S3AC"
+      },
       "panels": [
         {
           "template": "wobble-graph",
-          "props": { "title": "학습 곡선", "sub": "긴 chain-of-thought 학습", "unstable": "흔들림", "stable": "안정" },
-          "caption": { "ko": "긴 추론 학습은 흔들려요", "en": "Long-reasoning training is shaky" }
+          "props": {
+            "title": "학습 곡선",
+            "sub": "긴 chain-of-thought 학습",
+            "unstable": "흔들림",
+            "stable": "안정"
+          },
+          "caption": {
+            "ko": "긴 추론 학습이 흔들릴 때",
+            "en": "When long-reasoning training wobbles,"
+          }
         },
         {
           "template": "loop-pair",
           "props": {
-            "left": { "title": "Actor", "sub": "답을 써요", "icon": "pen" },
-            "right": { "title": "Critic", "sub": "점수를 매겨요", "icon": "check" }
+            "left": {
+              "title": "Actor",
+              "sub": "답을 써요",
+              "icon": "pen"
+            },
+            "right": {
+              "title": "Critic",
+              "sub": "점수를 매겨요",
+              "icon": "check"
+            }
           },
-          "caption": { "ko": "Critic이 점수를 매겨 잡아 줘요", "en": "A steady critic keeps it on track" }
+          "caption": {
+            "ko": "Critic이 점수를 매겨 잡아 주는 모델이에요",
+            "en": "this model steadies it with a scoring critic"
+          }
         },
         {
           "template": "bars-rise",
           "props": {
             "title": "모델 크기",
             "bars": [
-              { "label": "1.5B", "value": 1.5 },
-              { "label": "7B", "value": 7 },
-              { "label": "32B", "value": 32 },
-              { "label": "397B", "value": 397 }
+              {
+                "label": "1.5B",
+                "value": 1.5
+              },
+              {
+                "label": "7B",
+                "value": 7
+              },
+              {
+                "label": "32B",
+                "value": 32
+              },
+              {
+                "label": "397B",
+                "value": 397
+              }
             ],
             "meta": "★ 5,222 · Shanghai AI Lab"
           },
-          "caption": { "ko": "1.5B부터 397B까지 통했어요", "en": "It held up from 1.5B to 397B" }
+          "caption": {
+            "ko": "1.5B부터 397B까지 쓸 수 있답니다",
+            "en": "and it works from 1.5B all the way to 397B"
+          }
         }
       ]
     },
     {
       "id": "hairdeck",
       "seconds": 13,
-      "chapter": { "no": "02", "title": "HairDeck" },
+      "chapter": {
+        "no": "02",
+        "title": "HairDeck"
+      },
       "panels": [
         {
           "template": "drop-in",
-          "props": { "title": "캐릭터 사진", "sub": "딱 1장", "icon": "image" },
-          "caption": { "ko": "캐릭터 사진 한 장이면", "en": "Just one character photo" }
+          "props": {
+            "title": "캐릭터 사진",
+            "sub": "딱 1장",
+            "icon": "image"
+          },
+          "caption": {
+            "ko": "캐릭터 사진 딱 한 장만 넣으면",
+            "en": "Give it just one character photo"
+          }
         },
         {
           "template": "grow-items",
-          "props": { "title": "Hair card", "sub": "카드 단위로 생성", "count": 7 },
-          "caption": { "ko": "머리카락 카드가 생겨요", "en": "Hair cards grow out of it" }
+          "props": {
+            "title": "Hair card",
+            "sub": "카드 단위로 생성",
+            "count": 7
+          },
+          "caption": {
+            "ko": "머리카락 카드가 하나씩 생겨나고",
+            "en": "and hair cards grow out one by one,"
+          }
         },
         {
           "template": "swing-chain",
-          "props": { "title": "spring bone", "sub": "게임 엔진에서 바로 흔들려요", "meta": "★ 786 · 데모 공개" },
-          "caption": { "ko": "움직이는 게임용 머리 완성", "en": "Game-ready hair that moves" }
+          "props": {
+            "title": "spring bone",
+            "sub": "게임 엔진에서 바로 흔들려요",
+            "meta": "★ 786 · 데모 공개"
+          },
+          "caption": {
+            "ko": "게임에서 바로 흔들리는 머리가 돼요",
+            "en": "turning into game-ready hair that swings"
+          }
         }
       ]
     },
     {
       "id": "hynomas",
       "seconds": 13,
-      "chapter": { "no": "03", "title": "Hy-Nomas" },
+      "chapter": {
+        "no": "03",
+        "title": "Hy-Nomas"
+      },
       "panels": [
         {
           "template": "typing-prompt",
-          "props": { "label": "텍스트 지시", "prompt": "해 질 녘 바닷가 마을을 걸어가 줘" },
-          "caption": { "ko": "말로 장면을 지시하고", "en": "Describe a scene in words" }
+          "props": {
+            "label": "텍스트 지시",
+            "prompt": "해 질 녘 바닷가 마을을 걸어가 줘"
+          },
+          "caption": {
+            "ko": "말로 장면을 설명하고",
+            "en": "Describe a scene in words,"
+          }
         },
         {
           "template": "orbit-camera",
-          "props": { "label": "카메라 조작", "views": ["정면", "왼쪽", "위에서"] },
-          "caption": { "ko": "카메라를 돌려 보면", "en": "Move the camera around" }
+          "props": {
+            "label": "카메라 조작",
+            "views": [
+              "정면",
+              "왼쪽",
+              "위에서"
+            ]
+          },
+          "caption": {
+            "ko": "카메라를 이리저리 돌려 보면",
+            "en": "swing the camera around,"
+          }
         },
         {
           "template": "film-strip",
-          "props": { "label": "이어지는 세계", "meta": "★ 478 · Tencent Hunyuan" },
-          "caption": { "ko": "세계가 계속 이어져요", "en": "And the world keeps going" }
+          "props": {
+            "label": "이어지는 세계",
+            "meta": "★ 478 · Tencent Hunyuan"
+          },
+          "caption": {
+            "ko": "세계가 끝없이 이어지는 모델이에요",
+            "en": "and this model keeps the world going"
+          }
         }
       ]
     },
     {
       "id": "rest",
-      "seconds": 6,
-      "chapter": { "no": "04–10", "title": "놓치기 아까운 모델" },
+      "seconds": 5,
+      "chapter": {
+        "no": "04–10",
+        "title": "놓치기 아까운 모델"
+      },
       "panels": [
         {
           "template": "list-scroll",
           "props": {
             "rows": [
-              { "rank": 4, "name": "SAE 탐지기", "desc": "AI 글 판정 근거를 보여 줘요" },
-              { "rank": 5, "name": "HiP3R", "desc": "긴 영상을 하나의 3D로" },
-              { "rank": 6, "name": "VibeGame", "desc": "말로 2D 게임을 만들어요" },
-              { "rank": 7, "name": "RSIHub", "desc": "에이전트 진화 방법 비교" },
-              { "rank": 8, "name": "RoboHarness", "desc": "LLM 에이전트로 로봇 조작" },
-              { "rank": 9, "name": "OpenESM", "desc": "energy로 다듬는 언어 모델" },
-              { "rank": 10, "name": "IDM", "desc": "글자 많은 이미지도 빠르게" }
+              {
+                "rank": 4,
+                "name": "SAE 탐지기",
+                "desc": "AI 글 판정 근거를 보여 줘요"
+              },
+              {
+                "rank": 5,
+                "name": "HiP3R",
+                "desc": "긴 영상을 하나의 3D로"
+              },
+              {
+                "rank": 6,
+                "name": "VibeGame",
+                "desc": "말로 2D 게임을 만들어요"
+              },
+              {
+                "rank": 7,
+                "name": "RSIHub",
+                "desc": "에이전트 진화 방법 비교"
+              },
+              {
+                "rank": 8,
+                "name": "RoboHarness",
+                "desc": "LLM 에이전트로 로봇 조작"
+              },
+              {
+                "rank": 9,
+                "name": "OpenESM",
+                "desc": "energy로 다듬는 언어 모델"
+              },
+              {
+                "rank": 10,
+                "name": "IDM",
+                "desc": "글자 많은 이미지도 빠르게"
+              }
             ],
-            "highlight": [6, 7, 8]
+            "highlight": [
+              6,
+              7,
+              8
+            ]
           },
           "captions": [
-            { "ko": "놓치기 아까운 4~10위", "en": "Don't miss #4–#10" },
-            { "ko": "에이전트 모델만 세 편", "en": "Three agent models this week", "at": 3 }
+            {
+              "ko": "놓치기 아까운 4~10위도 있어요",
+              "en": "Don't miss #4 to #10 either"
+            },
+            {
+              "ko": "그중 세 편이 에이전트 모델이에요",
+              "en": "three of them are agent models",
+              "at": 2.5
+            }
           ]
         }
       ]
     },
     {
       "id": "diffusion",
-      "seconds": 6,
-      "chapter": { "no": "AI 기술", "title": "Diffusion" },
+      "seconds": 8,
+      "chapter": {
+        "no": "AI 기술",
+        "title": "Diffusion"
+      },
       "otter": "chalkboard",
       "panels": [
         {
           "template": "noise-reveal",
-          "props": { "title": "노이즈 → 그림", "steps": ["노이즈", "흐릿하게", "선명하게"], "meta": "HairDeck · Hy-Nomas · IDM이 써요" },
+          "props": {
+            "title": "노이즈 → 그림",
+            "steps": [
+              "노이즈",
+              "흐릿하게",
+              "선명하게"
+            ],
+            "meta": "HairDeck · Hy-Nomas · IDM이 써요"
+          },
           "captions": [
-            { "ko": "노이즈를 조금씩 걷어 내요", "en": "Removing noise step by step" },
-            { "ko": "낙서를 다듬듯이", "en": "Like polishing a doodle" }
+            {
+              "ko": "이번 주 모델들이 쓰는 Diffusion은",
+              "en": "Diffusion, used by this week's models,"
+            },
+            {
+              "ko": "노이즈를 걷어 내며 그림을 그리는 방식이에요",
+              "en": "is a way of drawing by clearing away noise"
+            },
+            {
+              "ko": "AI로 이미지나 3D를 만들 때 많이 써요",
+              "en": "and it powers most AI image and 3D generation"
+            }
           ]
         }
       ]
@@ -151,17 +346,34 @@
     {
       "id": "outro",
       "seconds": 5,
-      "chapter": { "no": "매주 월요일", "title": "@modaclog" },
+      "chapter": {
+        "no": "매주 월요일",
+        "title": "@modaclog"
+      },
       "panels": [
         {
           "template": "cta-pair",
           "props": {
-            "newsletter": { "name": "모닥로그 AI 리포트", "url": "silber60.github.io/AI_news_log", "button": "무료로 구독하기" },
-            "instagram": { "handle": "@modaclog", "bio": "매주 핫한 AI 모델을 60초로", "button": "팔로우" }
+            "newsletter": {
+              "name": "모닥로그 AI 리포트",
+              "url": "silber60.github.io/AI_news_log",
+              "button": "무료로 구독하기"
+            },
+            "instagram": {
+              "handle": "@modaclog",
+              "bio": "매주 핫한 AI 모델을 60초로",
+              "button": "팔로우"
+            }
           },
           "captions": [
-            { "ko": "매주 월요일 메일로 받아요", "en": "Every Monday in your inbox" },
-            { "ko": "팔로우하고 매주 받아 보기", "en": "Follow @modaclog for weekly AI picks" }
+            {
+              "ko": "매주 월요일, 메일로 받아 보고",
+              "en": "Get it in your inbox every Monday"
+            },
+            {
+              "ko": "@modaclog 팔로우도 잊지 마세요",
+              "en": "and follow @modaclog for more"
+            }
           ]
         }
       ]
