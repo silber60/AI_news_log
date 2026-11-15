@@ -73,6 +73,10 @@
 .archive-card li + li { margin-top: 4px; }
 .empty { font-size: 15px; color: #808080; }
 .cta { background: #EDF6FF; padding: 80px 0; }
+.promo { padding: 40px 0; }
+.promo + .get, .archive + .promo { padding-top: 0; }
+.promo a { display: block; max-width: 760px; margin: 0 auto; border-radius: 16px; overflow: hidden; }
+.promo img { display: block; width: 100%; height: auto; }
 .cta .art { border-radius: 16px; }
 .cta h2 { font-size: 28px; font-weight: 700; color: #303A83; margin-top: 24px; }
 .cta.solo .row { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
@@ -87,6 +91,7 @@
   .hero h1 { font-size: 26px; }
   .hero.solo .row, .cards, .archive-list { grid-template-columns: minmax(0, 1fr); }
   .get, .find, .sample, .archive, .cta { padding: 56px 0; }
+  .promo { padding: 32px 0; }
   .find .wrap.row { grid-template-columns: minmax(0, 1fr); }
   .get h2, .sample h2, .archive h2, .cta h2 { font-size: 24px; }
   .preview { justify-self: stretch; width: 100%; }
@@ -122,6 +127,10 @@
 <img class="art" src="{{ asset }}/otter-banner.jpg" width="544" height="306" alt="모닥불 앞에 앉은 해달">
 {%- endif %}
 </div>
+</section>
+
+<section class="promo" data-section="promo-top">
+<div class="wrap"><a href="{{ promo_url }}"><img src="{{ promo_asset }}/girogi-top.jpg" width="1280" height="400" alt="뉴스레터 개발자가 만든 앱 보러가기: AI 그림일기 기로기"></a></div>
 </section>
 
 <section class="get" data-section="what-you-get">
@@ -220,6 +229,10 @@
 <p class="empty">아직 발행된 호가 없어요.</p>
 {%- endif %}
 </div>
+</section>
+
+<section class="promo" data-section="promo-bottom">
+<div class="wrap"><a href="{{ promo_url }}"><img src="{{ promo_asset }}/girogi-bottom.jpg" width="1280" height="400" alt="오늘 하루, 그림 한 장으로 남겨 볼까요? AI 그림일기 기로기 보러가기" loading="lazy"></a></div>
 </section>
 
 <section class="cta{% if not subscribe_url %} solo{% endif %}" data-section="cta">

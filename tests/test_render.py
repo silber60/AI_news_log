@@ -1416,6 +1416,6 @@ def test_promo_banners_link_the_app(issue_w44):
 def test_promo_assets_exist():
     from pathlib import Path
 
-    d = Path(__file__).resolve().parent.parent / "docs" / "assets" / "email" / "promo-v1"
+    d = Path(__file__).resolve().parent.parent / "docs" / "assets" / "email" / "promo-v2"
     for name in ("girogi-top.jpg", "girogi-bottom.jpg"):
         assert (d / name).stat().st_size < 120 * 1024

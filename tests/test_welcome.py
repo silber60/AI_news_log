@@ -27,8 +27,9 @@ TOKEN_RE = re.compile(r"\?t=[0-9a-f]{32}")
 # fa0a75c (before 04.1-01). welcome=False and no endpoint must keep these bytes.
 WEEKLY_PIN_URL = render.SITE_URL + "unsubscribe/?t=" + "0" * 32
 # Re-pinned 2026-11-16 for the two 기로기 promo banners (template-version 10); the diff against
-# the previous output is exactly the two promo rows and the two promo text lines.
-WEEKLY_HTML_SHA256 = "a8e2f62cda0aaa621ec84ca94f27023ad8c1fa54fb0bdcb2bcd51c893c53eaa1"
+# the previous output is exactly the two promo rows and the two promo text lines. HTML re-pinned
+# again the same day: the banner images moved from promo-v1 to promo-v2 (owner's edited art).
+WEEKLY_HTML_SHA256 = "a0f6c68e6eeeea813728b5684fc4a2cf1e60ea8842dd1ceabd30513bbc4d2f98"
 WEEKLY_TEXT_SHA256 = "3e52a369684651576be660c4112ea228a12c550262c01f3cc75f5927bfe7ffba"
 
 

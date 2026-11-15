@@ -95,6 +95,8 @@ def _home_context(issues: list[Issue]) -> dict:
         "archive_id": render.ARCHIVE_ANCHOR.removeprefix("#"),
         "archive_href": render.ARCHIVE_ANCHOR,
         "asset": render.ASSET_BASE_URL,
+        "promo_asset": render.PROMO_ASSET_BASE_URL,
+        "promo_url": render.PROMO_URL,
         "web_font_url": render.WEB_FONT_URL,
         "font": Markup(render.FONT_STACK),  # trusted constant; keeps quotes unescaped
     }

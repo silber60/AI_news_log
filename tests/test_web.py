@@ -868,3 +868,23 @@ def test_home_search_chapter_sits_between_get_and_sample(site):
     ):
         assert text in sec
         assert humanize.lint(text) == []
+
+
+def test_home_has_both_promo_banners(home_html):
+    """Owner 2026-11-16: the 기로기 banners also sit on the home page, under the hero and
+    above the closing CTA, both linking to the Play Store page."""
+    from newsletter.stages import render
+
+    top = home_html.index('data-section="promo-top"')
+    bottom = home_html.index('data-section="promo-bottom"')
+    assert (
+        home_html.index('data-section="hero"')
+        < top
+        < home_html.index('data-section="what-you-get"')
+    )
+    assert (
+        home_html.index('data-section="archive"') < bottom < home_html.index('data-section="cta"')
+    )
+    assert home_html.count(f'href="{render.PROMO_URL}"') == 2
+    assert f"{render.PROMO_ASSET_BASE_URL}/girogi-top.jpg" in home_html
+    assert f"{render.PROMO_ASSET_BASE_URL}/girogi-bottom.jpg" in home_html
