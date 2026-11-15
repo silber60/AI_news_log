@@ -1392,3 +1392,30 @@ def test_trend_order_sits_right_under_greeting(issue_w44):
     assert _sections(out)[3:6] == ["greeting", "trend", "highlight"]
     txt = render_text(full, "구독자님")
     assert _ordered(txt, ["안녕하세요.", "이번 주 흐름 한눈에 📈", "이번 주 바로 써볼 만한 것 ✨"])
+
+
+# ------------------------------------------------- 기로기 promo banners (owner 2026-11-16)
+
+
+def test_promo_banners_link_the_app(issue_w44):
+    out = render_html(issue_w44, "구독자님")
+    url = render_mod.PROMO_URL
+    assert url == "https://play.google.com/store/apps/details?id=com.modaclog.girogi"
+    header = out[_section_pos(out, "header") :]
+    top = out[out.index('data-section="promo-top"') :]
+    assert out.index('data-section="header"') < out.index('data-section="promo-top"')
+    assert out.index('data-section="promo-bottom"') < out.index('data-section="closing"')
+    assert f'href="{url}"' in top[: top.index("</tr>")]
+    assert "girogi-top.jpg" in out and "girogi-bottom.jpg" in out
+    assert "뉴스레터 개발자가 만든 앱 보러가기" in out  # alt text
+    assert header
+    txt = render_text(issue_w44, "구독자님")
+    assert txt.count(url) == 2
+
+
+def test_promo_assets_exist():
+    from pathlib import Path
+
+    d = Path(__file__).resolve().parent.parent / "docs" / "assets" / "email" / "promo-v1"
+    for name in ("girogi-top.jpg", "girogi-bottom.jpg"):
+        assert (d / name).stat().st_size < 120 * 1024

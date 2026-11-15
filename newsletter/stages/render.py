@@ -44,6 +44,10 @@ _INLINER = css_inline.CSSInliner(load_remote_stylesheets=False, keep_link_tags=T
 # D-09: versioned, never-overwritten public asset directory. v2 (brand 모닥로그 AI 리포트)
 # swaps the top banner; v1 stays published for emails already sent.
 ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/v2"
+# Owner 2026-11-16: two banners promoting the owner's app, AI 그림일기 기로기 (Figma 51:1056,
+# 51:1064; 2x JPEGs in docs/assets/email/promo-v1/). One under the header, one above the closing.
+PROMO_ASSET_BASE_URL = "https://silber60.github.io/AI_news_log/assets/email/promo-v1"
+PROMO_URL = "https://play.google.com/store/apps/details?id=com.modaclog.girogi"
 # D-01, D-02: the GitHub Pages site. Issue pages live at SITE_URL + "issues/<issue_id>/"
 # forever, since sent emails link there. 04-01 Task 1 (owner): 지난 호 보기 opens the
 # home page's archive section, so id="archive" must stay on the home page.
@@ -286,6 +290,8 @@ def _context(
         "font": Markup(FONT_STACK),  # trusted constant; keeps quotes unescaped in style=
         "web_font_url": WEB_FONT_URL,
         "asset": ASSET_BASE_URL,
+        "promo_asset": PROMO_ASSET_BASE_URL,
+        "promo_url": PROMO_URL,
         "site_url": SITE_URL,
         "issue_url": issue_url(issue.issue_id),
         "archive_url": archive_url(),
