@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "issue_id": "2026-W46",
+  "stage": "highlight",
+  "data": [
+    {
+      "rank": 2,
+      "tag": "데모",
+      "why_ko": "말하는 도중 나온 글자를 다시 고치지 않는 음성 인식을 데모에서 바로 확인해 볼 수 있어요.",
+      "how_ko": "데모에 짧은 문장을 직접 말해 넣고 앞부분 글자가 끝까지 그대로 남는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/netease-youdao/confucius4-r2t2-demo"
+    },
+    {
+      "rank": 1,
+      "tag": "데모",
+      "why_ko": "k-means 군집화를 적은 반복 횟수로 끝내는 방식을 데모에서 직접 볼 수 있어요.",
+      "how_ko": "데모에 가진 임베딩 데이터를 넣어 보고 반복 횟수가 얼마나 줄어드는지 봐요.",
+      "demo_url": "https://huggingface.co/spaces/TTS-AGI/clap2-live-taxonomy"
+    },
+    {
+      "rank": 4,
+      "tag": "데모",
+      "why_ko": "결정 모델 에이전트의 여러 질의를 한 번에 처리하는 추론 엔진을 데모로 볼 수 있어요.",
+      "how_ko": "데모에 질의를 여러 개 한꺼번에 넣어 vLLM과 처리 속도를 견줘 봐요.",
+      "demo_url": "https://huggingface.co/spaces/BradNLP/Flide"
+    }
+  ]
+}

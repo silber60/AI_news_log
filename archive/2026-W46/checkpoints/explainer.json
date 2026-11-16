@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "issue_id": "2026-W46",
+  "stage": "explainer",
+  "data": {
+    "topic": "EMA: 최근 값에 무게를 두는 평균",
+    "body_ko": "mini-batch로 데이터를 조금씩 읽을 때마다 군집을 업데이트하는데, 지수 이동 평균은 새로 들어온 값과 지금까지의 값을 일정한 비율로 섞어요. 최근 값일수록 비중이 크고 오래된 값의 영향은 조금씩 줄어요. e-means는 이 방식을 임베딩 군집화에 쓰고, 하이퍼파라미터를 공식으로 정해서 따로 탐색할 필요가 없어요. 25 epoch 걸리는 Lloyd k-means의 loss를 1.4~2.6 epoch 만에 넘어섰어요.",
+    "related_ranks": [
+      1
+    ],
+    "point_ko": "최근 데이터에 더 무게를 둬서 군집화를 빨리 끝내요.",
+    "example_ko": "매달 용돈 기록을 볼 때 이번 달 지출을 가장 크게 반영하고, 몇 달 전 기록은 조금씩 흐려지게 두는 것과 같아요. 그러면 요즘 씀씀이가 평균에 바로 드러나요.",
+    "image": {
+      "url": "https://arxiv.org/html/2611.09501v1/high_nk_heatmap.png",
+      "width": 576,
+      "height": 405
+    }
+  }
+}

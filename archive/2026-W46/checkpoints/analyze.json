@@ -1,0 +1,617 @@
+{
+  "version": 1,
+  "issue_id": "2026-W46",
+  "stage": "analyze",
+  "data": [
+    {
+      "rank": 1,
+      "paper_id": "2611.09501",
+      "title_en": "e-means: outperforming k-means (in one-tenth the epochs)",
+      "upvotes": 13,
+      "num_comments": 3,
+      "github_stars": 41706,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "Meta",
+      "hf_url": "https://huggingface.co/papers/2611.09501",
+      "arxiv_url": "https://arxiv.org/abs/2611.09501",
+      "github_url": "https://github.com/facebookresearch/faiss",
+      "project_url": "https://e-means.github.io/",
+      "title_ko": "e-means: 지수 이동 평균으로 k-means 군집화 가속",
+      "ai_type": "기타",
+      "summary_ko": "데이터 임베딩을 묶는 k-means 군집화를 훨씬 적은 반복 횟수로 끝내 주는 알고리즘이에요.",
+      "summary_lines_ko": [
+        "mini-batch 업데이트에 지수 이동 평균을 적용해 임베딩을 군집화해요.",
+        "지수 이동 평균을 쓰고 하이퍼파라미터는 공식으로 정해 탐색이 필요 없어요.",
+        "25 epoch Lloyd k-means의 loss를 1.4~2.6 epoch 만에 넘어섰어요."
+      ],
+      "use_idea_ko": "수십억 개 임베딩을 수백만 개 군집으로 나누는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "mini-batch k-means 군집화 알고리즘",
+        "architecture_ko": "지수 이동 평균 기반 mini-batch k-means 업데이트",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "GPU에서 대규모 임베딩을 군집화하는 알고리즘이라 대화에서 따라 할 것이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "GPU에서 돌리는 군집화 알고리즘이라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.06043",
+      "title_en": "Confucius4-R2T2: A Stable-Prefix Streaming ASR Model for Real Real-Time Transcription",
+      "upvotes": 95,
+      "num_comments": 3,
+      "github_stars": 894,
+      "submitted_on_daily_at": "2026-11-09",
+      "affiliation": "Netease Youdao",
+      "hf_url": "https://huggingface.co/papers/2611.06043",
+      "arxiv_url": "https://arxiv.org/abs/2611.06043",
+      "github_url": "https://github.com/netease-youdao/Confucius4-R2T2",
+      "project_url": "https://r2t2.ai/",
+      "title_ko": "Confucius4-R2T2: 앞선 출력을 고치지 않는 스트리밍 ASR",
+      "ai_type": "음성",
+      "summary_ko": "말하는 동안 이미 나온 글자를 다시 고치지 않고 실시간으로 받아 적어 주는 음성 인식 모델이에요.",
+      "summary_lines_ko": [
+        "음성을 실시간으로 글로 바꾸면서 이미 낸 앞부분 출력을 다시 수정하지 않는 ASR 모델이에요.",
+        "Longest Stable Prefix 라벨로 학습해 구조 변경 없이 full-context 모델을 스트리밍 모델로 바꿨어요.",
+        "full-context 기반 모델에 가까운 인식 품질과 낮은 emission lag를 함께 기록했어요."
+      ],
+      "use_idea_ko": "번역기나 음성 에이전트에 실시간 자막을 넘기는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "안정 prefix 스트리밍 ASR 모델",
+        "architecture_ko": "Qwen3-ASR-1.7B 후속 학습, audio encoder와 projector 고정",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "음성 인식 모델이라 대화에서 따라 할 방법이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 가중치와 학습 방법이라 묶어 둘 내용이 없어요."
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.12806",
+      "title_en": "Learning Heterogeneous Tactile Representation for General Dexterous Manipulation",
+      "upvotes": 104,
+      "num_comments": 2,
+      "github_stars": 605,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "Robbyant",
+      "hf_url": "https://huggingface.co/papers/2611.12806",
+      "arxiv_url": "https://arxiv.org/abs/2611.12806",
+      "github_url": "https://github.com/Robbyant/lingbot-touch",
+      "project_url": "https://technology.robbyant.com/lingbot-touch",
+      "title_ko": "LingBot-Touch: 센서가 달라도 쓰는 촉각 표현 학습",
+      "ai_type": "기타",
+      "summary_ko": "서로 다른 촉각 센서 데이터를 하나의 tactile token으로 바꿔 로봇 손 조작을 돕는 모델이에요.",
+      "summary_lines_ko": [
+        "압저항, 자기, 시각 기반 촉각 센서의 신호를 통일된 표현으로 바꿔 줘요.",
+        "센서마다 물리 특성이 달라도 쓸 수 있고, 새 센서 종류도 쉽게 추가할 수 있어요.",
+        "diffusion policy와 VLA 모델에 붙였더니 시뮬레이션과 실제 로봇에서 조작 솜씨가 일관되게 나아졌어요."
+      ],
+      "use_idea_ko": "로봇 손이 접촉을 느끼며 정교하게 물건을 다루는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "촉각 foundation model",
+        "architecture_ko": "센서 종류와 무관한 통합 촉각 표현, plug-and-play tactile token",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "촉각 센서와 로봇 조작을 다루는 모델이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "로봇 하드웨어와 학습 모델이라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.42148",
+      "title_en": "Flide: Accelerating Decision Inference with Exact State Forking",
+      "upvotes": 36,
+      "num_comments": 6,
+      "github_stars": 508,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "National University of Singapore",
+      "hf_url": "https://huggingface.co/papers/2610.42148",
+      "arxiv_url": "https://arxiv.org/abs/2610.42148",
+      "github_url": "https://github.com/OmniJev/Flide",
+      "project_url": "https://flide.org/",
+      "title_ko": "Flide: 결정 모델 추론을 정확하게 가속하는 엔진",
+      "ai_type": "LLM",
+      "summary_ko": "결정 모델 기반 에이전트의 질의를 vLLM보다 빠르게 처리하는 추론 엔진이에요.",
+      "summary_lines_ko": [
+        "결정 요청의 분기 구조를 하나의 token stream으로 합쳐 여러 질의를 한 번에 처리해요.",
+        "ForkAttention으로 attention 층과 Gated DeltaNet 층 모두에서 분기별 계산을 분리해요.",
+        "vLLM과 SGLang보다 최대 9.5배 빠르게 질의에 답했어요."
+      ],
+      "use_idea_ko": "에이전트가 빠르게 분류 판단을 내려야 하는 시스템에 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "LLM 결정 모델용 추론 엔진",
+        "architecture_ko": "ForkAttention, GPU 메타데이터 기반 분기 인덱스, 사전 기록 실행 그래프",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "GPU에서 돌리는 추론 엔진이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 추론 엔진이라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.09195",
+      "title_en": "InstantHMR : Real-Time Human Mesh Recovery on Your Phone",
+      "upvotes": 2,
+      "num_comments": 2,
+      "github_stars": 406,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "naturalpad",
+      "hf_url": "https://huggingface.co/papers/2611.09195",
+      "arxiv_url": "https://arxiv.org/abs/2611.09195",
+      "github_url": "https://github.com/Naturalpad-studio/InstantHMR",
+      "project_url": null,
+      "title_ko": "InstantHMR: 휴대폰에서 실시간으로 사람 3D mesh 복원",
+      "ai_type": "비전",
+      "summary_ko": "사진 한 장에서 사람의 3D 몸 mesh를 휴대폰에서 5.5ms 만에 복원해 주는 모델이에요.",
+      "summary_lines_ko": [
+        "사진 한 장을 넣으면 사람의 6,890개 vertex 3D 몸 mesh를 복원해요.",
+        "Momentum Human Rig 기반 regressor를 SAM 3D Body 공개 annotation만으로 학습했어요.",
+        "Galaxy S23 NPU에서 사람당 5.5ms가 걸렸고 3DPW의 PA-MPJPE는 40.0mm였어요."
+      ],
+      "use_idea_ko": "휴대폰 AR/VR 운동 게임에서 몸 동작을 읽는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "모바일용 3D 인체 mesh 복원 모델",
+        "architecture_ko": "Momentum Human Rig 기반 single-image regressor",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "이미지에서 3D 인체를 복원하는 비전 모델이라 대화에서 따라 할 부분이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅하거나 기기에서 돌릴 가중치라 묶어 둘 지시문이 없어요."
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.10771",
+      "title_en": "WorldFoundry: Towards Unified Infrastructure for World Intelligence",
+      "upvotes": 58,
+      "num_comments": 2,
+      "github_stars": 352,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "OpenEnvision",
+      "hf_url": "https://huggingface.co/papers/2611.10771",
+      "arxiv_url": "https://arxiv.org/abs/2611.10771",
+      "github_url": "https://github.com/OpenEnvision/WorldFoundry",
+      "project_url": "https://openenvision.org/WorldFoundry/",
+      "title_ko": "WorldFoundry: world model 추론과 평가를 통합한 오픈소스 인프라",
+      "ai_type": "기타",
+      "summary_ko": "여러 world model을 한곳에서 돌리고 같은 기준으로 비교해 볼 수 있게 해 주는 오픈소스 도구예요.",
+      "summary_lines_ko": [
+        "video, 3D, 4D, 로봇 행동 world model의 추론과 평가를 한 인프라에서 실행해요.",
+        "모델마다 다른 입력과 평가 방식을 adapter로 맞추고, 실행 준비 상태와 평가 주장을 따로 기록해요.",
+        "모델 270개가 담긴 catalog를 구축했어요."
+      ],
+      "use_idea_ko": "여러 video world model의 결과를 같은 기준으로 비교하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "World model 추론과 평가용 오픈소스 인프라",
+        "architecture_ko": "modality별 adapter, manifest, scorecard 기반 실행 구조",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "영상, 3D, 로봇 world model을 돌리는 인프라라 대화에서 따라 할 게 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅하는 인프라라 지시문으로 묶을 내용이 없어요."
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.10649",
+      "title_en": "MACaQ: Fast, Model Agnostic Calibrated Quantization for Low-Precision Weights and Activations",
+      "upvotes": 30,
+      "num_comments": 2,
+      "github_stars": 300,
+      "submitted_on_daily_at": "2026-11-11",
+      "affiliation": "HUAWEI Computing Systems Lab",
+      "hf_url": "https://huggingface.co/papers/2611.10649",
+      "arxiv_url": "https://arxiv.org/abs/2611.10649",
+      "github_url": "https://github.com/huawei-csl/MACaQ",
+      "project_url": "https://huawei-csl.com/blog/macaq/",
+      "title_ko": "MACaQ: 레이어별 독립 MXFP4 W4A4 양자화",
+      "ai_type": "LLM",
+      "summary_ko": "LLM과 diffusion 모델의 가중치와 활성값을 4비트로 줄여 메모리와 계산량을 낮춰 주는 양자화 방법이에요.",
+      "summary_lines_ko": [
+        "모든 linear layer를 따로 MXFP4 W4A4로 post-training quantization 해요.",
+        "레이어마다 scale과 block-Hadamard 변환을 온라인으로 적용해 레이어 간 의존성을 없앴어요.",
+        "Qwen3-32B를 vLLM에서 돌릴 때 순수 MXFP4보다 end-to-end 오버헤드가 2.3%만 늘었어요."
+      ],
+      "use_idea_ko": "큰 LLM을 적은 GPU 메모리로 서빙하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "MXFP4 W4A4 양자화 기법",
+        "architecture_ko": "per-channel scale, block-Hadamard 변환, Flip-Refinement 기반…",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "모델 가중치를 양자화하는 추론 최적화라 대화에서 따라 할 수 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": null
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.08969",
+      "title_en": "PhysioWave-T: Token-Efficient Wavelet Foundation Models for Biosignals",
+      "upvotes": 2,
+      "num_comments": 2,
+      "github_stars": 297,
+      "submitted_on_daily_at": "2026-11-10",
+      "affiliation": "Nanyang Technological University",
+      "hf_url": "https://huggingface.co/papers/2611.08969",
+      "arxiv_url": "https://arxiv.org/abs/2611.08969",
+      "github_url": "https://github.com/ForeverBlue816/PhysioWave",
+      "project_url": "https://huggingface.co/collections/ForeverBlue/physiowave-t",
+      "title_ko": "PhysioWave-T: 생체신호 wavelet foundation model의 token 절감",
+      "ai_type": "기타",
+      "summary_ko": "뇌파, 심전도, 근전도 신호를 적은 token으로 처리해 분류하는 foundation model이에요.",
+      "summary_lines_ko": [
+        "EEG, ECG, sEMG 신호를 모달리티별 Transformer 하나로 처리하는 모델이에요.",
+        "wavelet subband를 tokenization 전에 합쳐 sequence 길이를 줄였어요.",
+        "Transformer latency를 4.0~7.2배 줄이고 정확도 손실은 없었어요."
+      ],
+      "use_idea_ko": "웨어러블 기기로 잰 뇌파에서 발작을 감지하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "생체신호 wavelet foundation model",
+        "architecture_ko": "wavelet scale folding 적용 Transformer, 모달리티별 encoder",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "생체신호 전용 모델이라 대화에서 따라 할 방법이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "직접 호스팅해야 하는 가중치와 학습 방법이에요."
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2611.12177",
+      "title_en": "Embodied First Exam",
+      "upvotes": 28,
+      "num_comments": 4,
+      "github_stars": 279,
+      "submitted_on_daily_at": "2026-11-11",
+      "affiliation": "MLL Lab",
+      "hf_url": "https://huggingface.co/papers/2611.12177",
+      "arxiv_url": "https://arxiv.org/abs/2611.12177",
+      "github_url": "https://github.com/mll-lab-nu/embodied-first-exam",
+      "project_url": "https://www.embodied-first-exam.ai/",
+      "title_ko": "Embodied First Exam: 코딩 에이전트의 로봇 제어 평가",
+      "ai_type": "에이전트",
+      "summary_ko": "코딩 에이전트가 여러 로봇을 제어할 수 있는지 시험하는 benchmark예요.",
+      "summary_lines_ko": [
+        "47대 로봇, 35개 suite, 1,156개 작업으로 코딩 에이전트의 로봇 제어 능력을 평가해요.",
+        "직접 제어, 코드 작성, 정책 학습 중 에이전트가 제어 방식을 직접 고르게 했어요.",
+        "핵심 456개 작업에서 가장 강한 에이전트도 Standard Setting 성공률이 34%였어요."
+      ],
+      "use_idea_ko": "코딩 에이전트가 로봇을 얼마나 잘 다루는지 점검하는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "코딩 에이전트용 로봇 제어 benchmark",
+        "architecture_ko": "확인 필요",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "해당 없음",
+        "reason_ko": "로봇 시뮬레이션 평가 환경이라 대화에서 따라 할 내용이 없어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "지시문으로 묶어 둘 방법이 아니라 평가용 시뮬레이션 환경이에요."
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "2611.12885",
+      "title_en": "World In-Context Learning for Agentic Robot Manipulation",
+      "upvotes": 57,
+      "num_comments": 4,
+      "github_stars": 274,
+      "submitted_on_daily_at": "2026-11-11",
+      "affiliation": "ArcheOne-AI",
+      "hf_url": "https://huggingface.co/papers/2611.12885",
+      "arxiv_url": "https://arxiv.org/abs/2611.12885",
+      "github_url": "https://github.com/ArcheOne-AI/RoboScript",
+      "project_url": "https://archeone-ai.github.io/RoboScript/",
+      "title_ko": "WICL: 시뮬레이터 연습으로 로봇 조작을 context에 학습",
+      "ai_type": "에이전트",
+      "summary_ko": "시연 하나를 보고 시뮬레이터에서 연습해, 로봇이 새 작업을 수행하게 해 주는 방법이에요.",
+      "summary_lines_ko": [
+        "frozen 모델이 시연을 보고 시뮬레이터에서 연습한 뒤, 피드백을 context에 적어 로봇을 조작해요.",
+        "가중치를 고치지 않고, 세계에서 얻은 피드백을 context에 기록하는 World In-Context Learning을…",
+        "RoboTwin 2.0의 50개 작업에서 평균 성공률 83.4%를 기록했고, 학습된 정책보다 20점 넘게 높았어요."
+      ],
+      "use_idea_ko": "시연 하나로 양팔 로봇에게 물건 조작 작업을 가르치는 데 쓸 수 있어요.",
+      "model_info": {
+        "kind_ko": "로봇 조작용 in-context learning 방법",
+        "architecture_ko": "frozen 모델, 시뮬레이터 연습, Task Memory, RoboScript 모듈형 구조",
+        "size": "확인 필요",
+        "training_data": "확인 필요",
+        "release": "확인 필요",
+        "evidence": []
+      },
+      "image": null,
+      "commercial": {
+        "verdict": "확인 필요",
+        "code_license": null,
+        "weights_license": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "poc": {
+        "verdict": "확인 필요",
+        "has_weights": null,
+        "has_code": null,
+        "has_demo": null,
+        "evidence": [],
+        "reason_ko": null
+      },
+      "hardware": {
+        "param_count": null,
+        "est_vram_gb": null,
+        "local_run": "확인 필요",
+        "evidence": []
+      },
+      "claude_gpt": {
+        "verdict": "기법 적용 가능",
+        "reason_ko": "시연을 바탕으로 연습하고 피드백을 context에 쌓는 방식을 따라 할 수 있어요."
+      },
+      "skill_gpt": {
+        "fit": "해당 없음",
+        "reason_ko": "시뮬레이터와 로봇 하드웨어가 필요해서 묶어 둘 지시문이 없어요."
+      }
+    }
+  ]
+}

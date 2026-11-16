@@ -1,0 +1,290 @@
+모닥로그 AI 리포트
+#기타 #음성 #LLM
+2026.11.16 월요일
+뉴스레터 개발자가 만든 앱 보러가기: AI 그림일기 기로기 https://play.google.com/store/apps/details?id=com.modaclog.girogi
+
+⚡️ 군집화, 반복은 줄이고 속도는 높이고 이번 주 AI 모델 10
+
+구독자님, 안녕하세요. 지난주 Hugging Face Papers에 올라온 모델 중 GitHub star를 많이 받은 10개를 골랐어요!
+
+========================================
+이번 주 흐름 한눈에 📈
+
+이번 주에는 로봇 쪽이 눈에 띄었어요. LingBot-Touch는 촉각 표현을, Embodied First Exam과 WICL은 로봇 제어와 조작을 다뤘어요. 한편 e-means, MACaQ, Flide처럼 반복 횟수와 계산량, 추론 속도를 줄이는 연구도 상위에 올랐어요.
+
+========================================
+이번 주 바로 써볼 만한 것 ✨
+
+[데모] Confucius4-R2T2: 앞선 출력을 고치지 않는 스트리밍 ASR
+왜 좋은지: 말하는 도중 나온 글자를 다시 고치지 않는 음성 인식을 데모에서 바로 확인해 볼 수 있어요.
+어떻게 써 볼지: 데모에 짧은 문장을 직접 말해 넣고 앞부분 글자가 끝까지 그대로 남는지 봐요.
+데모 써보기: https://huggingface.co/spaces/netease-youdao/confucius4-r2t2-demo
+
+[데모] e-means: 지수 이동 평균으로 k-means 군집화 가속
+왜 좋은지: k-means 군집화를 적은 반복 횟수로 끝내는 방식을 데모에서 직접 볼 수 있어요.
+어떻게 써 볼지: 데모에 가진 임베딩 데이터를 넣어 보고 반복 횟수가 얼마나 줄어드는지 봐요.
+데모 써보기: https://huggingface.co/spaces/TTS-AGI/clap2-live-taxonomy
+
+[데모] Flide: 결정 모델 추론을 정확하게 가속하는 엔진
+왜 좋은지: 결정 모델 에이전트의 여러 질의를 한 번에 처리하는 추론 엔진을 데모로 볼 수 있어요.
+어떻게 써 볼지: 데모에 질의를 여러 개 한꺼번에 넣어 vLLM과 처리 속도를 견줘 봐요.
+데모 써보기: https://huggingface.co/spaces/BradNLP/Flide
+
+========================================
+이것만 보면 끝! 이번 주 AI 모델 Top 3 ⚡️
+GitHub star 기준
+
+----------------------------------------
+1위 ㅣ 기타 ㅣ ★ 41,706
+e-means: 지수 이동 평균으로 k-means 군집화 가속
+e-means: outperforming k-means (in one-tenth the epochs)
+
+데이터 임베딩을 묶는 k-means 군집화를 훨씬 적은 반복 횟수로 끝내 주는 알고리즘이에요.
+· mini-batch 업데이트에 지수 이동 평균을 적용해 임베딩을 군집화해요.
+· 지수 이동 평균을 쓰고 하이퍼파라미터는 공식으로 정해 탐색이 필요 없어요.
+· 25 epoch Lloyd k-means의 loss를 1.4~2.6 epoch 만에 넘어섰어요.
+💡 수십억 개 임베딩을 수백만 개 군집으로 나누는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: mini-batch k-means 군집화 알고리즘
+구조: 지수 이동 평균 기반 mini-batch k-means 업데이트
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요
+라이선스: https://huggingface.co/qwegnai/GLM-5.3-Flash-shvq4g32-shvq2g64-shvq3g64
+
+논문: https://huggingface.co/papers/2611.09501
+arXiv: https://arxiv.org/abs/2611.09501
+코드: https://github.com/facebookresearch/faiss
+프로젝트: https://e-means.github.io/
+
+----------------------------------------
+2위 ㅣ 음성 ㅣ ★ 894
+Confucius4-R2T2: 앞선 출력을 고치지 않는 스트리밍 ASR
+Confucius4-R2T2: A Stable-Prefix Streaming ASR Model for Real Real-Time Transcription
+
+말하는 동안 이미 나온 글자를 다시 고치지 않고 실시간으로 받아 적어 주는 음성 인식 모델이에요.
+· 음성을 실시간으로 글로 바꾸면서 이미 낸 앞부분 출력을 다시 수정하지 않는 ASR 모델이에요.
+· Longest Stable Prefix 라벨로 학습해 구조 변경 없이 full-context 모델을 스트리밍 모델로 바꿨어요.
+· full-context 기반 모델에 가까운 인식 품질과 낮은 emission lag를 함께 기록했어요.
+💡 번역기나 음성 에이전트에 실시간 자막을 넘기는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 안정 prefix 스트리밍 ASR 모델
+구조: Qwen3-ASR-1.7B 후속 학습, audio encoder와 projector 고정
+크기: 2B 파라미터
+공개 범위: 가중치 · GitHub · 데모
+
+🧪 바로 써볼 수 있어요 · 🖥️ 개인 GPU 약 5GB
+
+논문: https://huggingface.co/papers/2611.06043
+arXiv: https://arxiv.org/abs/2611.06043
+코드: https://github.com/netease-youdao/Confucius4-R2T2
+프로젝트: https://r2t2.ai/
+
+----------------------------------------
+3위 ㅣ 기타 ㅣ ★ 605
+LingBot-Touch: 센서가 달라도 쓰는 촉각 표현 학습
+Learning Heterogeneous Tactile Representation for General Dexterous Manipulation
+
+서로 다른 촉각 센서 데이터를 하나의 tactile token으로 바꿔 로봇 손 조작을 돕는 모델이에요.
+· 압저항, 자기, 시각 기반 촉각 센서의 신호를 통일된 표현으로 바꿔 줘요.
+· 센서마다 물리 특성이 달라도 쓸 수 있고, 새 센서 종류도 쉽게 추가할 수 있어요.
+· diffusion policy와 VLA 모델에 붙였더니 시뮬레이션과 실제 로봇에서 조작 솜씨가 일관되게 나아졌어요.
+💡 로봇 손이 접촉을 느끼며 정교하게 물건을 다루는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 촉각 foundation model
+구조: 센서 종류와 무관한 통합 촉각 표현, plug-and-play tactile token
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요
+라이선스: https://github.com/Robbyant/lingbot-touch/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.12806
+arXiv: https://arxiv.org/abs/2611.12806
+코드: https://github.com/Robbyant/lingbot-touch
+프로젝트: https://technology.robbyant.com/lingbot-touch
+
+========================================
+AI 기술 쉽게 보기 🔍
+
+[오늘의 포인트] 최근 데이터에 더 무게를 둬서 군집화를 빨리 끝내요.
+
+EMA: 최근 값에 무게를 두는 평균
+
+mini-batch로 데이터를 조금씩 읽을 때마다 군집을 업데이트하는데, 지수 이동 평균은 새로 들어온 값과 지금까지의 값을 일정한 비율로 섞어요. 최근 값일수록 비중이 크고 오래된 값의 영향은 조금씩 줄어요. e-means는 이 방식을 임베딩 군집화에 쓰고, 하이퍼파라미터를 공식으로 정해서 따로 탐색할 필요가 없어요. 25 epoch 걸리는 Lloyd k-means의 loss를 1.4~2.6 epoch 만에 넘어섰어요.
+
+[예를 들어] 매달 용돈 기록을 볼 때 이번 달 지출을 가장 크게 반영하고, 몇 달 전 기록은 조금씩 흐려지게 두는 것과 같아요. 그러면 요즘 씀씀이가 평균에 바로 드러나요.
+
+========================================
+놓치기 아까운 4위부터 10위까지 👀
+GitHub star 기준
+
+----------------------------------------
+4위 ㅣ LLM ㅣ ★ 508
+Flide: 결정 모델 추론을 정확하게 가속하는 엔진
+Flide: Accelerating Decision Inference with Exact State Forking
+
+결정 모델 기반 에이전트의 질의를 vLLM보다 빠르게 처리하는 추론 엔진이에요.
+· 결정 요청의 분기 구조를 하나의 token stream으로 합쳐 여러 질의를 한 번에 처리해요.
+· ForkAttention으로 attention 층과 Gated DeltaNet 층 모두에서 분기별 계산을 분리해요.
+· vLLM과 SGLang보다 최대 9.5배 빠르게 질의에 답했어요.
+💡 에이전트가 빠르게 분류 판단을 내려야 하는 시스템에 쓸 수 있어요.
+🧩 모델 정보
+유형: LLM 결정 모델용 추론 엔진
+구조: ForkAttention, GPU 메타데이터 기반 분기 인덱스, 사전 기록 실행 그래프
+크기: 853M 파라미터 (외 3개 모델)
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요 · 🖥️ 개인 GPU 약 2GB
+라이선스: https://huggingface.co/OmniJev/OneJev1.6-0.8B
+
+논문: https://huggingface.co/papers/2610.42148
+arXiv: https://arxiv.org/abs/2610.42148
+코드: https://github.com/OmniJev/Flide
+프로젝트: https://flide.org/
+
+----------------------------------------
+5위 ㅣ 비전 ㅣ ★ 406
+InstantHMR: 휴대폰에서 실시간으로 사람 3D mesh 복원
+InstantHMR : Real-Time Human Mesh Recovery on Your Phone
+
+사진 한 장에서 사람의 3D 몸 mesh를 휴대폰에서 5.5ms 만에 복원해 주는 모델이에요.
+· 사진 한 장을 넣으면 사람의 6,890개 vertex 3D 몸 mesh를 복원해요.
+· Momentum Human Rig 기반 regressor를 SAM 3D Body 공개 annotation만으로 학습했어요.
+· Galaxy S23 NPU에서 사람당 5.5ms가 걸렸고 3DPW의 PA-MPJPE는 40.0mm였어요.
+💡 휴대폰 AR/VR 운동 게임에서 몸 동작을 읽는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 모바일용 3D 인체 mesh 복원 모델
+구조: Momentum Human Rig 기반 single-image regressor
+공개 범위: 가중치 · GitHub
+
+🧪 바로 써볼 수 있어요
+
+논문: https://huggingface.co/papers/2611.09195
+arXiv: https://arxiv.org/abs/2611.09195
+코드: https://github.com/Naturalpad-studio/InstantHMR
+
+----------------------------------------
+6위 ㅣ 기타 ㅣ ★ 352
+WorldFoundry: world model 추론과 평가를 통합한 오픈소스 인프라
+WorldFoundry: Towards Unified Infrastructure for World Intelligence
+
+여러 world model을 한곳에서 돌리고 같은 기준으로 비교해 볼 수 있게 해 주는 오픈소스 도구예요.
+· video, 3D, 4D, 로봇 행동 world model의 추론과 평가를 한 인프라에서 실행해요.
+· 모델마다 다른 입력과 평가 방식을 adapter로 맞추고, 실행 준비 상태와 평가 주장을 따로 기록해요.
+· 모델 270개가 담긴 catalog를 구축했어요.
+💡 여러 video world model의 결과를 같은 기준으로 비교하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: World model 추론과 평가용 오픈소스 인프라
+구조: modality별 adapter, manifest, scorecard 기반 실행 구조
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요
+라이선스: https://github.com/OpenEnvision/WorldFoundry/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.10771
+arXiv: https://arxiv.org/abs/2611.10771
+코드: https://github.com/OpenEnvision/WorldFoundry
+프로젝트: https://openenvision.org/WorldFoundry/
+
+----------------------------------------
+7위 ㅣ LLM ㅣ ★ 300
+MACaQ: 레이어별 독립 MXFP4 W4A4 양자화
+MACaQ: Fast, Model Agnostic Calibrated Quantization for Low-Precision Weights and Activations
+
+LLM과 diffusion 모델의 가중치와 활성값을 4비트로 줄여 메모리와 계산량을 낮춰 주는 양자화 방법이에요.
+· 모든 linear layer를 따로 MXFP4 W4A4로 post-training quantization 해요.
+· 레이어마다 scale과 block-Hadamard 변환을 온라인으로 적용해 레이어 간 의존성을 없앴어요.
+· Qwen3-32B를 vLLM에서 돌릴 때 순수 MXFP4보다 end-to-end 오버헤드가 2.3%만 늘었어요.
+💡 큰 LLM을 적은 GPU 메모리로 서빙하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: MXFP4 W4A4 양자화 기법
+구조: per-channel scale, block-Hadamard 변환, Flip-Refinement 기반…
+공개 범위: 가중치 · GitHub · 데모
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요
+라이선스: https://huggingface.co/huawei-csl/Qwen3.6-35B-A3B-MACaQ-R-GGUF
+
+논문: https://huggingface.co/papers/2611.10649
+arXiv: https://arxiv.org/abs/2611.10649
+코드: https://github.com/huawei-csl/MACaQ
+프로젝트: https://huawei-csl.com/blog/macaq/
+
+----------------------------------------
+8위 ㅣ 기타 ㅣ ★ 297
+PhysioWave-T: 생체신호 wavelet foundation model의 token 절감
+PhysioWave-T: Token-Efficient Wavelet Foundation Models for Biosignals
+
+뇌파, 심전도, 근전도 신호를 적은 token으로 처리해 분류하는 foundation model이에요.
+· EEG, ECG, sEMG 신호를 모달리티별 Transformer 하나로 처리하는 모델이에요.
+· wavelet subband를 tokenization 전에 합쳐 sequence 길이를 줄였어요.
+· Transformer latency를 4.0~7.2배 줄이고 정확도 손실은 없었어요.
+💡 웨어러블 기기로 잰 뇌파에서 발작을 감지하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 생체신호 wavelet foundation model
+구조: wavelet scale folding 적용 Transformer, 모달리티별 encoder
+공개 범위: 가중치 · GitHub
+
+💼 상업 이용 가능 · 🧪 바로 써볼 수 있어요
+라이선스: https://huggingface.co/ForeverBlue/EEG
+
+논문: https://huggingface.co/papers/2611.08969
+arXiv: https://arxiv.org/abs/2611.08969
+코드: https://github.com/ForeverBlue816/PhysioWave
+프로젝트: https://huggingface.co/collections/ForeverBlue/physiowave-t
+
+----------------------------------------
+9위 ㅣ 에이전트 ㅣ ★ 279
+Embodied First Exam: 코딩 에이전트의 로봇 제어 평가
+Embodied First Exam
+
+코딩 에이전트가 여러 로봇을 제어할 수 있는지 시험하는 benchmark예요.
+· 47대 로봇, 35개 suite, 1,156개 작업으로 코딩 에이전트의 로봇 제어 능력을 평가해요.
+· 직접 제어, 코드 작성, 정책 학습 중 에이전트가 제어 방식을 직접 고르게 했어요.
+· 핵심 456개 작업에서 가장 강한 에이전트도 Standard Setting 성공률이 34%였어요.
+💡 코딩 에이전트가 로봇을 얼마나 잘 다루는지 점검하는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 코딩 에이전트용 로봇 제어 benchmark
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요
+라이선스: https://github.com/mll-lab-nu/embodied-first-exam/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.12177
+arXiv: https://arxiv.org/abs/2611.12177
+코드: https://github.com/mll-lab-nu/embodied-first-exam
+프로젝트: https://www.embodied-first-exam.ai/
+
+----------------------------------------
+10위 ㅣ 에이전트 ㅣ ★ 274
+WICL: 시뮬레이터 연습으로 로봇 조작을 context에 학습
+World In-Context Learning for Agentic Robot Manipulation
+
+시연 하나를 보고 시뮬레이터에서 연습해, 로봇이 새 작업을 수행하게 해 주는 방법이에요.
+· frozen 모델이 시연을 보고 시뮬레이터에서 연습한 뒤, 피드백을 context에 적어 로봇을 조작해요.
+· 가중치를 고치지 않고, 세계에서 얻은 피드백을 context에 기록하는 World In-Context Learning을…
+· RoboTwin 2.0의 50개 작업에서 평균 성공률 83.4%를 기록했고, 학습된 정책보다 20점 넘게 높았어요.
+💡 시연 하나로 양팔 로봇에게 물건 조작 작업을 가르치는 데 쓸 수 있어요.
+🧩 모델 정보
+유형: 로봇 조작용 in-context learning 방법
+구조: frozen 모델, 시뮬레이터 연습, Task Memory, RoboScript 모듈형 구조
+공개 범위: GitHub
+
+💼 코드 상업 이용 가능 · 🧪 코드만 공개됐어요 · 🤖 Claude/GPT 기법 적용
+라이선스: https://github.com/ArcheOne-AI/RoboScript/blob/main/LICENSE
+
+논문: https://huggingface.co/papers/2611.12885
+arXiv: https://arxiv.org/abs/2611.12885
+코드: https://github.com/ArcheOne-AI/RoboScript
+프로젝트: https://archeone-ai.github.io/RoboScript/
+
+========================================
+오늘 하루, 그림 한 장으로 남겨 볼까요? AI 그림일기 기로기: https://play.google.com/store/apps/details?id=com.modaclog.girogi
+========================================
+이번 주 리포트는 여기까지! 다음 주 월요일에 또 만나요 👋
+
+모닥로그 AI 리포트
+매주 월요일 오전 8시에 보내드려요. 출처: Hugging Face Papers
+상업적 사용 판정은 공개 라이선스 정보를 바탕으로 한 참고용이에요. 실제 사용 전 원문을 확인해 주세요.
+더 이상 받고 싶지 않다면 이 메일에 "수신거부"라고 회신해 주세요.
+지난 호 보기: https://silber60.github.io/AI_news_log/#archive
+구독하기: https://silber60.github.io/AI_news_log/#subscribe

@@ -1,0 +1,409 @@
+{
+  "issue_id": "2026-W46",
+  "count": 10,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2611.09501",
+      "upvotes": 13,
+      "numComments": 3,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 41706,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.09501",
+          "title": "e-means: outperforming k-means (in one-tenth the epochs)",
+          "summary": "Lloyd's k-means algorithm is a long-running standard for clustering, with applications in data analysis, retrieval, quantization and data curation. In this paper, we introduce an exponential moving average optimization procedure for k-means with mini-batch updates, powered by modern deep learning machinery and new insights. We also establish scaling laws on how decay rate and batch size impact final performance. This gives us a formulaic rule to fix them for multiple problem sizes and embedding datasets, without the need for any hyperparameter sweep. The resulting clustering algorithm, coined e-means, is much faster than Lloyd k-means and converges to lower losses, frequently even beating k-means++. On a wide array of embeddings datasets, it beats the loss of Lloyd k-means at 25 epochs in 1.4 to 2.6 epochs, which translates to 10-45x GPU wall-clock speedups compared to state-of-the-art k-means implementations. As an example, e-means partitions DINO10B, a dataset of 10 billion DINO embeddings, into 16 million clusters in only 2.5 epochs, reaching a loss below Lloyd's at 25 epochs.",
+          "upvotes": 13,
+          "publishedAt": "2026-11-06T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "githubRepo": "https://github.com/facebookresearch/faiss",
+          "githubStars": 41706,
+          "projectPage": "https://e-means.github.io/"
+        },
+        "title": "e-means: outperforming k-means (in one-tenth the epochs)",
+        "numComments": 3,
+        "organization": {
+          "name": "meta",
+          "fullname": "Meta"
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.06043",
+      "upvotes": 95,
+      "numComments": 3,
+      "submittedOnDailyAt": "2026-11-09T00:00:00+00:00",
+      "github_stars": 894,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.06043",
+          "title": "Confucius4-R2T2: A Stable-Prefix Streaming ASR Model for Real Real-Time Transcription",
+          "summary": "Streaming speech recognition is increasingly consumed by machines, such as translators and voice agents, that act on each token as it appears. A token that is later revised costs wasted work or a wrong action. In this work, we present Confucius4-R2T2 (short for Real Real-Time Transcription), a stable-prefix streaming ASR model that never modifies its earlier output while maintaining high accuracy and low latency. R2T2 is obtained by post-training Qwen3-ASR-1.7B on 1,500 hours of Chinese and English audio while freezing its pre-trained audio encoder and projector. The adaptation is based on the concept of Longest Stable Prefix (LSP), a new notion that we introduce in this work. We prove that LSP is monotone under the prefix order, consistent with the full-audio output, and maximal among labels that equal a whole earlier output. Learning from LSP labels converts a full-context model into a stable-prefix streaming one without any architectural change. Extensive evaluations show that R2T2 brings streaming recognition close to the base model's full-context quality while delivering stable text with low emission lag. Its gains extend beyond the post-training languages, demonstrating a practical path from full-context ASR to stable streaming. We open-source the model weights and code at https://huggingface.co/netease-youdao/Confucius4-R2T2 and https://github.com/netease-youdao/Confucius4-R2T2.",
+          "upvotes": 95,
+          "publishedAt": "2026-11-04T06:46:50.000Z",
+          "submittedOnDailyAt": "2026-11-09T00:00:00.000Z",
+          "ai_summary": "A full-context speech recognizer is adapted to emit immutable streaming transcripts with near full-context accuracy and low latency by learning longest stable prefix labels.",
+          "ai_keywords": [
+            "stable-prefix streaming ASR",
+            "post-training",
+            "Qwen3-ASR-1.7B",
+            "audio encoder",
+            "projector",
+            "Longest Stable Prefix (LSP)",
+            "prefix order",
+            "full-context ASR",
+            "full-context model",
+            "emission lag",
+            "streaming recognition"
+          ],
+          "githubRepo": "https://github.com/netease-youdao/Confucius4-R2T2",
+          "githubStars": 894,
+          "projectPage": "https://r2t2.ai/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/6a9e88fa2bfa420de87da276/_VUVf7TSeDszMx2s84Bl-.qt"
+          ]
+        },
+        "title": "Confucius4-R2T2: A Stable-Prefix Streaming ASR Model for Real Real-Time Transcription",
+        "numComments": 3,
+        "organization": {
+          "name": "netease-youdao",
+          "fullname": "Netease Youdao"
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.12806",
+      "upvotes": 104,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 605,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.12806",
+          "title": "Learning Heterogeneous Tactile Representation for General Dexterous Manipulation",
+          "summary": "Tactile sensing is an indispensable modality for contact-rich dexterous manipulation, a capability that hints at the ultimate frontiers of embodied intelligence. However, commercially available tactile sensors are still at a relatively early stage of development, with each type of sensor offering irreplaceable strengths alongside its own drawbacks. A key challenge is thus to free tactile understanding from sensor-specific physics, so that embodied models can effectively leverage heterogeneous tactile data. To this end, we develop LingBot-Touch, a tactile foundation model characterized by the following properties. (i) Our model yields a unified representation across different tactile sensors (i.e., piezoresistive, magnetic, and visuotactile sensors), and is easily extensible to new sensor types. (ii) The resulting tactile tokens are plug-and-play: they can be seamlessly integrated into policy models across paradigms, from diffusion policy to vision-language-action (VLA) models such as π_{0.5} and LingBot-VLA, consistently enhancing manipulation dexterity. (iii) Extensive experiments, spanning simulation and real-robot deployments across multiple hardware platforms, demonstrate that our tactile representation substantially benefits complex manipulation tasks while maintaining strong computational efficiency. We believe the findings in this work demonstrate the potential of leveraging cross-sensor data to scale tactile learning, and offer encouraging insights for the design of future hardware and embodied models.",
+          "upvotes": 104,
+          "publishedAt": "2026-11-09T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "ai_summary": "LingBot-Touch is a tactile foundation model that learns a unified, extensible representation across heterogeneous tactile sensors, yielding plug-and-play tactile tokens that consistently enhance manipulation policies such as diffusion policy and VLA models.",
+          "ai_keywords": [
+            "tactile foundation model",
+            "unified representation",
+            "heterogeneous tactile data",
+            "tactile tokens",
+            "plug-and-play",
+            "policy models",
+            "diffusion policy",
+            "vision-language-action (VLA) models",
+            "π0.5",
+            "LingBot-VLA",
+            "embodied models",
+            "cross-sensor data",
+            "tactile learning",
+            "manipulation dexterity"
+          ],
+          "githubRepo": "https://github.com/Robbyant/lingbot-touch",
+          "githubStars": 605,
+          "projectPage": "https://technology.robbyant.com/lingbot-touch"
+        },
+        "title": "Learning Heterogeneous Tactile Representation for General Dexterous Manipulation",
+        "numComments": 2,
+        "organization": {
+          "name": "robbyant",
+          "fullname": "Robbyant"
+        }
+      }
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.42148",
+      "upvotes": 36,
+      "numComments": 6,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 508,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2610.42148",
+          "title": "Flide: Accelerating Decision Inference with Exact State Forking",
+          "summary": "Decision models such as Jev have emerged as a highly promising paradigm for LLM agent systems, providing lightweight and reliable categorical reasoning for rapid System One execution. However, existing generation-oriented inference engines fail to support these workloads effectively, suffering from severe prefix recomputation overheads or distorted output probabilities. To address this challenge, we propose Flide, an efficient and exact inference engine that decouples the logical tree structure of a decision request from its physical execution within a single flattened token stream. Through ForkAttention, Flide navigates request dependencies using GPU-resident indices across both standard attention and recurrent Gated DeltaNet layers, guaranteeing in exact arithmetic that every query branch evaluates identically to an isolated forward pass. By expressing branch topologies directly in GPU-resident metadata, Flide accommodates diverse request mixtures with a compact set of pre-recorded execution graphs while enabling expanding agent histories to resume from checkpoints saved in earlier passes. Extensive evaluations on public hybrid and decision models demonstrate that Flide answers queries up to 9.5 times faster than vLLM and SGLang while staying closest to a float32 reference in total variation distance. By unifying physical execution throughput with mathematical exactness, Flide establishes a principled foundation for scalable, latency-critical decision intelligence in agent systems.",
+          "upvotes": 36,
+          "publishedAt": "2026-10-30T17:59:38.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "ai_summary": "Flide is an exact inference engine that accelerates decision-model LLM agents by decoupling logical request trees from physical execution and using ForkAttention to preserve exact branch evaluations.",
+          "ai_keywords": [
+            "LLM agent systems",
+            "categorical reasoning",
+            "System One execution",
+            "inference engines",
+            "prefix recomputation",
+            "output probabilities",
+            "exact inference engine",
+            "logical tree structure",
+            "flattened token stream",
+            "ForkAttention",
+            "GPU-resident indices",
+            "standard attention",
+            "recurrent Gated DeltaNet layers",
+            "exact arithmetic",
+            "query branch",
+            "isolated forward pass",
+            "branch topologies",
+            "GPU-resident metadata",
+            "execution graphs",
+            "agent histories",
+            "checkpoints",
+            "hybrid and decision models",
+            "vLLM",
+            "SGLang",
+            "float32 reference",
+            "total variation distance"
+          ],
+          "githubRepo": "https://github.com/OmniJev/Flide",
+          "githubStars": 508,
+          "projectPage": "https://flide.org/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/63490424667da7e6737f49a4/esE12qCjIhzLipdUMMZOg.mp4"
+          ]
+        },
+        "title": "Flide: Accelerating Decision Inference with Exact State Forking",
+        "numComments": 6,
+        "organization": {
+          "name": "NationalUniversityofSingapore",
+          "fullname": "National University of Singapore"
+        }
+      }
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.09195",
+      "upvotes": 2,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 406,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.09195",
+          "title": "InstantHMR : Real-Time Human Mesh Recovery on Your Phone",
+          "summary": "Real-time 3D human mesh recovery from a single image on mobile devices is a challenging problem with many applications, including robotics, biomechanics, AR/VR, and exergames. Current state-of-the-art models are either too slow to run efficiently on mobile devices or sacrifice accuracy for speed. We present InstantHMR, a family of open-source single-image regressors suited for mobile inference, based on the Momentum Human Rig (MHR) parametric model and trained exclusively on publicly available annotations from the SAM 3D Body dataset. Our approach achieves remarkable performance on a Samsung Galaxy S23 NPU, recovering a 6,890-vertex body mesh in 5.5 ms per person, and 0.98 ms on an NVIDIA RTX 4070 GPU. This speed surpasses all existing methods we evaluated. On mobile, it is 12x faster than the single mobile-compatible method that slightly outperforms ours in accuracy, while achieving competitive accuracy with 40.0 mm PA-MPJPE on 3DPW, 48.8 mm on EMDB and 41.7 mm on RICH. To ensure fair comparisons, we re-evaluate 11 state-of-the-art methods under a unified protocol aligned with the closest MHR-based competitors, including Meta's official MHR-to-SMPL conversion, and report their reproduction results. Additionally, we measure latency across eight different targets, ranging from desktop TensorRT to two phone NPUs. Code and models are available at https://github.com/Naturalpad-studio/InstantHMR.",
+          "upvotes": 2,
+          "publishedAt": "2026-11-06T09:17:27.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "githubRepo": "https://github.com/Naturalpad-studio/InstantHMR",
+          "githubStars": 406
+        },
+        "title": "InstantHMR : Real-Time Human Mesh Recovery on Your Phone",
+        "numComments": 2,
+        "organization": {
+          "name": "naturalpad",
+          "fullname": "naturalpad"
+        }
+      }
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.10771",
+      "upvotes": 58,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 352,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.10771",
+          "title": "WorldFoundry: Towards Unified Infrastructure for World Intelligence",
+          "summary": "Visual generative models increasingly blur the line between synthesizing observations and simulating environments. Yet visual plausibility alone does not constitute successful world modeling: compelling outputs may lack persistent state, physical dynamics, or causally consistent responses to interactions. We define a generative world model as a predictive dynamical system that maintains a persistent, history-conditioned representation of an environment, updates that representation in response to actions or interventions, and generates temporally coherent trajectories that reflect outcomes under observed and counterfactual interventions. From this definition, we derive an intelligence-oriented framework spanning perceptual grounding, persistent state modeling, controllable transformation, dynamics-aware prediction, and closed-loop interaction. We present WorldFoundry, open-source infrastructure for reproducible inference and evaluation across video, 3D and 4D, embodied action, and interactive world systems. WorldFoundry unifies model and benchmark discovery, runtime and asset preparation, execution orchestration, artifact management, and interactive visualization, while modality-specific adapters preserve native inputs, execution semantics, output representations, and evaluation protocols. Explicit manifests, durable artifact contracts, and evidence-aware scorecards separate execution readiness from evaluative claims, making each claim traceable to its supporting artifacts. The catalog contains 270 model entries, 74 benchmarks, and 62 registered metric entries, with readiness and execution evidence recorded separately. WorldFoundry enables reproducible comparison of persistent, controllable dynamics across heterogeneous systems, advancing the field from perceptual synthesis toward measurable world intelligence.",
+          "upvotes": 58,
+          "publishedAt": "2026-11-07T14:59:22.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "ai_summary": "WorldFoundry offers open-source infrastructure for reproducible inference and evaluation of generative world models across video, 3D/4D, embodied action, and interactive systems, with traceable evidence and benchmarks.",
+          "ai_keywords": [
+            "visual generative models",
+            "generative world model",
+            "predictive dynamical system",
+            "persistent history-conditioned representation",
+            "temporally coherent trajectories",
+            "counterfactual interventions",
+            "perceptual grounding",
+            "persistent state modeling",
+            "controllable transformation",
+            "dynamics-aware prediction",
+            "closed-loop interaction",
+            "video",
+            "3D and 4D",
+            "embodied action",
+            "interactive world systems",
+            "modality-specific adapters",
+            "evidence-aware scorecards",
+            "execution orchestration",
+            "artifact management",
+            "interactive visualization"
+          ],
+          "githubRepo": "https://github.com/OpenEnvision/WorldFoundry",
+          "githubStars": 352,
+          "projectPage": "https://openenvision.org/WorldFoundry/"
+        },
+        "title": "WorldFoundry: Towards Unified Infrastructure for World Intelligence",
+        "numComments": 2,
+        "organization": {
+          "name": "OpenEnvisionLab",
+          "fullname": "OpenEnvision"
+        }
+      }
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.10649",
+      "upvotes": 30,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-11T00:00:00+00:00",
+      "github_stars": 300,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.10649",
+          "title": "MACaQ: Fast, Model Agnostic Calibrated Quantization for Low-Precision Weights and Activations",
+          "summary": "Weight-activation quantization can reduce the memory and compute cost of neural-network inference, but recent methods often require expensive optimization and architecture-specific propagation of basis transforms across layers. We introduce MACaQ, an MXFP4 W4A4 post-training quantization method that treats every linear layer independently. MACaQ applies a per-channel scale and a block-Hadamard transform online to each layer's activations, while absorbing the corresponding inverse transforms into its weights. Retaining these transforms online avoids cross-layer dependencies and enables a simple streaming implementation of the quantization process, in which only one layer must reside in memory at a time. To improve over round-to-nearest quantization, we introduce Flip-Refinement, a Hessian-aware coordinate-descent procedure that greedily moves individual FP4 codes to adjacent representable values. Despite executing the activation transforms at inference time, MACaQ adds only 2.3% end-to-end overhead over pure MXFP4 on Qwen3-32B in vLLM. MACaQ reaches lower perplexity than DuQuant++ and MR-GPTQ, and already matches their best perplexity on Llama-3-8B in 11 times less quantization time. We further apply MACaQ without architecture-specific modifications to an image diffusion model, illustrating the generality of its layer-local design and show quantization of a 122B parameter model in 64 minutes, using only 32.5GB GPU RAM.",
+          "upvotes": 30,
+          "publishedAt": "2026-11-07T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-11T00:00:00.000Z",
+          "ai_summary": "MACaQ is an MXFP4 W4A4 post-training quantization method that quantizes each linear layer independently using online activation transforms and Hessian-aware refinement, reducing cost while preserving accuracy across language and diffusion models.",
+          "ai_keywords": [
+            "weight-activation quantization",
+            "post-training quantization",
+            "MXFP4",
+            "W4A4",
+            "per-channel scale",
+            "block-Hadamard transform",
+            "activation transforms",
+            "inverse transforms",
+            "linear layer",
+            "cross-layer dependencies",
+            "streaming implementation",
+            "round-to-nearest quantization",
+            "Flip-Refinement",
+            "Hessian-aware coordinate-descent",
+            "FP4 codes",
+            "perplexity",
+            "Qwen3-32B",
+            "vLLM",
+            "DuQuant++",
+            "MR-GPTQ",
+            "Llama-3-8B",
+            "image diffusion model",
+            "layer-local design"
+          ],
+          "githubRepo": "https://github.com/huawei-csl/MACaQ",
+          "githubStars": 300,
+          "projectPage": "https://huawei-csl.com/blog/macaq/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/68b1e03b8aefe9d999b719f2/SK0ZEOfLp0ISepSXXQmud.png"
+          ]
+        },
+        "title": "MACaQ: Fast, Model Agnostic Calibrated Quantization for Low-Precision Weights and Activations",
+        "numComments": 2,
+        "organization": {
+          "name": "huawei-csl",
+          "fullname": "HUAWEI Computing Systems Lab"
+        }
+      }
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.08969",
+      "upvotes": 2,
+      "numComments": 2,
+      "submittedOnDailyAt": "2026-11-10T00:00:00+00:00",
+      "github_stars": 297,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.08969",
+          "title": "PhysioWave-T: Token-Efficient Wavelet Foundation Models for Biosignals",
+          "summary": "We present PhysioWave-T, a token-efficient wavelet foundation model family for EEG, ECG, and sEMG. Dynamic scale folding recombines J+1 wavelet subbands prior to tokenization, compressing sequence length from (J+1)CS to CS tokens for J levels, C channels, and S temporal patches. Route-specific front ends and learned channel-name embeddings allow one Transformer per modality to handle diverse montages and sampling rates, while unseen setups reuse the backbone via lightweight adapters. We pre-train a 30M-parameter EEG model on over 15M windows (19--128 channels), alongside ECG (30M) and sEMG (12M) encoders. Across four EEG routes, scale folding cuts Transformer latency by 4.0--7.2x and peak memory by 6.8--12.7x over scale expansion without accuracy loss. Our EEG encoder leads 8 of 9 metrics against BENDR, BIOT, LaBraM, and EEGPT, and surpasses LUNA-L on wearable seizure detection with fewer parameters. Reliability-aware latent fusion (RALF) further integrates summary tokens from independently pre-trained encoders via sample-adaptive weights. On SeizeIT2, RALF raises event sensitivity at 11 false alarms/h from 61.4% to 74.4% and window AUPRC from 0.321 to 0.399 over the best unimodal baseline, outperforming weighted-logit and concatenation fusion across all variants. PhysioWave-T also achieves state-of-the-art sEMG accuracies and top macro-F1 on PTB-XL Super and Chapman-Shaoxing. Code and models: https://github.com/ForeverBlue816/PhysioWave.",
+          "upvotes": 2,
+          "publishedAt": "2026-11-06T04:30:15.000Z",
+          "submittedOnDailyAt": "2026-11-10T00:00:00.000Z",
+          "githubRepo": "https://github.com/ForeverBlue816/PhysioWave",
+          "githubStars": 297,
+          "projectPage": "https://huggingface.co/collections/ForeverBlue/physiowave-t"
+        },
+        "title": "PhysioWave-T: Token-Efficient Wavelet Foundation Models for Biosignals",
+        "numComments": 2,
+        "organization": {
+          "name": "NanyangTechnologicalUniversity",
+          "fullname": "Nanyang Technological University"
+        }
+      }
+    },
+    {
+      "rank": 9,
+      "paper_id": "2611.12177",
+      "upvotes": 28,
+      "numComments": 4,
+      "submittedOnDailyAt": "2026-11-11T00:00:00+00:00",
+      "github_stars": 279,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.12177",
+          "title": "Embodied First Exam",
+          "summary": "Early successes on agentic robotics point to a potential paradigm shift toward using coding agents to control robots. Existing robotics benchmarks are built around visuomotor policy learning, leaving it open whether coding agents can reliably control diverse robots under physical-world constraints. We therefore introduce the Embodied First Exam, a unified, comprehensive, and agent-native evaluation framework where coding agents can choose their own control approach: direct control, code to control, or train a policy to control. We hope it serves as a first exam for coding agents before they enter the physical world, with 1,156 tasks in 35 suites on 47 robots, including 9 new suites that go beyond pick-and-place to spatial puzzles, dexterous manipulation, multi-robot interaction, dynamic whole-body control, and sim-to-sim engineering. Each task can be run in up to three evaluation settings. The Standard Setting mimics the real world: the agent receives only sensor observations and, by default, cannot reset the environment. Its Realtime variant keeps the environment running while the agent reasons. The Privileged Setting gives the agent access to the full simulator state and unlimited resets, allowing it to search for an oracle solution for training purposes. Success rates in this setting serve as an approximate upper bound. On the 456 core tasks, the strongest of eight agents, GPT-6 Astra in Codex, achieves a success rate of 34% in the Standard Setting, leaving much room for improvement. To see where agents fail, we label the stage at which failed attempts go wrong and compare failures across agents, settings, and stage categories.",
+          "upvotes": 28,
+          "publishedAt": "2026-11-09T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-11T00:00:00.000Z",
+          "githubRepo": "https://github.com/mll-lab-nu/embodied-first-exam",
+          "githubStars": 279,
+          "projectPage": "https://www.embodied-first-exam.ai/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/66f2b8602ef2817ec3cb65f6/uTKZmq_NMI3vfPJuty5Sg.mp4"
+          ]
+        },
+        "title": "Embodied First Exam",
+        "numComments": 4,
+        "organization": {
+          "name": "MLL-Lab",
+          "fullname": "MLL Lab"
+        }
+      }
+    },
+    {
+      "rank": 10,
+      "paper_id": "2611.12885",
+      "upvotes": 57,
+      "numComments": 4,
+      "submittedOnDailyAt": "2026-11-11T00:00:00+00:00",
+      "github_stars": 274,
+      "basis": "stars",
+      "entry": {
+        "paper": {
+          "id": "2611.12885",
+          "title": "World In-Context Learning for Agentic Robot Manipulation",
+          "summary": "Trained action policies write manipulation skill into network weights, tying what is learned to the distribution it is learned from. In-context learning (ICL) avoids this coupling but has not matched trained policies, because a demonstration recorded in another scene carries no feedback from the world the robot currently faces. We observe that what an agent learns in context is semantic, recording task steps and object roles rather than visual appearance, so experience gathered in one world transfers to another. Based on this insight, we propose World In-Context Learning (WICL), a paradigm in which a frozen model starts from a demonstration, rehearses the task in a world such as a simulator, and writes the feedback into its context rather than its weights. We build RoboScript, a modular infrastructure that implements WICL for agentic manipulation. From a single demonstration, RoboScript learns each task through rehearsal in simulation, freezes the learned knowledge as a Task Memory, and deploys the frozen memory on new scenes with data isolation that ensures every deployment input is available on a real robot. On all 50 tasks of RoboTwin 2.0, RoboScript reaches 83.4% mean success across clean and randomized settings with one demonstration per task and no gradient updates, exceeding the strongest trained action policy by over 20 points. The method generalizes across visual distributions, improves through reflection, scales with the foundation model, and transfers to a physical dual-arm robot through cross-embodiment memory adaptation. With a world in the loop, a robot can learn a manipulation task in its context as well as it learns one in its weights. All code is available at https://github.com/ArcheOne-AI/RoboScript",
+          "upvotes": 57,
+          "publishedAt": "2026-11-09T00:00:00.000Z",
+          "submittedOnDailyAt": "2026-11-11T00:00:00.000Z",
+          "githubRepo": "https://github.com/ArcheOne-AI/RoboScript",
+          "githubStars": 274,
+          "projectPage": "https://archeone-ai.github.io/RoboScript/",
+          "mediaUrls": [
+            "https://cdn-uploads.huggingface.co/production/uploads/67467b5979406f42a14517e9/xfnfaD1zk8qa_yfbK4e7u.mp4"
+          ]
+        },
+        "title": "World In-Context Learning for Agentic Robot Manipulation",
+        "numComments": 4,
+        "organization": {
+          "name": "ArcheOne-AI",
+          "fullname": "ArcheOne-AI"
+        }
+      }
+    }
+  ]
+}

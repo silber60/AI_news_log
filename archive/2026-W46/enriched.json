@@ -1,0 +1,368 @@
+{
+  "issue_id": "2026-W46",
+  "count": 10,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2611.09501",
+      "model_id": "qwegnai/GLM-5.3-Flash-shvq4g32-shvq2g64-shvq3g64",
+      "linked_models": [
+        {
+          "id": "qwegnai/GLM-5.3-Flash-shvq4g32-shvq2g64-shvq3g64",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "TTS-AGI/clap2-live-taxonomy"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "mit",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:zai-org/GLM-5.3-Flash",
+        "base_model:quantized:zai-org/GLM-5.3-Flash"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/facebookresearch/faiss/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/qwegnai/GLM-5.3-Flash-shvq4g32-shvq2g64-shvq3g64",
+        "https://huggingface.co/spaces/TTS-AGI/clap2-live-taxonomy",
+        "https://github.com/facebookresearch/faiss/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.06043",
+      "model_id": "netease-youdao/Confucius4-R2T2",
+      "linked_models": [
+        {
+          "id": "netease-youdao/Confucius4-R2T2",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "netease-youdao/confucius4-r2t2-demo",
+        "yudarahma/whisper-audio",
+        "eustlb/asr-models-on-the-hub",
+        "mrfakename/confucius4-r2t2-webgpu"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "netease-model-use-license-agreement",
+        "license_link": "https://raw.githubusercontent.com/netease-youdao/Confucius4-R2T2/refs/heads/master/MODEL_LICENSE"
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 2038052480,
+        "parameters": {
+          "BF16": 2038052480
+        }
+      },
+      "base_model_tags": [
+        "base_model:Qwen/Qwen3-ASR-1.7B",
+        "base_model:finetune:Qwen/Qwen3-ASR-1.7B"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/netease-youdao/Confucius4-R2T2/blob/master/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/netease-youdao/Confucius4-R2T2",
+        "https://huggingface.co/spaces/netease-youdao/confucius4-r2t2-demo",
+        "https://github.com/netease-youdao/Confucius4-R2T2/blob/master/LICENSE"
+      ]
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.12806",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/Robbyant/lingbot-touch/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/Robbyant/lingbot-touch/blob/main/LICENSE",
+        "https://github.com/Robbyant/lingbot-touch"
+      ]
+    },
+    {
+      "rank": 4,
+      "paper_id": "2610.42148",
+      "model_id": "OmniJev/OneJev1.6-0.8B",
+      "linked_models": [
+        {
+          "id": "OmniJev/OneJev1.6-4B",
+          "gated": false
+        },
+        {
+          "id": "OmniJev/OneJev1.6-0.8B",
+          "gated": false
+        },
+        {
+          "id": "OmniJev/OneJev1.6-27B",
+          "gated": false
+        },
+        {
+          "id": "OmniJev/OneJev1.6-9B",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "BradNLP/Flide",
+        "multimodalart/jev-decision-index",
+        "hotchpotch/S1MB-leaderboard",
+        "walidhadri/playground-decision-models",
+        "walidhadri/playground-decision-models-fr"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 852985920,
+        "parameters": {
+          "BF16": 852985920
+        }
+      },
+      "base_model_tags": [
+        "base_model:Qwen/Qwen3.5-0.8B",
+        "base_model:finetune:Qwen/Qwen3.5-0.8B"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/OmniJev/Flide/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/OmniJev/OneJev1.6-0.8B",
+        "https://huggingface.co/spaces/BradNLP/Flide",
+        "https://github.com/OmniJev/Flide/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.09195",
+      "model_id": "momolesang/InstantHMR",
+      "linked_models": [
+        {
+          "id": "momolesang/InstantHMR",
+          "gated": false
+        }
+      ],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "sam-license",
+        "license_link": "LICENSE"
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/Naturalpad-studio/InstantHMR/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/momolesang/InstantHMR",
+        "https://huggingface.co/momolesang/InstantHMR/blob/main/LICENSE",
+        "https://github.com/Naturalpad-studio/InstantHMR/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.10771",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/OpenEnvision/WorldFoundry/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/OpenEnvision/WorldFoundry/blob/main/LICENSE",
+        "https://github.com/OpenEnvision/WorldFoundry"
+      ]
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.10649",
+      "model_id": "huawei-csl/Qwen3.6-35B-A3B-MACaQ-R-GGUF",
+      "linked_models": [
+        {
+          "id": "huawei-csl/Qwen3.6-35B-A3B-MACaQ-R-GGUF",
+          "gated": false
+        },
+        {
+          "id": "Launch80/Qwen3.8-27B-MACaQ-MXFP4-SABER",
+          "gated": false
+        },
+        {
+          "id": "hermitdave/LFM3-1.7B-MLX-MACaQ-4.25bpw",
+          "gated": false
+        },
+        {
+          "id": "hermitdave/OLMoE-1B-7B-MLX-MACaQ-4.25bpw",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "fastgpu/vram-and-gpu-cost-calculator"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:Qwen/Qwen3.6-35B-A3B",
+        "base_model:quantized:Qwen/Qwen3.6-35B-A3B"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/huawei-csl/MACaQ/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/huawei-csl/Qwen3.6-35B-A3B-MACaQ-R-GGUF",
+        "https://huggingface.co/spaces/fastgpu/vram-and-gpu-cost-calculator",
+        "https://github.com/huawei-csl/MACaQ/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.08969",
+      "model_id": "ForeverBlue/EEG",
+      "linked_models": [
+        {
+          "id": "ForeverBlue/EEG",
+          "gated": false
+        },
+        {
+          "id": "ForeverBlue/EMG",
+          "gated": false
+        },
+        {
+          "id": "ForeverBlue/ECG",
+          "gated": false
+        },
+        {
+          "id": "ForeverBlue/RALF-SeizeIT2",
+          "gated": false
+        }
+      ],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/ForeverBlue816/PhysioWave/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/ForeverBlue/EEG",
+        "https://github.com/ForeverBlue816/PhysioWave/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 9,
+      "paper_id": "2611.12177",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/mll-lab-nu/embodied-first-exam/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/mll-lab-nu/embodied-first-exam/blob/main/LICENSE",
+        "https://github.com/mll-lab-nu/embodied-first-exam"
+      ]
+    },
+    {
+      "rank": 10,
+      "paper_id": "2611.12885",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/ArcheOne-AI/RoboScript/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/ArcheOne-AI/RoboScript/blob/main/LICENSE",
+        "https://github.com/ArcheOne-AI/RoboScript"
+      ]
+    }
+  ]
+}
