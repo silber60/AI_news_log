@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "issue_id": "2026-W47",
+  "stage": "explainer",
+  "data": {
+    "topic": "Agent memory: 경험을 종류별로 나눠 보관하는 기억 구조",
+    "body_ko": "LLM 에이전트가 지난 대화와 작업 경험을 다시 꺼내 쓰려면 기억을 따로 저장해 둬야 해요. MIRIX-2.0은 기억을 여섯 종류의 memory agent로 나눠 저장하고, 필요할 때 해당 agent가 찾아 줘요. 기록은 지우지 않고 보존하되 검색 범위는 예산으로 제한해요. 그래서 기록이 늘어도 검색 부담이 커지지 않아요.",
+    "related_ranks": [
+      1
+    ],
+    "point_ko": "지난 대화와 작업 경험을 다시 꺼내 쓰게 해 줘요.",
+    "example_ko": "학교 사물함에 국어책, 체육복, 준비물을 칸마다 나눠 두면 필요한 걸 금방 꺼낼 수 있어요. 수업이 바뀌어도 사물함 전체를 뒤지지 않고 그 시간에 필요한 칸만 열어 보면 돼요.",
+    "image": {
+      "url": "https://arxiv.org/html/2611.12068v1/mirix_user_centric.png",
+      "width": 576,
+      "height": 281
+    }
+  }
+}

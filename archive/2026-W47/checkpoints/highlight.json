@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "issue_id": "2026-W47",
+  "stage": "highlight",
+  "data": [
+    {
+      "rank": 3,
+      "tag": "데모",
+      "why_ko": "사진이나 영상에서 실제 거리 단위의 깊이 지도를 바로 뽑아 볼 수 있어요.",
+      "how_ko": "데모에 거리를 아는 실내 사진을 올려 깊이 값이 실제와 비슷한지 비교해 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/hugging-apps/depthpro2-l"
+    },
+    {
+      "rank": 4,
+      "tag": "데모",
+      "why_ko": "영상 하나로 3D 형상, 카메라 위치, 움직이는 물체의 궤적을 함께 볼 수 있어요.",
+      "how_ko": "데모에 움직이는 물체가 있는 짧은 영상을 넣어 궤적과 마스크가 맞는지 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/yyfz233/Pi4"
+    },
+    {
+      "rank": 8,
+      "tag": "데모",
+      "why_ko": "구조 정보와 참조 이미지, 글을 함께 넣어 영상 구도를 직접 정할 수 있어요.",
+      "how_ko": "데모에 레이아웃과 참조 이미지를 넣고 글만 바꿔 가며 영상이 어떻게 달라지는지 보면 돼요.",
+      "demo_url": "https://huggingface.co/spaces/hugging-apps/invoker-render"
+    }
+  ]
+}

@@ -1,0 +1,363 @@
+{
+  "issue_id": "2026-W47",
+  "count": 10,
+  "items": [
+    {
+      "rank": 1,
+      "paper_id": "2611.12068",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/Mirix-AI/MIRIX/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/Mirix-AI/MIRIX/blob/main/LICENSE",
+        "https://github.com/Mirix-AI/MIRIX"
+      ]
+    },
+    {
+      "rank": 2,
+      "paper_id": "2611.18397",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/RainBowLuoCS/Gamer/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/RainBowLuoCS/Gamer/blob/main/LICENSE",
+        "https://github.com/RainBowLuoCS/Gamer"
+      ]
+    },
+    {
+      "rank": 3,
+      "paper_id": "2611.26603",
+      "model_id": "apple/DepthPro2-H",
+      "linked_models": [
+        {
+          "id": "apple/DepthPro2",
+          "gated": false
+        },
+        {
+          "id": "apple/DepthPro2-focal",
+          "gated": false
+        },
+        {
+          "id": "apple/DepthPro2-H",
+          "gated": false
+        },
+        {
+          "id": "apple/DepthPro2-coreml",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "hugging-apps/depthpro2-l",
+        "Segizu/medidor-metrico-de-escena",
+        "akhaliq/DepthPro2",
+        "christianengel/DepthPro2-ONNX",
+        "christianengel/WristDepth",
+        "brickhousestudiosllc/DepthPro2"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "apple-amlr",
+        "license_link": "https://github.com/apple-aiml-research/ml-depth-pro-2/blob/main/LICENSE_MODEL"
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 872108865,
+        "parameters": {
+          "F32": 872108865
+        }
+      },
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/apple-aiml-research/ml-depth-pro-2/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/apple/DepthPro2-H",
+        "https://huggingface.co/spaces/hugging-apps/depthpro2-l",
+        "https://github.com/apple-aiml-research/ml-depth-pro-2/blob/main/LICENSE_MODEL",
+        "https://github.com/apple-aiml-research/ml-depth-pro-2/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 4,
+      "paper_id": "2611.23144",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [
+        "yyfz233/Pi4"
+      ],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/yyfz/Pi4/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/spaces/yyfz233/Pi4",
+        "https://github.com/yyfz/Pi4/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 5,
+      "paper_id": "2611.21339",
+      "model_id": "yunyangge/MovieRoll",
+      "linked_models": [
+        {
+          "id": "yunyangge/MovieRoll",
+          "gated": "auto"
+        }
+      ],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "tencent-hunyuan-community",
+        "license_link": "LICENSE"
+      },
+      "gated": true,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:tencent/HunyuanVideo-1.5",
+        "base_model:finetune:tencent/HunyuanVideo-1.5"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/Tencent-Hunyuan/MovieRoll/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/yunyangge/MovieRoll",
+        "https://huggingface.co/yunyangge/MovieRoll/blob/main/LICENSE",
+        "https://github.com/Tencent-Hunyuan/MovieRoll/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 6,
+      "paper_id": "2611.20254",
+      "model_id": "VoxDance-Lab/VoxMel-0.6B",
+      "linked_models": [
+        {
+          "id": "VoxDance-Lab/VoxMel-0.6B",
+          "gated": false
+        },
+        {
+          "id": "VoxDance-Lab/VoxMel-0.3B",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "akhaliq/VoxMel",
+        "guanwenhao/VoxMel-0.3B"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "apache-2.0",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/VoxDance-Lab/VoxMel/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/VoxDance-Lab/VoxMel-0.6B",
+        "https://huggingface.co/spaces/akhaliq/VoxMel",
+        "https://github.com/VoxDance-Lab/VoxMel/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 7,
+      "paper_id": "2611.20992",
+      "model_id": null,
+      "linked_models": [],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": null,
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/zfkarl/MedJev/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://github.com/zfkarl/MedJev/blob/main/LICENSE",
+        "https://github.com/zfkarl/MedJev"
+      ]
+    },
+    {
+      "rank": 8,
+      "paper_id": "2611.22925",
+      "model_id": "inclusionAI/invoker-render-1.0",
+      "linked_models": [
+        {
+          "id": "inclusionAI/invoker-render-1.0",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "hugging-apps/invoker-render"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "apache-2.0-and-cc-by-nc-4.0",
+        "license_link": "https://github.com/inclusionAI/CodeWorldModel#acknowledgements-and-license"
+      },
+      "gated": false,
+      "safetensors": {
+        "total": 33122992896,
+        "parameters": {
+          "F32": 33122992896
+        }
+      },
+      "base_model_tags": [],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "Apache-2.0",
+        "name": "Apache License 2.0",
+        "html_url": "https://github.com/inclusionAI/CodeWorldModel/blob/master/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/inclusionAI/invoker-render-1.0",
+        "https://huggingface.co/spaces/hugging-apps/invoker-render",
+        "https://github.com/inclusionAI/CodeWorldModel/blob/master/LICENSE"
+      ]
+    },
+    {
+      "rank": 9,
+      "paper_id": "2611.23236",
+      "model_id": "Shengxiang-Lin/PGPO",
+      "linked_models": [
+        {
+          "id": "Shengxiang-Lin/PGPO",
+          "gated": false
+        }
+      ],
+      "spaces": [],
+      "datasets": [],
+      "weights_license": {
+        "license": "mit",
+        "license_name": null,
+        "license_link": null
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:unsloth/Qwen3-4B-Base",
+        "base_model:adapter:unsloth/Qwen3-4B-Base"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "MIT",
+        "name": "MIT License",
+        "html_url": "https://github.com/Shengxiang-Lin/PGPO/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/Shengxiang-Lin/PGPO",
+        "https://github.com/Shengxiang-Lin/PGPO/blob/main/LICENSE"
+      ]
+    },
+    {
+      "rank": 10,
+      "paper_id": "2611.23226",
+      "model_id": "cyberdes-security/FastFrames-S-mobile-mlx",
+      "linked_models": [
+        {
+          "id": "apple/FastFrames-L",
+          "gated": false
+        },
+        {
+          "id": "apple/FastFrames-S",
+          "gated": false
+        },
+        {
+          "id": "pratikgx/FastFrames-S-MLX",
+          "gated": false
+        },
+        {
+          "id": "cyberdes-security/FastFrames-S-mobile-mlx",
+          "gated": false
+        }
+      ],
+      "spaces": [
+        "linoyts/fastframes-s-live",
+        "akhaliq/FastFrames-L",
+        "linoyts/fastframes-l-live",
+        "mrfakename/fastframes-l"
+      ],
+      "datasets": [],
+      "weights_license": {
+        "license": "other",
+        "license_name": "apple-amlr",
+        "license_link": "https://huggingface.co/cyberdes-security/FastFrames-S-mobile-mlx/blob/main/LICENSE-APPLE-AMLR"
+      },
+      "gated": false,
+      "safetensors": null,
+      "base_model_tags": [
+        "base_model:mlx-community/FastFrames-S-bf16-mlx",
+        "base_model:finetune:mlx-community/FastFrames-S-bf16-mlx"
+      ],
+      "github_license": {
+        "status": "ok",
+        "spdx_id": "NOASSERTION",
+        "name": "Other",
+        "html_url": "https://github.com/apple-aiml-research/ml-fastframes/blob/main/LICENSE"
+      },
+      "paper_fetch_ok": true,
+      "evidence": [
+        "https://huggingface.co/cyberdes-security/FastFrames-S-mobile-mlx",
+        "https://huggingface.co/spaces/linoyts/fastframes-s-live",
+        "https://huggingface.co/cyberdes-security/FastFrames-S-mobile-mlx/blob/main/LICENSE-APPLE-AMLR",
+        "https://github.com/apple-aiml-research/ml-fastframes/blob/main/LICENSE"
+      ]
+    }
+  ]
+}
